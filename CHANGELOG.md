@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] - 2026-09-01
+
+### Added
+
+- Added a native OpenCode adapter.
+- Added OpenCode agent generation under `.opencode/agent/`.
+- Added OpenCode slash-command generation under `.opencode/command/`.
+- Added OpenCode skill generation under `.opencode/skills/`.
+
+### Changed
+
+- Preserved existing OpenCode files during installation.
+- Preserved modified or user-owned OpenCode files during uninstall.
+- Updated documentation for Claude Code, Codex, and OpenCode support.
+- Corrected repository metadata and documentation links.
+
+### Verification
+
+- `npm run build` passing.
+- `npm run lint` passing.
+- 132 tests passing.
+- `npm pack --dry-run` passing.
+
 ## [0.2.1] - 2026-08-26
 
 ### Fixed

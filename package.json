@@ -1,6 +1,6 @@
 {
   "name": "oh-my-patent",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Patent disclosure drafting workflow with brainstorm path tracking",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
