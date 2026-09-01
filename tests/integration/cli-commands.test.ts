@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'child_process';
-import { existsSync, rmSync, mkdirSync } from 'fs';
+import { existsSync, rmSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 describe('CLI Commands', () => {
@@ -119,6 +119,41 @@ describe('CLI Commands', () => {
       // 验证生成的文件
       expect(existsSync(resolve(outputPath, '.codex'))).toBe(true);
       expect(existsSync(resolve(outputPath, 'AGENTS.md'))).toBe(true);
+    });
+
+    test('should generate opencode adapter', () => {
+      const outputPath = resolve(testDir, 'test-adapt-opencode');
+
+      const output = execSync(
+        `node "${cliPath}" adapt generate --tool opencode --output "${outputPath}"`,
+        { encoding: 'utf-8' }
+      );
+
+      const result = JSON.parse(output);
+      expect(result.ok).toBe(true);
+      expect(result.adapter).toBe('opencode');
+      expect(result.files).toBeGreaterThan(0);
+      expect(existsSync(resolve(outputPath, '.opencode/agent/archimedes.md'))).toBe(true);
+      expect(existsSync(resolve(outputPath, '.opencode/command/archimedes.md'))).toBe(true);
+      expect(existsSync(resolve(outputPath, '.opencode/skills/brainstorm-path/SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(outputPath, 'opencode.json'))).toBe(false);
+    });
+
+    test('should preserve existing OpenCode files during install', () => {
+      const outputPath = resolve(testDir, 'test-install-opencode');
+      const customAgent = resolve(outputPath, '.opencode/agent/archimedes.md');
+
+      mkdirSync(resolve(outputPath, '.opencode/agent'), { recursive: true });
+      writeFileSync(customAgent, 'custom agent\n', 'utf-8');
+
+      const output = execSync(
+        `node "${cliPath}" adapt install --tool opencode --workspace-dir "${outputPath}"`,
+        { encoding: 'utf-8' }
+      );
+
+      expect(JSON.parse(output).adapter).toBe('opencode');
+      expect(readFileSync(customAgent, 'utf-8')).toBe('custom agent\n');
+      expect(existsSync(resolve(outputPath, '.opencode/command/patent-new.md'))).toBe(true);
     });
 
     test('should fail with invalid tool name', () => {

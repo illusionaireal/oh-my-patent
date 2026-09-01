@@ -127,8 +127,8 @@ Or use online editors:
 
 ### Official Links
 - **npm**: https://www.npmjs.com/package/oh-my-patent
-- **GitHub**: https://github.com/zengbods/oh-my-patent
-- **Issues**: https://github.com/zengbods/oh-my-patent/issues
+- **GitHub**: https://github.com/illusionaireal/oh-my-patent
+- **Issues**: https://github.com/illusionaireal/oh-my-patent/issues
 
 ### Community Support
 - **LINUX DO Community**: https://linux.do/
@@ -164,7 +164,7 @@ If you find errors or areas for improvement in the documentation:
 If you encounter issues:
 
 1. 📖 First, consult this documentation index to find relevant sections
-2. 🔍 Search for similar issues in [Issues](https://github.com/zengbods/oh-my-patent/issues)
+2. 🔍 Search for similar issues in [Issues](https://github.com/illusionaireal/oh-my-patent/issues)
 3. 💬 Start a discussion in the [LINUX DO Community](https://linux.do/)
 4. 🐛 If it's a bug, create a new Issue
 

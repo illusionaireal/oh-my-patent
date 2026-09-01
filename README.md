@@ -2,7 +2,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/zengbods/oh-my-patent)
+[![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![中文](https://img.shields.io/badge/中文-切换-orange.svg)](./README.zh-CN.md)
 
 <div align="center">
@@ -60,7 +60,7 @@ oh-my-patent adapt setup --workspace-dir .
 | **10 AI windows, manual merge** | Cut & paste chat logs, consolidate yourself | **Archimedes** orchestrator routes to 11 specialists. Outputs auto-saved to `references/`, context passes between rounds |
 | **Rejected ideas lost forever** | Chat history scrolls away — that one great idea from round 2 is gone | **`.brainstorm/` decision DAG** persists every round's scores, snapshots, and pass/reject decisions. Roll back, fork, or revive |
 | **Visio → screenshot → Word** | Draw by hand, export, reformat, lose the source file | **Mermaid/PlantUML rendering** extracts architecture from `MAIN.md`, renders SVG+PNG, and auto-rewrites figure references |
-| **Per-editor, per-teammate config** | Claude Code settings. Codex settings. Separate. Manual. Every time. | **`oh-my-patent adapt setup`** — one command generates configs for both editors. Uninstall is one command, removing *only* what we generated |
+| **Per-editor, per-teammate config** | Claude Code settings. Codex settings. OpenCode settings. Separate. Manual. Every time. | **`oh-my-patent adapt setup`** — one command generates configs for all supported editors. Uninstall is one command, removing *only* what we generated |
 | **Crash mid-project = start over** | Scramble through screenshots, guess where you left off | **Workflow state machine** — all stages written to `state.json`, decision tree in `path.json`. Resume from the exact point of failure |
 | **6 rounds in, no idea what "done" is** | A mess of loose documents | **Quantitative threshold model** auto-decides if brainstorming is mature. QA loop exits on 2 consecutive rounds with zero new issues |
 
@@ -73,7 +73,7 @@ oh-my-patent adapt setup --workspace-dir .
 | | |
 |---|---|
 | 🧠 **Decision-path tracking**<br>`.brainstorm/` records every round's scores, innovations, and decisions as an auditable DAG. Roll back to any node, fork alternatives, revive abandoned ideas. | 🤖 **11-agent end-to-end pipeline**<br>Search → ideation → patentability → draft → review → diagrams. The full patent lifecycle, zero hand-holding between stages. |
-| ⚡ **`/archimedes` one-liner**<br>Start every task with Archimedes. He reads your state, routes to specialists, waits for output, and advances to the next stage. | 🔗 **Zero-config adapters**<br>`oh-my-patent adapt setup` generates configs for Claude Code and Codex simultaneously. One command, both editors. |
+| ⚡ **`/archimedes` one-liner**<br>Start every task with Archimedes. He reads your state, routes to specialists, waits for output, and advances to the next stage. | 🔗 **Zero-config adapters**<br>`oh-my-patent adapt setup` generates configs for Claude Code, Codex, and OpenCode simultaneously. One command, all editors. |
 | 🛡️ **Safe uninstall**<br>Exact-file removal — only deletes what we auto-generated. No `readdir + unlink` traversing your workspace. Your custom edits are safe. | 📊 **Auto figure rendering**<br>Parses `MAIN.md` for technical architecture, renders Mermaid/PlantUML to SVG+PNG, and auto-rewrites figure references in-place. |
 | 🎯 **Scoring thresholds & QA loops**<br>Quantitative model judges if brainstorming is mature. Up to 6 QA rounds, exiting when 2 consecutive rounds produce zero new issues. | 🔄 **Resumable state machine**<br>`INIT → RESEARCH → BRAINSTORM → DRAFT → QA_LOOP → FINAL_REVIEW → DIAGRAM → DONE`. Crashes are non-destructive. Resume from `state.json`. |
 
@@ -211,12 +211,13 @@ cd your-patent-projects
 oh-my-patent adapt setup --workspace-dir .
 ```
 
-This generates configs for **Claude Code** (`.claude/` + `CLAUDE.md`) and **Codex** (`.codex/` + `AGENTS.md` + `codex.json`). After this, use `/archimedes` in your editor.
+This generates configs for **Claude Code** (`.claude/` + `CLAUDE.md`), **Codex** (`.codex/` + `AGENTS.md` + `codex.json`), and **OpenCode** (`.opencode/agent/`, `.opencode/command/`, and `.opencode/skills/`). After this, use `/archimedes` in your editor.
 
 ```bash
 # Options: generate for one editor only
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
 oh-my-patent adapt setup --tool codex --workspace-dir .
+oh-my-patent adapt setup --tool opencode --workspace-dir .
 
 # Aliases
 oh-my-patent adapt install       # same as setup
@@ -304,15 +305,15 @@ Four layers, one data flow.
 | **Orchestration** | Agent / skill / command definitions | `plugin.jsonc`, `plugins/` |
 | **Engine** | Path tracking, state machine, diagrams, thresholds | `src/core/` |
 | **Command** | Unified CLI wrapping engine capabilities | `src/cli.ts`, `src/commands/` |
-| **Adapter** | Converts orchestration → Claude Code / Codex configs | `src/adapters/claude/`, `src/adapters/codex/` |
+| **Adapter** | Converts orchestration → Claude Code / Codex / OpenCode configs | `src/adapters/claude/`, `src/adapters/codex/`, `src/adapters/opencode/` |
 
 ```
   plugin.jsonc (orchestration definition)
            │
     [Adapters] generate
            │
-  .claude/ (Claude Code)      .codex/ (Codex)
-  CLAUDE.md                   AGENTS.md, codex.json
+  .claude/ (Claude Code)      .codex/ (Codex)       .opencode/ (OpenCode)
+  CLAUDE.md                   AGENTS.md, codex.json  agents, commands, skills
            │
   AI in your editor invokes 11 specialist agents
            │
@@ -342,7 +343,8 @@ oh-my-patent/                    # Core repo: configs and engine
 │   ├── commands/                # path init/record/overview/branch/restore...
 │   ├── adapters/
 │   │   ├── claude/              # → .claude/ + CLAUDE.md
-│   │   └── codex/               # → .codex/ + AGENTS.md + codex.json
+│   │   ├── codex/               # → .codex/ + AGENTS.md + codex.json
+│   │   └── opencode/            # → .opencode/ agents, commands, and skills
 │   └── tui/                     # Ink+React interactive UI
 ├── plugin.jsonc
 └── dist/                        # Compiled output
@@ -382,7 +384,7 @@ npm run lint   # tsc --noEmit type checking
 
 ---
 
-*MIT Licensed &ensp;&middot;&ensp; Crafted by [zengbods](https://github.com/zengbods)*<br>
+ *MIT Licensed &ensp;&middot;&ensp; Crafted by [illusionaireal](https://github.com/illusionaireal)*<br>
 *With thanks to the [LINUX DO Community](https://linux.do/)*
 
 &mdash; 1 &mdash;

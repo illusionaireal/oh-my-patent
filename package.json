@@ -24,11 +24,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zengbods/oh-my-patent.git"
+    "url": "https://github.com/illusionaireal/oh-my-patent.git"
   },
-  "homepage": "https://github.com/zengbods/oh-my-patent#readme",
+  "homepage": "https://github.com/illusionaireal/oh-my-patent#readme",
   "bugs": {
-    "url": "https://github.com/zengbods/oh-my-patent/issues"
+    "url": "https://github.com/illusionaireal/oh-my-patent/issues"
   },
   "files": [
     "dist/",

@@ -27,7 +27,7 @@ The CLI has four domains — `path`, `diagram`, `adapt`, `tui` — each with sub
 ### Quick Start for Local Development
 
 ```bash
-git clone https://github.com/zengbods/oh-my-patent
+git clone https://github.com/illusionaireal/oh-my-patent
 cd oh-my-patent
 npm install
 npm run build

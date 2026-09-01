@@ -72,6 +72,7 @@ import {
 import { loadPortableDef } from './adapters/loader.js';
 import { ClaudeCodeAdapter } from './adapters/claude/index.js';
 import { CodexAdapter } from './adapters/codex/index.js';
+import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { FigureSpec } from './core/diagram-types.js';
@@ -380,6 +381,7 @@ async function pathMarkdown(projectPath: string, opts: Record<string, string>): 
 const adapters: ToolAdapter[] = [
   new ClaudeCodeAdapter(),
   new CodexAdapter(),
+  new OpenCodeAdapter(),
 ];
 const adapterMap = new Map<string, ToolAdapter>(adapters.map(a => [a.name, a]));
 
@@ -451,6 +453,9 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       const dir = resolve(fullPath, '..');
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
+      }
+      if (name === 'opencode' && existsSync(fullPath)) {
+        continue;
       }
       writeFileSync(fullPath, content, 'utf-8');
       fileCount++;
@@ -741,7 +746,7 @@ Options:
   --mode <mode>         Visualization mode: overview|node|innovation|branch|dashboard
   --target <id>         Target ID for visualization/detail
   --output <file>       Output file path (optional)
-  --tool <name>         Adapter name: claude-code|codex (default: all)
+  --tool <name>         Adapter name: claude-code|codex|opencode (default: all)
   --workspace-dir <dir> Workspace directory (default: parent of plugin dir)
   --specs <json|@file>  FigureSpec array (JSON or @file)
   --phase <phase>       Render phase: draft (default) or final

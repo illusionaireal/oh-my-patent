@@ -15,11 +15,13 @@ import { loadPortableDef } from './loader.js';
 import { ToolAdapter } from './types.js';
 import { ClaudeCodeAdapter } from './claude/index.js';
 import { CodexAdapter } from './codex/index.js';
+import { OpenCodeAdapter } from './opencode/index.js';
 
 // Available adapters
 const adapters: ToolAdapter[] = [
   new ClaudeCodeAdapter(),
   new CodexAdapter(),
+  new OpenCodeAdapter(),
 ];
 
 const adapterMap = new Map<string, ToolAdapter>(adapters.map(a => [a.name, a]));

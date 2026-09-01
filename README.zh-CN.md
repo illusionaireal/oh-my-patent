@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/zengbods/oh-my-patent)
+[![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![English](https://img.shields.io/badge/English-Switch-blue.svg)](./README.md)
 
 > 阿基米德（achimedes）编排器，通过模仿真实的专利撰写过程，遵循你的想法，撰写成一份完整的专利交底书，。
@@ -78,7 +78,7 @@ oh-my-patent adapt setup --workspace-dir .
 | 🧠 | **头脑风暴决策路径追踪** | `.brainstorm/` 里自动保存每轮的评分、创新点、淘汰/通过决策。能回退到任意节点、分叉探索替代方向、复活已放弃创新点 |
 | 🤖 | **11 智能体端到端流水线** | 检索 → 创意激发 → 可专利性评估 → 撰写 → 审查 → 答辩 → 附图，覆盖交底书全生命周期 |
 | ⚡ | **`/archimedes` 一句话启动** | 不管什么命令，先找 Archimedes。他判断阶段、分配任务、传递上下文、等待产出、推进下一关 |
-| 🔗 | **零配置跨工具适配器** | `oh-my-patent adapt setup` 一条命令给 Claude Code 和 Codex 同时注册配置 |
+| 🔗 | **零配置跨工具适配器** | `oh-my-patent adapt setup` 一条命令给 Claude Code、Codex 和 OpenCode 同时注册配置 |
 | 🛡️ | **安全卸载** | 精确文件级清理——只删自动生成的文件，绝不 `readdir + unlink` 遍历你工作区 |
 | 📊 | **自动附图渲染** | 解析 MAIN.md 中的技术架构描述，Mermaid/PlantUML → SVG/PNG，自动回写 |
 | 🎯 | **评分阈值与 QA 循环** | 量化阈值模型自动判断头脑风暴够不够深入；审查阶段最多 6 轮 QA 循环，直到连续 2 轮无新问题 |
@@ -107,6 +107,7 @@ oh-my-patent adapt setup --workspace-dir .
 这会生成：
 - **Claude Code**: `.claude/agents/`, `.claude/commands/`, `CLAUDE.md`
 - **Codex**: `.codex/agents/`, `.codex/skills/`, `AGENTS.md`
+- **OpenCode**: `.opencode/agent/`, `.opencode/command/`, `.opencode/skills/`
 
 完成后，你就可以在编辑器中使用 `/archimedes` 等命令了。
 
@@ -115,6 +116,7 @@ oh-my-patent adapt setup --workspace-dir .
 # 只为特定工具生成配置
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
 oh-my-patent adapt setup --tool codex --workspace-dir .
+oh-my-patent adapt setup --tool opencode --workspace-dir .
 
 # 其他命令
 oh-my-patent adapt install     # setup的别名
@@ -136,7 +138,7 @@ npm install -g oh-my-patent && cd /path/to/user/project && oh-my-patent adapt se
 
 ```bash
 # 克隆项目
-git clone https://github.com/zengbods/oh-my-patent
+git clone https://github.com/illusionaireal/oh-my-patent
 cd oh-my-patent
 npm install
 npm run build
@@ -160,6 +162,7 @@ oh-my-patent adapt uninstall --workspace-dir .
 这会删除以下文件：
 - **Claude Code**: `.claude/agents/*.md`, `.claude/commands/*.md`, `.claude/settings.json`, `CLAUDE.md`
 - **Codex**: `.codex/agents/*.md`, `.codex/skills/*.md`, `AGENTS.md`, `codex.json`
+- **OpenCode**: `.opencode/agent/*.md`, `.opencode/command/*.md`, `.opencode/skills/*/SKILL.md`
 - **全局配置**: `~/.claude-best/agents/*.md`, `~/.claude-best/commands/*.md`（如果有）
 
 **安全保证**：
@@ -174,6 +177,9 @@ oh-my-patent adapt uninstall --tool claude-code --workspace-dir .
 
 # 只卸载 Codex 配置
 oh-my-patent adapt uninstall --tool codex --workspace-dir .
+
+# 只卸载 OpenCode 配置
+oh-my-patent adapt uninstall --tool opencode --workspace-dir .
 ```
 
 ### 完全卸载（包括 CLI 工具）
@@ -242,7 +248,7 @@ oh-my-patent <域> <子命令> [选项]
 
 | 子命令 | 用途 |
 |--------|------|
-| `adapt setup [--tool claude-code\|codex] [--workspace-dir .]` | 推荐入口。安装编辑器配置，带卸载提示 |
+| `adapt setup [--tool claude-code\|codex\|opencode] [--workspace-dir .]` | 推荐入口。安装编辑器配置，带卸载提示 |
 | `adapt install` | 与 `setup` 行为一致 |
 | `adapt uninstall [--tool <name>] [--workspace-dir .]` | **只删自动生成的文件**。绝不碰你的自定义文件 |
 | `adapt generate` | 只生成到 `plugins/<tool>/`，不写入工作区 |
@@ -396,7 +402,7 @@ DAG 是可审计的记录：`path.json`（元数据 + 边 + 当前节点）、`n
 | **编排层** | 智能体/技能/命令的端口定义，一次定义，到处跑 | `plugin.jsonc`、`opencode.jsonc`、`.opencode/skills/` |
 | **引擎层** | 路径追踪、状态机、图表渲染、阈值评估 | `src/core/` |
 | **命令层** | 把引擎能力封装为统一的 CLI 命令 | `src/cli.ts`、`src/commands/` |
-| **适配层** | 把编排层的定义自动转成 Claude Code / Codex 需要的格式 | `src/adapters/claude/`, `src/adapters/codex/` |
+| **适配层** | 把编排层的定义自动转成 Claude Code / Codex / OpenCode 需要的格式 | `src/adapters/claude/`, `src/adapters/codex/`, `src/adapters/opencode/` |
 
 三层之间的数据流：
 
@@ -407,6 +413,7 @@ DAG 是可审计的记录：`path.json`（元数据 + 边 + 当前节点）、`n
            ↓
   .claude/ (Claude Code)    <——一个文件，多处消费
   .codex/ (Codex)           <——
+  .opencode/ (OpenCode)     <——
   AGENTS.md / CLAUDE.md
   codex.json
            ↓

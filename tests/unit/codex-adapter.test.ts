@@ -37,7 +37,7 @@ describe('CodexAdapter', () => {
 
     for (const skill of def.skills) {
       const skillContent = result.files.get(join('.codex', 'skills', skill.id, 'SKILL.md')) ?? '';
-      expect(skillContent).toMatch(/^---\nname: [a-z0-9-]+\ndescription: .+\n---\n/);
+      expect(skillContent).toMatch(/^---\r?\nname: [a-z0-9-]+\r?\ndescription: .+\r?\n---\r?\n/);
       expect(result.files.get(join('plugins', 'oh-my-patent', 'skills', skill.id, 'SKILL.md'))).toBe(skillContent);
     }
 

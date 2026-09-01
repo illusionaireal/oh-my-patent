@@ -127,8 +127,8 @@ mmdc -i docs/workflow-diagram.md -o docs/workflow-diagram.png -w 2400
 
 ### 官方链接
 - **npm**: https://www.npmjs.com/package/oh-my-patent
-- **GitHub**: https://github.com/zengbods/oh-my-patent
-- **Issues**: https://github.com/zengbods/oh-my-patent/issues
+- **GitHub**: https://github.com/illusionaireal/oh-my-patent
+- **Issues**: https://github.com/illusionaireal/oh-my-patent/issues
 
 ### 社区支持
 - **LINUX DO 社区**: https://linux.do/
@@ -164,7 +164,7 @@ mmdc -i docs/workflow-diagram.md -o docs/workflow-diagram.png -w 2400
 如果你在使用过程中遇到问题：
 
 1. 📖 先查阅本文档索引，找到相关章节
-2. 🔍 在 [Issues](https://github.com/zengbods/oh-my-patent/issues) 中搜索类似问题
+2. 🔍 在 [Issues](https://github.com/illusionaireal/oh-my-patent/issues) 中搜索类似问题
 3. 💬 在 [LINUX DO 社区](https://linux.do/) 发起讨论
 4. 🐛 如果是 bug，创建新的 Issue
 

@@ -35,3 +35,4 @@ export {
 export { loadPortableDef } from './adapters/loader.js';
 export { ClaudeCodeAdapter } from './adapters/claude/index.js';
 export { CodexAdapter } from './adapters/codex/index.js';
+export { OpenCodeAdapter } from './adapters/opencode/index.js';

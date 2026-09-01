@@ -248,8 +248,8 @@ export class CodexAdapter implements ToolAdapter {
       author: {
         name: 'oh-my-patent',
       },
-      homepage: 'https://github.com/openai/codex',
-      repository: 'https://github.com/openai/codex',
+      homepage: 'https://github.com/illusionaireal/oh-my-patent',
+      repository: 'https://github.com/illusionaireal/oh-my-patent',
       license: 'MIT',
       keywords: ['patent', 'disclosure', 'workflow', 'codex'],
       skills: './skills/',
