@@ -497,6 +497,8 @@ npm run lint   # tsc --noEmit 类型检查
 - 所有帮助改进此项目的贡献者
 - 开源社区提供的出色工具和库，使这个项目成为可能
 
+品牌资产与用法见 [assets/brand/README.md](./assets/brand/README.md)。
+
 ---
 
 ## 许可证

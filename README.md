@@ -389,6 +389,8 @@ npm run lint   # tsc --noEmit type checking
  *MIT Licensed &ensp;&middot;&ensp; Crafted by [illusionaireal](https://github.com/illusionaireal)*<br>
 *With thanks to the [LINUX DO Community](https://linux.do/)*
 
+Brand assets and usage: [assets/brand/README.md](./assets/brand/README.md).
+
 &mdash; 1 &mdash;
 
 </div>

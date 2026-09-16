@@ -9,7 +9,7 @@
 ## Assets in this repository
 
 - `png/logo-primary.png` — 1900×600 primary horizontal lockup (README / docs header).
-- `png/mark-primary-512.png` — 512×512 primary mark (GitHub repository avatar, social preview).
+- `png/mark-primary-512.png` — 512×512 primary mark (GitHub profile picture, repository social preview).
 - `png/favicon.ico` — multi-size favicon (16/32/64/128/256 px).
 - `README-snippet.md` — the header snippet the top-level READMEs embed.
 
@@ -34,5 +34,6 @@ Use the **blue mark** as the default brand asset. Use the **black mark** only wh
 ## Where each asset is used
 
 - README header (English and Chinese): `png/logo-primary.png`.
-- GitHub repository avatar and social preview: `png/mark-primary-512.png` — upload through the repository **Settings** page; these slots cannot be set from the repository contents.
+- GitHub profile picture (this is what appears next to every commit and on the repository card; GitHub has no per-repository avatar): `png/mark-primary-512.png`, uploaded at https://github.com/settings/profile.
+- Repository social preview (the card image shown when the repository link is shared): `png/mark-primary-512.png`, uploaded under repository **Settings → General → Social preview**.
 - Favicon: `png/favicon.ico`.
