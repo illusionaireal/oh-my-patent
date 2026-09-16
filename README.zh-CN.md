@@ -7,6 +7,12 @@
 [![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![English](https://img.shields.io/badge/English-Switch-blue.svg)](./README.md)
 
+<div align="center">
+
+<img src="./assets/brand/png/logo-primary.png" width="720" alt="oh-my-patent">
+
+</div>
+
 > 阿基米德（achimedes）编排器，通过模仿真实的专利撰写过程，遵循你的想法，撰写成一份完整的专利交底书，。
 
 ## 给 AI 助手看的
