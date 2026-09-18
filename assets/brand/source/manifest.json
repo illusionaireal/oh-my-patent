@@ -1,0 +1,52 @@
+{
+  "source_archive": {
+    "filename": "oh-my-patent-logo-assets-final.zip",
+    "sha256": "4b110788837588163bc7a79c6f588d124f11d5e2fc1a88b2e66a50af24a09f97",
+    "storage": "Maintainer-held original bundle; intentionally not committed"
+  },
+  "base_commit": "4c6b9b9d6de03ccfa7ec20e646ca10d09ecd1cf8",
+  "assets": [
+    {
+      "path": "png/logo-primary.png",
+      "bytes": 329907,
+      "sha256": "48573eb40c5f26eb19f54ab29df53a454156a4f58b9d032b86ee6cbb9e193496",
+      "provenance": "original-bundle:assets/brand/png/logo-primary.png"
+    },
+    {
+      "path": "png/logo-on-dark.png",
+      "bytes": 332280,
+      "sha256": "df5e7e07f4c037d665b147b1eb5f2dbb95fab046fcba4366fb42963b3506c8fe",
+      "provenance": "original-bundle:assets/brand/png/logo-on-dark.png"
+    },
+    {
+      "path": "png/mark-primary-512.png",
+      "bytes": 283777,
+      "sha256": "bef8a80e6b03776e0188a39e0f1d14884243306c0e1169166bab2bb949a90d66",
+      "provenance": "original-bundle:assets/brand/png/mark-primary-512.png"
+    },
+    {
+      "path": "png/favicon.ico",
+      "bytes": 138442,
+      "sha256": "3e9367335dd6d448fc5bebace2c640b8f6badfdd4e2c378e4a3f8fd8461ddf70",
+      "provenance": "original-bundle:assets/brand/png/favicon.ico"
+    },
+    {
+      "path": "social/github-social-preview.png",
+      "bytes": 194494,
+      "sha256": "e07810abadd9f401f92f5b6ceea07ccb93340e82eda0f36f5c4503a410404b24",
+      "provenance": "brand-rollout-derived"
+    },
+    {
+      "path": "source/github-social-preview.svg",
+      "bytes": 2245,
+      "sha256": "72a84c7525aad6ef2619e96d69fcfa1292b111d3b758006c3e592ab92fbdc419",
+      "provenance": "brand-rollout-derived"
+    },
+    {
+      "path": "source/render-social-preview.cjs",
+      "bytes": 1498,
+      "sha256": "b5b0fbebca407ca8df0f120c034a398ab4e6d761a53afe60a84e09ff4f2f5e6f",
+      "provenance": "brand-rollout-derived"
+    }
+  ]
+}

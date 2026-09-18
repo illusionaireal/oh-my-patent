@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
+  <title id="title">oh-my-patent — Meet Archimedes</title>
+  <desc id="description">An AI patent plugin for Claude Code, Codex, and OpenCode. Turn your Eureka into a patent disclosure. Archimedes raises a patent document with a WOW expression.</desc>
+  <rect width="1280" height="640" fill="#ffffff"/>
+  <g font-family="Arial, Liberation Sans, sans-serif">
+    <circle cx="69" cy="59" r="5" fill="#2563eb"/>
+    <text x="86" y="65" font-size="17" font-weight="700" letter-spacing="1.4" fill="#52617a">AI PATENT PLUGIN</text>
+    <text x="1216" y="65" text-anchor="end" font-size="16" fill="#52617a">illusionaireal / oh-my-patent</text>
+    <image href="../png/mark-primary-512.png" x="64" y="135" width="340" height="340" preserveAspectRatio="xMidYMid meet"/>
+    <text x="446" y="167" font-size="20" font-weight="700" fill="#2563eb">Meet Archimedes.</text>
+    <text x="446" y="250" font-size="70" font-weight="700" letter-spacing="-3" fill="#10182d">oh-my-patent</text>
+    <g font-size="34" letter-spacing="-0.7" fill="#10182d">
+      <text x="446" y="317">Turn your “Eureka!”</text>
+      <text x="446" y="360">into a patent disclosure.</text>
+    </g>
+    <g font-size="19" fill="#52617a">
+      <text x="446" y="410">Specialist agents. Traceable decisions.</text>
+      <text x="446" y="438">Explore a new direction from any recorded round.</text>
+    </g>
+    <path d="M64 524H1216" stroke="#dce4ef"/>
+    <g fill="#eff5ff">
+      <rect x="64" y="548" width="152" height="44" rx="8"/>
+      <rect x="228" y="548" width="100" height="44" rx="8"/>
+      <rect x="340" y="548" width="140" height="44" rx="8"/>
+    </g>
+    <g font-size="18" font-weight="700" fill="#173971">
+      <text x="140" y="577" text-anchor="middle">Claude Code</text>
+      <text x="278" y="577" text-anchor="middle">Codex</text>
+      <text x="410" y="577" text-anchor="middle">OpenCode</text>
+    </g>
+    <text x="977" y="577" font-size="17" fill="#52617a">Start with</text>
+    <text x="1070" y="577" font-size="17" font-weight="700" font-family="Courier New, monospace" fill="#10182d">/archimedes</text>
+  </g>
+</svg>

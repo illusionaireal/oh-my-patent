@@ -1,7 +1,7 @@
 {
   "name": "oh-my-patent",
   "version": "0.3.1",
-  "description": "Patent disclosure drafting workflow with brainstorm path tracking",
+  "description": "Archimedes, your Eureka-to-patent guide. An AI patent plugin for Claude Code, Codex, and OpenCode that turns technical ideas into patent disclosures with traceable, forkable decision paths.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -16,7 +16,13 @@
   },
   "keywords": [
     "patent",
-    "ai",
+    "patent-disclosure",
+    "ai-agents",
+    "archimedes",
+    "claude-code",
+    "codex",
+    "opencode",
+    "plugin",
     "brainstorm",
     "cli"
   ],
@@ -35,7 +41,8 @@
     "src/",
     "plugin.jsonc",
     "opencode.jsonc",
-    "assets/",
+    "assets/brand/png/",
+    "assets/brand/README.md",
     "README.md",
     "README.zh-CN.md",
     "LICENSE"

@@ -7,16 +7,19 @@
 
 <div align="center">
 
-<img src="./assets/brand/png/logo-primary.png" width="720" alt="oh-my-patent">
-
-*VOL. 01 &ensp;&middot;&ensp; 2026*
-
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/png/logo-on-dark.png">
+  <img src="./assets/brand/png/logo-primary.png" width="720"
+       alt="oh-my-patent — Archimedes raising a patent document with a WOW! expression">
+</picture>
 
 # `oh-my-patent`
 
-*A CLI that turns your technical idea into a complete patent disclosure document.*<br>
-*No hand-holding. No copy-pasting between tools. No lost ideas.*
+**Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
+
+An AI patent plugin for **Claude Code, Codex, and OpenCode**.<br>
+Archimedes orchestrates specialist agents across research, ideation, drafting,
+review, and diagrams—with traceable, forkable decision paths.
 
 </div>
 
@@ -34,7 +37,7 @@
 
 <div align="center">
 
-**One command. Eleven agents. One patent disclosure.**
+**One command. A specialist team. One patent disclosure.**
 
 ```bash
 npm install -g oh-my-patent
@@ -59,7 +62,7 @@ oh-my-patent adapt setup --workspace-dir .
 
 | Your pain | In other tools | With `oh-my-patent` |
 |---|---|---|
-| **10 AI windows, manual merge** | Cut & paste chat logs, consolidate yourself | **Archimedes** orchestrator routes to 11 specialists. Outputs auto-saved to `references/`, context passes between rounds |
+| **10 AI windows, manual merge** | Cut & paste chat logs, consolidate yourself | **Archimedes** orchestrator routes to specialist agents. Outputs auto-saved to `references/`, context passes between rounds |
 | **Rejected ideas lost forever** | Chat history scrolls away — that one great idea from round 2 is gone | **`.brainstorm/` decision DAG** persists every round's scores, snapshots, and pass/reject decisions. Roll back, fork, or revive |
 | **Visio → screenshot → Word** | Draw by hand, export, reformat, lose the source file | **Mermaid/PlantUML rendering** extracts architecture from `MAIN.md`, renders SVG+PNG, and auto-rewrites figure references |
 | **Per-editor, per-teammate config** | Claude Code settings. Codex settings. OpenCode settings. Separate. Manual. Every time. | **`oh-my-patent adapt setup`** — one command generates configs for all supported editors. Uninstall is one command, removing *only* what we generated |
@@ -74,7 +77,7 @@ oh-my-patent adapt setup --workspace-dir .
 
 | | |
 |---|---|
-| 🧠 **Decision-path tracking**<br>`.brainstorm/` records every round's scores, innovations, and decisions as an auditable DAG. Roll back to any node, fork alternatives, revive abandoned ideas. | 🤖 **11-agent end-to-end pipeline**<br>Search → ideation → patentability → draft → review → diagrams. The full patent lifecycle, zero hand-holding between stages. |
+| 🧠 **Decision-path tracking**<br>`.brainstorm/` records every round's scores, innovations, and decisions as an auditable DAG. Roll back to any node, fork alternatives, revive abandoned ideas. | 🤖 **Multi-agent end-to-end pipeline**<br>Search → ideation → patentability → draft → review → diagrams. The full patent lifecycle, zero hand-holding between stages. |
 | ⚡ **`/archimedes` one-liner**<br>Start every task with Archimedes. He reads your state, routes to specialists, waits for output, and advances to the next stage. | 🔗 **Zero-config adapters**<br>`oh-my-patent adapt setup` generates configs for Claude Code, Codex, and OpenCode simultaneously. One command, all editors. |
 | 🛡️ **Safe uninstall**<br>Exact-file removal — only deletes what we auto-generated. No `readdir + unlink` traversing your workspace. Your custom edits are safe. | 📊 **Auto figure rendering**<br>Parses `MAIN.md` for technical architecture, renders Mermaid/PlantUML to SVG+PNG, and auto-rewrites figure references in-place. |
 | 🎯 **Scoring thresholds & QA loops**<br>Quantitative model judges if brainstorming is mature. Up to 6 QA rounds, exiting when 2 consecutive rounds produce zero new issues. | 🔄 **Resumable state machine**<br>`INIT → RESEARCH → BRAINSTORM → DRAFT → QA_LOOP → FINAL_REVIEW → DIAGRAM → DONE`. Crashes are non-destructive. Resume from `state.json`. |
@@ -132,7 +135,7 @@ User proposes a topic
 
 ## Ⅳ.&ensp; THE AGENTS
 
-*11 specialists, 5 collaboration patterns.*
+*A specialist team, 5 collaboration patterns.*
 
 ### The agents at a glance
 
@@ -317,7 +320,7 @@ Four layers, one data flow.
   .claude/ (Claude Code)      .codex/ (Codex)       .opencode/ (OpenCode)
   CLAUDE.md                   AGENTS.md, codex.json  agents, commands, skills
            │
-  AI in your editor invokes 11 specialist agents
+  AI in your editor invokes specialist agents
            │
   Output → .brainstorm/ decision-path records
   Output → state.json workflow state machine
@@ -348,6 +351,7 @@ oh-my-patent/                    # Core repo: configs and engine
 │   │   ├── codex/               # → .codex/ + AGENTS.md + codex.json
 │   │   └── opencode/            # → .opencode/ agents, commands, and skills
 │   └── tui/                     # Ink+React interactive UI
+├── assets/brand/                # Shared logos, brand guide, and social preview
 ├── plugin.jsonc
 └── dist/                        # Compiled output
 
