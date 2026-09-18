@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, renameSync, unlinkSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { execSync } from 'child_process';
+import { randomBytes } from 'crypto';
 
 export type CheckStatus = 'ready' | 'missing' | 'warning';
 
@@ -310,13 +311,25 @@ export function writeMcpConfig(
     mkdirSync(dir, { recursive: true });
   }
 
-  const tempPath = `${configPath}.${Date.now()}.tmp`;
+  const tempPath = `${configPath}.${Date.now()}.${randomBytes(4).toString('hex')}.tmp`;
   try {
-    writeFileSync(tempPath, JSON.stringify(existing, null, 2), 'utf-8');
-    if (existsSync(configPath)) {
-      unlinkSync(configPath);
+    writeFileSync(tempPath, JSON.stringify(existing, null, 2), { encoding: 'utf-8', flag: 'wx' });
+    try {
+      renameSync(tempPath, configPath);
+    } catch (renameErr) {
+      const code = (renameErr as NodeJS.ErrnoException).code;
+      if (code === 'EEXIST' || code === 'EACCES' || code === 'EPERM') {
+        // Windows: destination exists, need to unlink first
+        try {
+          unlinkSync(configPath);
+        } catch {
+          // ignore
+        }
+        renameSync(tempPath, configPath);
+      } else {
+        throw renameErr;
+      }
     }
-    renameSync(tempPath, configPath);
   } catch (error) {
     if (existsSync(tempPath)) {
       try { unlinkSync(tempPath); } catch { /* ignore */ }

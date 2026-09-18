@@ -13,6 +13,7 @@ import { execFile } from 'child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { promisify } from 'util';
+import { deflateRawSync } from 'zlib';
 import {
   FigureSpec,
   RenderResult,
@@ -25,6 +26,26 @@ import {
 const execFileAsync = promisify(execFile);
 
 // ============================================================================
+// 安全校验
+// ============================================================================
+
+/**
+ * Valid figureId pattern: alphanumeric, underscore, dash.
+ * Prevents path traversal (e.g. ../../etc/passwd) and directory separators.
+ */
+const FIGURE_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export function isValidFigureId(figureId: string): boolean {
+  return typeof figureId === 'string' && figureId.length > 0 && figureId.length <= 128 && FIGURE_ID_PATTERN.test(figureId);
+}
+
+function assertValidFigureId(figureId: string): void {
+  if (!isValidFigureId(figureId)) {
+    throw new Error(`Invalid figureId: ${figureId}. Must match ${FIGURE_ID_PATTERN.source} and be 1-128 chars`);
+  }
+}
+
+// ============================================================================
 // PlantUML 编码
 // ============================================================================
 
@@ -33,8 +54,7 @@ const execFileAsync = promisify(execFile);
  * 使用 PlantUML 的 deflate+base64 编码方案
  */
 function encodePlantUML(text: string): string {
-  const zlib = require('zlib');
-  const compressed = zlib.deflateRawSync(Buffer.from(text, 'utf-8'));
+  const compressed = deflateRawSync(Buffer.from(text, 'utf-8'));
   return encode64(compressed);
 }
 
@@ -81,6 +101,7 @@ export class DiagramRenderer {
    * 渲染单张 Mermaid 图
    */
   async renderMermaid(spec: FigureSpec, outputDir: string): Promise<RenderResult> {
+    assertValidFigureId(spec.figureId);
     const baseName = spec.figureId;
     const sourcePath = join(outputDir, `${baseName}.mmd`);
     const pngPath = join(outputDir, `${baseName}.png`);
@@ -135,6 +156,7 @@ export class DiagramRenderer {
    * 渲染单张 PlantUML 图
    */
   async renderPlantUML(spec: FigureSpec, outputDir: string): Promise<RenderResult> {
+    assertValidFigureId(spec.figureId);
     const baseName = spec.figureId;
     const sourcePath = join(outputDir, `${baseName}.puml`);
     const pngPath = join(outputDir, `${baseName}.png`);
@@ -222,6 +244,7 @@ export class DiagramRenderer {
     outputDir: string,
     engine: Engine
   ): Promise<RenderResult> {
+    assertValidFigureId(figureId);
     // 读取 manifest 获取原始 spec 信息
     const manifest = this.readManifest(outputDir);
     const entry = manifest.find(e => e.figureId === figureId);

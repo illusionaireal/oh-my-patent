@@ -186,4 +186,29 @@ describe('DiagramRenderer', () => {
       expect(manifest[0].files.source).toBe('fig1_arch.mmd');
     });
   });
+
+  describe('figureId validation', () => {
+    it('should reject path traversal in figureId', async () => {
+      const renderer = new DiagramRenderer();
+      const malicious = makeMermaidSpec({ figureId: '../../etc/passwd' });
+      await expect(renderer.renderMermaid(malicious, tmpDir)).rejects.toThrow(/Invalid figureId/);
+    });
+
+    it('should reject figureId with slashes', async () => {
+      const renderer = new DiagramRenderer();
+      const malicious = makeMermaidSpec({ figureId: 'fig/../evil' });
+      await expect(renderer.renderMermaid(malicious, tmpDir)).rejects.toThrow(/Invalid figureId/);
+    });
+
+    it('should reject figureId with dots', async () => {
+      const renderer = new DiagramRenderer();
+      const malicious = makeMermaidSpec({ figureId: '..hidden' });
+      await expect(renderer.renderMermaid(malicious, tmpDir)).rejects.toThrow(/Invalid figureId/);
+    });
+
+    it('should reject invalid figureId in rerender', async () => {
+      const renderer = new DiagramRenderer();
+      await expect(renderer.rerender('../../evil', 'graph TB', tmpDir, 'mermaid')).rejects.toThrow(/Invalid figureId/);
+    });
+  });
 });

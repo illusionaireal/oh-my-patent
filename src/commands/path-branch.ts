@@ -11,6 +11,7 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { loadPath, loadNode, saveNode, initBrainstormDirectory } from '../core/path-persistence.js';
 import { BrainstormPath, BrainstormNode } from '../core/brainstorm-path.js';
+import { ensureInside as ensureBranchPathInside } from '../core/path-safety.js';
 
 // ============================================================================
 // 类型定义
@@ -67,6 +68,35 @@ interface BranchIndex {
 const BRANCHES_DIR = 'branches';
 const INDEX_FILE = 'index.json';
 
+const BRANCH_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+const PATH_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+// Path ID: max 128, Branch ID: max 160 to accommodate suffix like "-branch-123"
+const MAX_PATH_ID_LENGTH = 128;
+const MAX_BRANCH_ID_LENGTH = 160;
+
+export function isValidBranchId(branchId: string): boolean {
+  return typeof branchId === 'string' && branchId.length > 0 && branchId.length <= MAX_BRANCH_ID_LENGTH && BRANCH_ID_PATTERN.test(branchId);
+}
+
+export function isValidPathId(pathId: string): boolean {
+  return typeof pathId === 'string' && pathId.length > 0 && pathId.length <= MAX_PATH_ID_LENGTH && PATH_ID_PATTERN.test(pathId);
+}
+
+function assertValidBranchId(branchId: string): void {
+  if (!isValidBranchId(branchId)) {
+    throw new Error(`Invalid branchId: ${branchId}. Must match ${BRANCH_ID_PATTERN.source}, 1-${MAX_BRANCH_ID_LENGTH} chars`);
+  }
+}
+
+function assertValidPathId(pathId: string): void {
+  if (!isValidPathId(pathId)) {
+    throw new Error(`Invalid pathId: ${pathId}. Must match ${PATH_ID_PATTERN.source}, 1-${MAX_PATH_ID_LENGTH} chars`);
+  }
+}
+
+
+
 // ============================================================================
 // 辅助函数
 // ============================================================================
@@ -99,7 +129,10 @@ function getBranchIndexPath(projectPath: string): string {
  * @returns 分支文件路径
  */
 function getBranchFilePath(projectPath: string, branchId: string): string {
-  return path.join(getBranchesDir(projectPath), `${branchId}.json`);
+  assertValidBranchId(branchId);
+  const filePath = path.join(getBranchesDir(projectPath), `${branchId}.json`);
+  ensureBranchPathInside(getBranchesDir(projectPath), filePath);
+  return filePath;
 }
 
 /**
@@ -169,6 +202,7 @@ async function saveBranchPath(
   branchId: string,
   branchPath: BrainstormPath
 ): Promise<void> {
+  assertValidBranchId(branchId);
   await initBranchDirectory(projectPath);
 
   const filePath = getBranchFilePath(projectPath, branchId);
@@ -187,6 +221,7 @@ async function loadBranchPath(
   projectPath: string,
   branchId: string
 ): Promise<BrainstormPath | null> {
+  assertValidBranchId(branchId);
   const filePath = getBranchFilePath(projectPath, branchId);
 
   try {
@@ -209,6 +244,8 @@ async function loadBranchPath(
  * @returns 分支ID
  */
 function generateBranchId(originalPathId: string, branchNumber: number): string {
+  // Validate original path ID to prevent traversal via tampered path.json
+  assertValidPathId(originalPathId);
   // 从原始路径ID中提取基础部分
   // 例如: path-1712345678 -> path-1712345678-branch-1
   return `${originalPathId}-branch-${branchNumber}`;
@@ -260,6 +297,10 @@ export async function createBranchFromNode(
   const branchNumber = index.lastBranchNumber + 1;
   const branchId = generateBranchId(originalPath.id, branchNumber);
 
+  // 3.1 关键修复：生成完整 branchId 后、任何文件写入前完成校验，避免长 ID 导致孤儿文件
+  // 原逻辑在 saveBranchPath 才校验，此时节点文件已写入，会遗留不在索引中的分支目录
+  assertValidBranchId(branchId);
+
   // 4. 复制该节点及之前所有节点到新路径
   const nodesToCopy = originalPath.nodes.slice(0, nodeIndex + 1);
   const branchPath: BrainstormPath = {
@@ -275,36 +316,53 @@ export async function createBranchFromNode(
     currentNodeId: nodeId,
   };
 
-  // 5. 保存分支路径节点文件
-  for (const copiedNodeId of nodesToCopy) {
-    const node = await loadNode(projectPath, copiedNodeId);
-    if (node) {
-      // 为分支创建独立的节点文件，存储在分支特定目录
-      const branchNodesDir = path.join(getBranchesDir(projectPath), branchId, 'nodes');
-      await fs.mkdir(branchNodesDir, { recursive: true });
+  // 5. 保存分支路径节点文件 + 6. 保存元数据 + 7. 更新索引
+  // 包裹 try-catch，失败时清理已写入的孤儿文件，满足“失败不产生文件”
+  try {
+    for (const copiedNodeId of nodesToCopy) {
+      const node = await loadNode(projectPath, copiedNodeId);
+      if (node) {
+        const branchNodesDir = path.join(getBranchesDir(projectPath), branchId, 'nodes');
+        ensureBranchPathInside(getBranchesDir(projectPath), branchNodesDir);
+        await fs.mkdir(branchNodesDir, { recursive: true });
 
-      const nodeFilePath = path.join(branchNodesDir, `round-${node.round}.json`);
-      const nodeContent = JSON.stringify(node, null, 2);
-      await fs.writeFile(nodeFilePath, nodeContent, 'utf-8');
+        const nodeFilePath = path.join(branchNodesDir, `round-${node.round}.json`);
+        const nodeContent = JSON.stringify(node, null, 2);
+        await fs.writeFile(nodeFilePath, nodeContent, 'utf-8');
+      }
     }
+
+    await saveBranchPath(projectPath, branchId, branchPath);
+
+    const branchInfo: BranchInfo = {
+      branchId,
+      parentPathId: originalPath.id,
+      branchPointNodeId: nodeId,
+      branchReason,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+    };
+
+    index.branches.push(branchInfo);
+    index.lastBranchNumber = branchNumber;
+    await saveBranchIndex(projectPath, index);
+  } catch (error) {
+    // 清理孤儿文件：分支目录和分支元数据文件
+    try {
+      const branchNodesDir = path.join(getBranchesDir(projectPath), branchId);
+      ensureBranchPathInside(getBranchesDir(projectPath), branchNodesDir);
+      await fs.rm(branchNodesDir, { recursive: true, force: true });
+    } catch {
+      // ignore cleanup errors
+    }
+    try {
+      const filePath = getBranchFilePath(projectPath, branchId);
+      await fs.unlink(filePath);
+    } catch {
+      // ignore if not exists
+    }
+    throw error;
   }
-
-  // 6. 保存分支路径元数据
-  await saveBranchPath(projectPath, branchId, branchPath);
-
-  // 7. 更新分支索引
-  const branchInfo: BranchInfo = {
-    branchId,
-    parentPathId: originalPath.id,
-    branchPointNodeId: nodeId,
-    branchReason,
-    createdAt: new Date().toISOString(),
-    status: 'active',
-  };
-
-  index.branches.push(branchInfo);
-  index.lastBranchNumber = branchNumber;
-  await saveBranchIndex(projectPath, index);
 
   return {
     branchId,
@@ -354,6 +412,7 @@ export async function getBranchDetail(
   projectPath: string,
   branchId: string
 ): Promise<BranchDetail | null> {
+  assertValidBranchId(branchId);
   // 1. 加载分支索引，查找分支信息
   const index = await loadBranchIndex(projectPath);
   const branchInfo = index.branches.find(b => b.branchId === branchId);
@@ -389,6 +448,7 @@ export async function updateBranchStatus(
   branchId: string,
   status: BranchStatus
 ): Promise<boolean> {
+  assertValidBranchId(branchId);
   const index = await loadBranchIndex(projectPath);
   const branchInfo = index.branches.find(b => b.branchId === branchId);
 
@@ -417,6 +477,7 @@ export async function updateBranchStatus(
  * @returns 是否删除成功
  */
 export async function deleteBranch(projectPath: string, branchId: string): Promise<boolean> {
+  assertValidBranchId(branchId);
   const index = await loadBranchIndex(projectPath);
   const branchIndex = index.branches.findIndex(b => b.branchId === branchId);
 
@@ -440,6 +501,7 @@ export async function deleteBranch(projectPath: string, branchId: string): Promi
 
   // 删除分支节点目录
   const branchNodesDir = path.join(getBranchesDir(projectPath), branchId);
+  ensureBranchPathInside(getBranchesDir(projectPath), branchNodesDir);
   try {
     await fs.rm(branchNodesDir, { recursive: true, force: true });
   } catch (error) {

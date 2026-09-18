@@ -65,11 +65,13 @@ function parseYamlFrontmatter(raw: string): OpenCodeFrontmatter {
   // Parse tools section — allow keys like "mcp*" (with asterisk)
   const toolsMatch = raw.match(/tools:\s*\n((?:\s+[\w*][\w*-]*:\s+\w+\n?)*)/);
   if (toolsMatch) {
-    fm.tools = {};
+    fm.tools = Object.create(null) as Record<string, boolean>;
     for (const tLine of toolsMatch[1].split('\n')) {
       const tMatch = tLine.trim().match(/^([\w][\w*-]*):\s*(\w+)$/);
       if (tMatch) {
-        fm.tools[tMatch[1]] = tMatch[2] === 'true';
+        const k = tMatch[1];
+        if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+        (fm.tools as Record<string, boolean>)[k] = tMatch[2] === 'true';
       }
     }
   }
@@ -116,10 +118,11 @@ function parseHtmlCommentFrontmatter(content: string): { fm: OpenCodeFrontmatter
     const permMatch = inner.match(/^Permissions:\s*(.+)$/i);
     if (permMatch) {
       const perms = permMatch[1].split(',').map(p => p.trim().toLowerCase());
-      fm.tools = fm.tools ?? {};
+      fm.tools = fm.tools ?? Object.create(null) as Record<string, boolean>;
       for (const p of perms) {
+        if (p === '__proto__' || p === 'constructor' || p === 'prototype') continue;
         if (['write', 'edit', 'bash', 'mcp', 'mcp*', 'task', 'skill'].includes(p)) {
-          fm.tools[p] = true;
+          (fm.tools as Record<string, boolean>)[p] = true;
         }
       }
     }
@@ -335,6 +338,7 @@ function loadMCPServers(opencodeConfigPath: string): MCPServerDef[] {
 
   if (config.mcp) {
     for (const [id, serverRaw] of Object.entries(config.mcp)) {
+      if (id === '__proto__' || id === 'constructor' || id === 'prototype') continue;
       const s = serverRaw as Record<string, unknown>;
 
       let transport: 'local' | 'remote' = 'local';
@@ -412,12 +416,14 @@ export async function loadPortableDef(options: LoaderOptions): Promise<PortableD
   const opencodeConfigPath = join(workspaceDir, 'opencode.jsonc');
   const mcpServers = loadMCPServers(opencodeConfigPath);
 
-  // 6. Config schema
-  const config: PluginConfig = {};
+  // 6. Config schema - use null-prototype and filter dangerous keys to prevent pollution
+  const DANGEROUS = new Set(['__proto__', 'constructor', 'prototype']);
+  const config: PluginConfig = Object.create(null);
   if (plugin.config) {
     for (const [key, value] of Object.entries(plugin.config)) {
+      if (DANGEROUS.has(key)) continue;
       const v = value as Record<string, unknown>;
-      config[key] = {
+      (config as Record<string, unknown>)[key] = {
         type: (v.type as 'string' | 'number' | 'boolean') ?? 'string',
         default: v.default,
         enum: v.enum as string[] | undefined,
