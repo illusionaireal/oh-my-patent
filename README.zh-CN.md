@@ -7,15 +7,13 @@
 [![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![English](https://img.shields.io/badge/English-Switch-blue.svg)](./README.md)
 
-<div align="center">
-
+<p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/png/logo-on-dark.png">
   <img src="./assets/brand/png/logo-primary.png" width="720"
        alt="oh-my-patent — Archimedes（阿基米德）举起专利文档，惊呼 WOW!">
 </picture>
-
-</div>
+</p>
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 

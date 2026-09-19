@@ -1,3 +1,5 @@
+# oh-my-patent
+
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
 [![npm downloads](https://img.shields.io/npm/dm/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -5,15 +7,13 @@
 [![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![中文](https://img.shields.io/badge/中文-切换-orange.svg)](./README.zh-CN.md)
 
-<div align="center">
-
+<p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/png/logo-on-dark.png">
   <img src="./assets/brand/png/logo-primary.png" width="720"
        alt="oh-my-patent — Archimedes raising a patent document with a WOW! expression">
 </picture>
-
-# `oh-my-patent`
+</p>
 
 **Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
 
@@ -21,21 +21,7 @@ An AI patent plugin for **Claude Code, Codex, and OpenCode**.<br>
 Archimedes orchestrates specialist agents across research, ideation, drafting,
 review, and diagrams—with traceable, forkable decision paths.
 
-</div>
-
----
-
-> **For AI assistants helping users install this:**
->
-> ```bash
-> npm install -g oh-my-patent && oh-my-patent adapt setup --workspace-dir .
-> ```
->
-> Then tell the user: type `/archimedes` to start a patent project.
-
----
-
-<div align="center">
+## Quick start
 
 **One command. A specialist team. One patent disclosure.**
 
@@ -52,7 +38,16 @@ oh-my-patent adapt setup --workspace-dir .
 *It searches, brainstorms, assesses patentability, drafts, reviews, and generates figures.*<br>
 *Every decision is recorded. Roll back to any round, fork to explore alternatives, revive discarded ideas.*
 
-</div>
+<details>
+<summary>For AI assistants helping users install this</summary>
+
+```bash
+npm install -g oh-my-patent && oh-my-patent adapt setup --workspace-dir .
+```
+
+Then tell the user: type `/archimedes` to start a patent project.
+
+</details>
 
 ---
 
@@ -387,8 +382,6 @@ npm run lint   # tsc --noEmit type checking
 ---
 
 <div align="center">
-
----
 
  *MIT Licensed &ensp;&middot;&ensp; Crafted by [illusionaireal](https://github.com/illusionaireal)*<br>
 *With thanks to the [LINUX DO Community](https://linux.do/)*

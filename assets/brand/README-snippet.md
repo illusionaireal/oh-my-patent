@@ -4,6 +4,12 @@ Copy the matching block into the README at the repository root. GitHub does not
 include this file automatically. The paths below are relative to the root README,
 not to this snippet file. For a README under `docs/`, use `../assets/brand/`.
 
+Start each README with one plain `# oh-my-patent` heading, followed by its badges.
+Place the logo below them. Center only the picture paragraph; keep the tagline,
+description, quick-start instructions, and fenced code blocks outside centered
+containers so commands remain left-aligned. Do not repeat the project title
+below the logo or wrap the heading in inline-code backticks.
+
 ## English — README.md
 
 ```html
