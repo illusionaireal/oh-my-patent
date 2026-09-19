@@ -1,140 +1,78 @@
-# oh-my-patent README 视觉重设计规格
+# oh-my-patent README 品牌与版式规范
 
-## 一、设计方向：复古工程 / ACM 论文风
+本规范取代此前棕色复古工程期刊风格。品牌资产和使用规则以
+[assets/brand/README.md](./assets/brand/README.md) 为准。
 
-把开发者工具文档包装成一本“技术期刊”的封面与目录页，强调：
-- **正式感**：专利本身就是严肃技术文档，视觉应匹配这种“学术权威性”。
-- **可读性**：信息密度高但不压迫，留白 generous，层级清晰。
-- **怀旧感**：像 1980s ACM proceedings / 老式工程手册，但保留现代 SaaS 落地页的信息结构。
+## 定位与记忆点
 
-## 二、受众与目标
+- 项目：`oh-my-patent`。
+- 品类：面向 **Claude Code、Codex、OpenCode** 的 **AI 专利插件**。
+- 核心角色：**Archimedes（阿基米德）**，也是 `/archimedes` 使用入口。
+- 视觉记忆点：阿基米德举起专利文档，惊呼 **WOW!**；文字以 **Eureka!** 表达发现时刻。
+- 交付价值：从技术构想形成专利交底书，决策路径可追溯、可分叉。
+- CLI 是安装、适配和工作流操作方式；首屏先讲产品价值与支持平台。
 
-- **受众**：AI 辅助开发者、独立发明者、技术团队里负责专利的人。
-- **目标**：看一眼就知道“这是一个能把点子变成专利交底书的 CLI 工具”，并且能立刻复制安装命令开始用。
+## 视觉系统
 
-## 三、色彩系统
+沿用已确认的蓝色母版，不重绘角色，不更改人物、文档、轮廓或负空间。
+品牌蓝用于强调；深海军蓝用于标题和深色底；白色用于默认留白。
+以下是文档和分享卡的界面配色，不是要求重新给 Logo 着色：
 
-| Token | 用途 | Hex |
-|-------|------|-----|
-| `--paper` | 主背景、卡片底色 | `#F7F1E3` |
-| `--paper-warm` | 次背景、强调区块 | `#F0E8D6` |
-| `--ink` | 主文字、标题 | `#2B2016` |
-| `--ink-muted` | 副文字、说明 | `#5C4A3D` |
-| `--accent` | 主强调（CTA、链接、图注） | `#8B4513` 马鞍棕 |
-| `--accent-warm` | 次强调（徽章、hover 状态） | `#A0522D` |
-| `--code-bg` | 代码块背景 | `#EAE2CF` |
-| `--code-border` | 代码块边框 | `#C4B8A5` |
-| `--rule` | 分隔线 | `#C4B8A5` |
-| `--highlight` | 高亮标记（阈值数字、强调词） | `#B8860B` 暗金 |
+| 用途 | 色值 |
+|---|---|
+| 强调蓝 | `#2563EB` |
+| 深色文字 | `#10182D` |
+| 次级文字 | `#52617A` |
+| 浅蓝底 | `#EFF5FF` |
+| 分隔线 | `#DCE4EF` |
+| 背景 | `#FFFFFF` |
 
-## 四、字体系统
+GitHub README 使用平台原生字体和 Markdown 排版，不依赖自定义 CSS、
+外部字体或大块海报承载正文。Logo 是图片，标题、平台名称和说明保留为可检索文字。
 
-| 层级 | 字体 | 字号 | 字重 | 备注 |
-|------|------|------|------|------|
-| 刊名 / 主标题 | `Tiempos Headline` / `Playfair Display` | 72px | 700 | 衬线大标题，居中 |
-| 章节标题 | `Tiempos Text` / `Lora` | 40px | 700 | 衬线 |
-| 小标题 | `Tiempos Text` / `Lora` | 24px | 600 | 衬线 |
-| 正文 | `Source Serif Pro` / `Crimson Text` | 18px | 400 | 舒适阅读 |
-| 代码 / 路径 | `SF Mono` / `JetBrains Mono` | 15px | 500 | 等宽 |
-| 徽章 / 标签 | `Inter` | 13px | 600 | 全大写，letter-spacing 1.5px |
+## 首屏顺序
 
-## 五、页面结构（共 7 个 Sections）
+项目标题与徽章 → Logo → Archimedes / Eureka 核心句 → 三个平台与插件定位 → 安装入口。
+中英文使用相同资产和同义描述。项目标题只保留一个普通一级标题，
+不使用行内代码样式，不在 Logo 下方重复标题。
+仅 Logo 所在的图片段落居中；说明文字、安装步骤和代码块保持左对齐。
+禁止用居中容器包裹 Markdown 代码块，以免代码继承居中样式。
+英文首页优先展示 Quick start，面向 AI 助手的重复安装提示放入折叠区。
+相邻内容间使用标题或单条分隔线，避免连续横线和多余留白。
+不再使用期刊卷号或未核对的智能体数量作为宣传重点。
 
-### 0. Header（刊头）
-- 顶部一条细横线（`--rule`）。
-- 横线上方左侧：小字 `VOL. 01 • 2026` + `PROJECT DOCUMENT`。
-- 横线上方右侧：GitHub 徽章链接（npm / license / TypeScript 严格）。
-- 横线下方居中：大标题 `oh-my-patent`，副标题为斜体衬线：*“Your idea → a full patent disclosure document.”*
+英文核心句：
 
-### 1. Hero / 开篇语
-- 中心一行超大字：
-  > **“把技术点子，自动写成专利交底书。”**
-- 其下一段短文：
-  > 11 个专利专用 AI 智能体，一个 CLI 编排器。你只需说 `/archimedes`，它负责搜索、头脑风暴、可专利性评估、撰写、审查、生成附图。每步决策都被记录，可随时回退、分叉、复活旧想法。
-- 一个代码块样式的安装卡片：
-  ```bash
-  npm install -g oh-my-patent
-  oh-my-patent adapt setup --workspace-dir .
-  ```
-  卡片左侧加一条 `--accent` 竖条，像引用块或旧式终端窗口。
-- 右侧或下方放一个“期刊插图”占位：抽象齿轮/卷轴/钢笔的线稿，表示“专利”与“机械精密”。
+> Meet Archimedes. Turn your “Eureka!” into a patent disclosure.
 
-### 2. 痛点对比（Problem / Solution）
-- 标题：`## 为什么专利写作总是这么痛苦？`
-- 用 5 组左右对比的卡片：
-  - 左侧：旧方式（浅灰文字、删除线效果）
-  - 右侧：oh-my-patent 方式（粗体、带 `--accent` 前置小标）
-- 5 组内容取 README 原表：10 个 AI 来回切 / 灵感丢失 / 画图手动 / 配置重复 / 机器崩溃 / 没有终点。
+中文核心句：
 
-### 3. 核心特性 Bento 网格
-- 标题：`## 它的核心能力`
-- 8 张卡片，2×4 或 3×3 网格（根据宽度）：
-  1. 🧠 头脑风暴决策路径追踪
-  2. 🤖 11 智能体端到端流水线
-  3. ⚡ `/archimedes` 一句话启动
-  4. 🔗 零配置跨工具适配器
-  5. 🛡️ 安全卸载（只删生成的文件）
-  6. 📊 自动附图渲染（Mermaid/PlantUML）
-  7. 🎯 量化阈值与 QA 循环
-  8. 🔄 可恢复工作流状态机
-- 每张卡片：小图标、衬线标题、一句正文、浅米色背景、细边框。
+> 遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。
 
-### 4. 工作流时间线
-- 标题：`## 从想法到交底书：10 个阶段`
-- 用竖向时间线，每个节点：
-  - 圆圈编号（1-10）
-  - 阶段名（如 `INIT`、`RESEARCH`、`BRAINSTORM_R1`）
-  - 一句说明
-  - 产出物（如 `projects/{NN}-{topic}/`、`references/landscape.md`）
-- 关键分支用虚线箭头回到上游：
-  - `QA_LOOP → DRAFT`（问题未解决）
-  - `FINAL_REVIEW → QA_LOOP`（需修订）
-  - 阈值未过 → `BRAINSTORM_R1`（强制迭代）
+直接复制的引用片段见
+[README-snippet.md](./assets/brand/README-snippet.md)。
 
-### 5. 11 Agent 网格
-- 标题：`## 11 位专业智能体`
-- 用 3×4 或 4×3 卡片网格，每张卡片：
-  - 等宽 agent 名（如 `archimedes`）
-  - 角色一句话
-  - 调用阶段（小字，斜体）
-- 可分组着色：
-  - 编排：`archimedes`
-  - 检索：`patent-landscape-analyst`
-  - 头脑风暴：`innovation-architect`、`adversarial-examiner`、`brainstorm-moderator`、`path-recorder`
-  - 评估：`security-engineer`、`compliance-analyst`、`patentability-evaluator`
-  - 撰写/审查：`disclosure-writer`、`disclosure-reviewer`、`technical-responder`
-  - 附图：`diagram-generator`
+## 正文与图像
 
-### 6. 安装与卸载（快速参考）
-- 标题：`## 安装与卸载`
-- 左侧：安装步骤，三段命令，带序号 ① ② ③。
-- 右侧：卸载说明，强调“只删除我们生成的文件，不动你自定义的内容”。
-- 底部一个 `TIP` 引用块：
-  > 如果你不确定是否保留数据，先 `git status` 看一下。
+保留痛点、能力、协作模式、安装、用法和架构等现有技术内容。
+品牌图片统一放在 `assets/brand/`；流程图、协作图继续放在 `docs/images/`。
+不要为每个平台复制一套 Logo，也不要把品牌图放进运行时或生成的适配目录。
 
-### 7. Footer（刊尾）
-- 顶部一条粗横线。
-- 居中：项目名 + 一行小字：
-  > `MIT Licensed • Crafted by zengbods • Acknowledgments: LINUX DO Community`
-- 最底部一个装饰性小图标：老式钢笔尖线稿。
+## 各展示面
 
-## 六、布局与网格
+| 展示面 | 使用内容 |
+|---|---|
+| GitHub 中英文 README | 同一横版 Logo；深色主题使用现有深色版 |
+| GitHub About / npm description | 品牌规范中的统一英文 description |
+| GitHub Social preview | 独立 1280×640 横版分享卡，包含三平台名称 |
+| 可选账号头像 | 方形 512px 图标；不因仓库品牌更新而更换个人头像 |
+| 未来网站 favicon | 现有 ICO；网站部署时配置，仓库 README 不加载 favicon |
 
-- 画布宽度：**1440px**，主内容区宽度 **960px**（居中），两侧大留白。
-- Section 间距：160px 上下（Hero 与下一 section 可更紧凑 120px）。
-- 卡片内边距：24px-32px。
-- 网格 gutter：24px。
-- 所有元素严格左对齐或居中对齐，避免混用。
+## 验收
 
-## 七、装饰元素
-
-- 细水平线：各 section 之间用 1px `--rule` 分隔。
-- 小数字/罗马数字：用 `Ⅰ、Ⅱ、Ⅲ…` 标注章节，强化期刊感。
-- 引用块：左侧 4px `--accent` 竖线，背景 `--paper-warm`。
-- 代码块：等宽字体、浅背景、圆角 2px（保持复古，不过度圆角）。
-- 页眉/页脚：可加入“页码”装饰，如 `— 1 —`。
-
-## 八、可落地的下一步
-
-1. 待 Ardot 适配器恢复后，按本规格上画布：先创建主页面（1440px 宽，纸色背景），再逐 section 用 `batch_edit` 搭建。
-2. 或直接按本规格改写 `README.md`，把文字内容与视觉层级直接对应，即可在 GitHub 上呈现。
+- 两份 README 的图片路径有效，浅色、深色和窄屏展示可读。
+- 在仓库首页实际渲染中核对代码块左对齐，确认未嵌套在居中容器内。
+- Archimedes 拼写正确，三个支持平台均出现在首屏与 description 中。
+- 原有 Logo 字节保持不变，派生资产能追溯到确认的资产包。
+- 分享卡不依赖联网字体，PNG 小于 1 MB；GitHub 设置需单独上传。
+- npm 发布范围保留 README 所需图片，排除分享卡和源文件。

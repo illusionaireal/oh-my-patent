@@ -7,13 +7,19 @@
 [![Tests](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)](https://github.com/illusionaireal/oh-my-patent)
 [![English](https://img.shields.io/badge/English-Switch-blue.svg)](./README.md)
 
-<div align="center">
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/png/logo-on-dark.png">
+  <img src="./assets/brand/png/logo-primary.png" width="720"
+       alt="oh-my-patent — Archimedes（阿基米德）举起专利文档，惊呼 WOW!">
+</picture>
+</p>
 
-<img src="./assets/brand/png/logo-primary.png" width="720" alt="oh-my-patent">
+**遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-</div>
-
-> 阿基米德（achimedes）编排器，通过模仿真实的专利撰写过程，遵循你的想法，撰写成一份完整的专利交底书，。
+面向 **Claude Code、Codex、OpenCode** 的 AI 专利插件。
+由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
+并保留可追溯、可分叉的决策路径。
 
 ## 给 AI 助手看的
 
@@ -44,7 +50,7 @@ npm install -g oh-my-patent && oh-my-patent adapt setup --workspace-dir .
 
 ## 一句话
 
-安装。写作 `/archimedes`，说你要什么。剩下的交给 11 个专利专用 AI 智能体。
+安装后输入 `/archimedes`，说出你的技术构想，由 Archimedes 调度专业智能体协作完成交底书。
 
 ```bash
 npm install -g oh-my-patent
@@ -67,7 +73,7 @@ oh-my-patent adapt setup --workspace-dir .
 
 | 痛点 | 别的工具怎么做 | oh-my-patent 怎么做 |
 |---|---|---|
-| 要问 10 个 AI 不同的提示词，再人工整理输出 | 你需要自己切分任务、粘贴对话、手动归并 | **Archimedes 主编排器**自动路由到 11 个专业智能体，每轮产出自动写入 `references/`，上下文在各轮间自动传递 |
+| 要问 10 个 AI 不同的提示词，再人工整理输出 | 你需要自己切分任务、粘贴对话、手动归并 | **Archimedes 主编排器**自动路由到专业智能体，每轮产出自动写入 `references/`，上下文在各轮间自动传递 |
 | 多轮头脑风暴翻完页就失忆了 | 对话历史丢失，放弃的创新点再也找不到 | **.brainstorm/ 决策路径系统**把每轮的评分、创新点、淘汰/通过决策持久化成有向无环图，支持回退、分叉、恢复 |
 | 写专利附图要画 Visio/PPT 再贴图 | 手动作图、另存为图片再插入 Word | **Mermaid/PlantUML 自动渲染**从交底书提取技术架构，输出 SVG+PNG 并自动回写 `MAIN.md` |
 | 写了一半机器崩了/对话断了 | 从 jpg 里翻截图，从零重来 | **工作流状态机**。所有阶段写入 `state.json` + 决策树写入 `path.json`，断点即续 |
@@ -82,7 +88,7 @@ oh-my-patent adapt setup --workspace-dir .
 | 图标 | 名称 | 一句话解释 |
 |-----:|:------|:------|
 | 🧠 | **头脑风暴决策路径追踪** | `.brainstorm/` 里自动保存每轮的评分、创新点、淘汰/通过决策。能回退到任意节点、分叉探索替代方向、复活已放弃创新点 |
-| 🤖 | **11 智能体端到端流水线** | 检索 → 创意激发 → 可专利性评估 → 撰写 → 审查 → 答辩 → 附图，覆盖交底书全生命周期 |
+| 🤖 | **多智能体端到端流水线** | 检索 → 创意激发 → 可专利性评估 → 撰写 → 审查 → 答辩 → 附图，覆盖交底书全生命周期 |
 | ⚡ | **`/archimedes` 一句话启动** | 不管什么命令，先找 Archimedes。他判断阶段、分配任务、传递上下文、等待产出、推进下一关 |
 | 🔗 | **零配置跨工具适配器** | `oh-my-patent adapt setup` 一条命令给 Claude Code、Codex 和 OpenCode 同时注册配置 |
 | 🛡️ | **安全卸载** | 精确文件级清理——只删自动生成的文件，绝不 `readdir + unlink` 遍历你工作区 |
@@ -314,13 +320,13 @@ oh-my-patent tui [项目路径]
 
 ## 多智能体协作模式
 
-11 个专业智能体不是简单排队运行的——它们被组合成 **五种不同的协作模式**，每种解决一个特定的协调问题。下面拆解每种模式：谁和谁对话、决策落在哪里。
+专业智能体不是简单排队运行的——它们被组合成 **五种不同的协作模式**，每种解决一个特定的协调问题。下面拆解每种模式：谁和谁对话、决策落在哪里。
 
 ### 模式 1 — 编排路由（Archimedes + 状态机）
 
 ![编排路由](docs/images/ai-gen/图1.png)
 
-**问题**：11 个智能体、10 个工作流阶段、1 个用户。谁来调度下一步？
+**问题**：多个智能体、10 个工作流阶段、1 个用户。谁来调度下一步？
 
 **解决方案**：`archimedes` 是唯一的主智能体。他读取 `.patent/state.json`，根据 `current_stage` 分派到正确的专业智能体，持久化产出，推进阶段。状态机是真相来源，Archimedes 只是调度器。
 
@@ -381,7 +387,7 @@ oh-my-patent tui [项目路径]
 
 DAG 是可审计的记录：`path.json`（元数据 + 边 + 当前节点）、`nodes/round-{n}.json`（每轮详情）、`snapshots/`（创新点历史）、`branches/`（分叉探索）。
 
-### 11 个智能体一览
+### 智能体一览
 
 | 智能体 | 角色 | 被调用阶段 |
 |--------|------|-----------|
@@ -423,7 +429,7 @@ DAG 是可审计的记录：`path.json`（元数据 + 边 + 当前节点）、`n
   AGENTS.md / CLAUDE.md
   codex.json
            ↓
-  编辑器中的 AI 调用 11 个专业智能体
+  编辑器中的 AI 调用专业智能体
            ↓
   产出 → .brainstorm/ 决策路径记录
   产出 → state.json 工作流状态机
@@ -451,6 +457,7 @@ oh-my-patent/              # 核心仓库：配置与引擎，不存项目交付
 │   │   ├── claude/        # → .claude/ + CLAUDE.md
 │   │   └── codex/         # → .codex/ + AGENTS.md + codex.json
 │   └── tui/               # Ink+React 交互界面
+├── assets/brand/          # 统一品牌资产、使用规范与分享卡
 ├── plugin.jsonc
 ├── opencode.jsonc
 └── dist/ (编译产物)
