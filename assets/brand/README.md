@@ -59,7 +59,7 @@ Both root READMEs use the same assets. `<picture>` selects the dark lockup when
 supported; the primary PNG is the fallback. Use `./assets/brand/` in a root README
 and `../assets/brand/` in a README directly inside `docs/`.
 
-Copy the examples in [README-snippet.md](https://github.com/illusionaireal/oh-my-patent/blob/master/assets/brand/README-snippet.md). GitHub does not
+Copy the examples in [README-snippet.md](./README-snippet.md). GitHub does not
 automatically include a snippet file, so update both READMEs when changing the
 shared header. The snippet code is relative to the destination README.
 
@@ -89,4 +89,4 @@ new use case requires it; do not substitute an earlier visual approximation.
 
 Its SVG files contain embedded raster artwork. They are SVG wrappers, not true
 editable vector masters; do not describe them as resolution-independent vector
-logos. See [source/README.md](https://github.com/illusionaireal/oh-my-patent/blob/master/assets/brand/source/README.md) for provenance and reproduction.
+logos. See [source/README.md](./source/README.md) for provenance and reproduction.
