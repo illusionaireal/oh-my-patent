@@ -73,6 +73,8 @@ import { loadPortableDef } from './adapters/loader.js';
 import { runAdaptGenerate } from './adapters/run-generate.js';
 import { pruneGeneratedFiles } from './adapters/prune.js';
 import { ClaudeCodeAdapter } from './adapters/claude/index.js';
+import { mergeMcpConfig } from './adapters/claude/mcp-config.js';
+import { atomicWriteFileSync } from './core/atomic-write.js';
 import { CodexAdapter } from './adapters/codex/index.js';
 import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
@@ -454,7 +456,11 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       if (name === 'opencode' && existsSync(fullPath)) {
         continue;
       }
-      writeFileSync(fullPath, content, 'utf-8');
+      const installedContent = name === 'claude-code' && relPath === '.mcp.json' && existsSync(fullPath)
+        ? mergeMcpConfig(readFileSync(fullPath, 'utf-8'), content)
+        : content;
+      atomicWriteFileSync(fullPath, installedContent,
+        name === 'claude-code' && relPath === '.mcp.json' ? { mode: 0o600 } : {});
       fileCount++;
     }
 

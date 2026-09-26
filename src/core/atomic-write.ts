@@ -23,12 +23,14 @@ import { randomBytes } from 'crypto';
 
 export type RenameFn = typeof renameSync;
 
-/** Options for {@link atomicWriteFileSync}; all fields are for tests. */
+/** Options for {@link atomicWriteFileSync}. */
 export interface AtomicWriteOptions {
   /** Replacement for the final rename step (crash simulation). */
   rename?: RenameFn;
   /** Skip parent-directory creation when the caller already did it. */
   mkdir?: boolean;
+  /** Permissions of the replacement file, for configuration containing secrets. */
+  mode?: number;
 }
 
 /** Build the temp-file path used for the intermediate write. */
@@ -57,7 +59,7 @@ export function atomicWriteFileSync(
   const rename = options.rename ?? renameSync;
 
   try {
-    writeFileSync(tempPath, content, { encoding: 'utf-8', flag: 'wx' });
+    writeFileSync(tempPath, content, { encoding: 'utf-8', flag: 'wx', mode: options.mode });
     rename(tempPath, filePath);
   } catch (error) {
     try {

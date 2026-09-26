@@ -93,6 +93,7 @@ describe('init checker MCP configuration', () => {
     const saved = JSON.parse(readFileSync(join(settingsDir, 'settings.json'), 'utf-8'));
 
     expect(saved.permissions).toEqual({ allow: ['Read'] });
-    expect(saved.mcpServers.google_scholar.command).toBe('mcp-google-scholar');
+    const mcp = JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf-8'));
+    expect(mcp.mcpServers.google_scholar.command).toBe('mcp-google-scholar');
   });
 });

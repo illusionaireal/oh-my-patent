@@ -69,18 +69,18 @@ describe('MCP config write protection (REQ-009)', () => {
     expect(entries).toHaveLength(1);
   });
 
-  test('does not touch .gitignore when the parent directory is already ignored', () => {
+  test('does not touch .gitignore when the MCP file is already ignored', () => {
     mkdirSync(join(workspace, '.claude'), { recursive: true });
-    writeFileSync(join(workspace, '.gitignore'), 'node_modules/\n.claude/\n', 'utf-8');
+    writeFileSync(join(workspace, '.gitignore'), 'node_modules/\n.mcp.json\n', 'utf-8');
 
     const result = writeMcpConfig(workspace, 'patsnap_search', {
       type: 'streamableHttp',
       url: `https://connect.example/mcp?apikey=${SECRET}`,
     });
 
-    expect(result.configPath).toBe(join(workspace, '.claude', 'settings.json'));
+    expect(result.configPath).toBe(join(workspace, '.mcp.json'));
     expect(result.gitignoreUpdated).toBe(false);
-    expect(readFileSync(join(workspace, '.gitignore'), 'utf-8')).toBe('node_modules/\n.claude/\n');
+    expect(readFileSync(join(workspace, '.gitignore'), 'utf-8')).toBe('node_modules/\n.mcp.json\n');
   });
 
   test('tightens permissions where POSIX modes exist and reports the observed mode', () => {

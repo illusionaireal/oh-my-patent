@@ -156,7 +156,7 @@ function tryExec(command: string): string | null {
 }
 
 function detectAdapter(workspaceDir: string): string {
-  if (existsSync(join(workspaceDir, '.claude'))) return 'Claude Code';
+  if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) return 'Claude Code';
   if (existsSync(join(workspaceDir, '.codex')) || existsSync(join(workspaceDir, 'codex.json'))) return 'Codex';
   if (existsSync(join(workspaceDir, 'opencode.jsonc'))) return 'OpenCode';
   return 'Unknown';
@@ -193,7 +193,7 @@ function hardenPermissions(filePath: string): { applied: boolean; mode: number |
 /**
  * Make sure the MCP config path cannot be committed by accident.
  *
- * The config lands in the workspace root (`codex.json`, `.claude/settings.json`,
+ * The config lands in the workspace root (`codex.json`, `.mcp.json`,
  * `opencode.jsonc`) and routinely contains `?apikey=...` in a URL, so a plain
  * `git add -A` would publish the key. Appending the path is idempotent and is
  * skipped when the entry (or its directory) is already ignored.
@@ -225,9 +225,9 @@ function ensureGitignored(
 }
 
 function getMcpConfigTarget(workspaceDir: string): McpConfigTarget {
-  if (existsSync(join(workspaceDir, '.claude'))) {
+  if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) {
     return {
-      path: join(workspaceDir, '.claude', 'settings.json'),
+      path: join(workspaceDir, '.mcp.json'),
       key: 'mcpServers',
       adapter: 'claude',
     };
@@ -346,7 +346,9 @@ export function writeMcpConfig(
   }
   const storedConfig = target.adapter === 'opencode'
     ? toOpenCodeMcpConfig(config)
-    : config;
+    : target.adapter === 'claude' && typeof config.url === 'string'
+      ? { ...config, type: config.type === 'sse' ? 'sse' : 'http' }
+      : config;
   (existing[target.key] as Record<string, unknown>)[mcpId] = storedConfig;
 
   const dir = dirname(configPath);
@@ -359,22 +361,9 @@ export function writeMcpConfig(
   try {
     writeFileSync(tempPath, JSON.stringify(existing, null, 2), { encoding: 'utf-8', flag: 'wx' });
     permissions = hardenPermissions(tempPath);
-    try {
-      renameSync(tempPath, configPath);
-    } catch (renameErr) {
-      const code = (renameErr as NodeJS.ErrnoException).code;
-      if (code === 'EEXIST' || code === 'EACCES' || code === 'EPERM') {
-        // Windows: destination exists, need to unlink first
-        try {
-          unlinkSync(configPath);
-        } catch {
-          // ignore
-        }
-        renameSync(tempPath, configPath);
-      } else {
-        throw renameErr;
-      }
-    }
+    // Rename replaces atomically on supported platforms. Never unlink the
+    // previous configuration on failure: a locked file must remain intact.
+    renameSync(tempPath, configPath);
   } catch (error) {
     if (existsSync(tempPath)) {
       try { unlinkSync(tempPath); } catch { /* ignore */ }

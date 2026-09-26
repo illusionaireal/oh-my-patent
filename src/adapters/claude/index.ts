@@ -7,15 +7,16 @@
  * Outputs:
  * - CLAUDE.md              → Project instructions with agent routing, commands, workflow rules
  * - .claude/agents/*.md    → Per-agent prompt files (full prompt content, no OpenCode frontmatter)
- * - .claude/settings.json  → MCP server configuration in Claude Code format
+ * - .mcp.json             → Project MCP server configuration
+ * - .claude/skills/<id>/SKILL.md → Portable workflow skills
  */
 
 import { join, resolve } from 'path';
 import {
-  existsSync, readdirSync, rmdirSync, rmSync,
+  existsSync, readFileSync, readdirSync, rmdirSync, rmSync,
 } from 'fs';
 import {
-  PortableDef, AgentDef, CommandDef, MCPServerDef, ToolAdapter, GenerateResult, UninstallResult
+  PortableDef, AgentDef, CommandDef, SkillDef, MCPServerDef, ToolAdapter, GenerateResult, UninstallResult
 } from '../types.js';
 import { WORKFLOW_STAGE_ORDER } from '../../core/workflow.js';
 import { stampGenerated } from '../generated-marker.js';
@@ -39,9 +40,13 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       files.set(join('.claude', 'agents', agentFileName), promptContent);
     }
 
-    // 2. Generate .claude/settings.json with MCP config
+    // 2. Generate project-scoped MCP configuration.
     const settingsContent = this.generateSettings(def.mcpServers);
-    files.set(join('.claude', 'settings.json'), settingsContent);
+    files.set('.mcp.json', settingsContent);
+
+    for (const skill of def.skills) {
+      files.set(join('.claude', 'skills', skill.id, 'SKILL.md'), this.generateSkill(skill));
+    }
 
     // 3. Generate per-command files under .claude/commands/
     for (const cmd of def.commands) {
@@ -58,9 +63,10 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       'Copy the generated files to your project root directory:',
       '  - CLAUDE.md → <project-root>/CLAUDE.md',
       '  - .claude/ → <project-root>/.claude/',
+      '  - .mcp.json → <project-root>/.mcp.json (merge with existing servers)',
       '',
       'Then run Claude Code in the project directory:',
-      '  claude',
+      '  claude --agent archimedes',
       '',
       'Use slash commands like /patent-new, /patent-search, etc.',
       'Or describe your intent in natural language (Chinese or English).',
@@ -146,6 +152,9 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     fm.description = agent.description;
 
     const tools = ['Read', 'Glob', 'Grep'];
+    // Delegation is available when the primary agent is the main thread
+    // (claude --agent archimedes), not when invoked as a nested subagent.
+    if (agent.role === 'primary') tools.push('Agent');
     if (agent.permissions.write) tools.push('Write');
     if (agent.permissions.edit) tools.push('Edit');
     if (agent.permissions.bash) tools.push('Bash');
@@ -245,7 +254,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
         };
       } else if (server.transport === 'remote' && server.url) {
         mcpServersConfig[server.id] = {
-          type: 'url',
+          type: 'http',
           url: server.url,
         };
       }
@@ -410,7 +419,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     // --- MCP ---
     lines.push('### MCP Integration');
     lines.push('');
-    lines.push('Configured MCP servers (in `.claude/settings.json`):');
+    lines.push('Configured MCP servers (in `.mcp.json`):');
     for (const server of def.mcpServers.filter(s => s.enabled)) {
       lines.push(`- \`${server.id}\``);
     }
@@ -441,7 +450,10 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     for (const agent of def.agents) {
       paths.push(join('.claude', 'agents', `${agent.id}.md`));
     }
-    paths.push(join('.claude', 'settings.json'));
+    paths.push('.mcp.json');
+    for (const skill of def.skills) {
+      paths.push(join('.claude', 'skills', skill.id, 'SKILL.md'));
+    }
     for (const cmd of def.commands) {
       paths.push(join('.claude', 'commands', `${cmd.id}.md`));
     }
@@ -454,13 +466,14 @@ export class ClaudeCodeAdapter implements ToolAdapter {
    *
    * Deliberately independent of `def`: the point is to find files an older
    * definition produced, so the list cannot be derived from the current one.
-   * `CLAUDE.md` and `.claude/settings.json` are single files that every run
+   * `CLAUDE.md` and `.mcp.json` are single files that every run
    * overwrites, so they need no pruning and are not listed here.
    */
   getManagedDirectories(): string[] {
     return [
       join('.claude', 'agents'),
       join('.claude', 'commands'),
+      join('.claude', 'skills'),
     ];
   }
 
@@ -483,6 +496,15 @@ export class ClaudeCodeAdapter implements ToolAdapter {
 
     // 1. Workspace files
     for (const relPath of this.getGeneratedFilePaths(def)) {
+      // .mcp.json is shared configuration. Remove it only when it is still
+      // exactly our generated default; custom servers/credentials belong to
+      // the user and must survive uninstall.
+      if (relPath === '.mcp.json' && existsSync(resolve(workspaceDir, relPath))) {
+        if (readFileSync(resolve(workspaceDir, relPath), 'utf-8') !== this.generateSettings(def.mcpServers)) {
+          filesSkipped.push(relPath);
+          continue;
+        }
+      }
       removeExact(resolve(workspaceDir, relPath), relPath);
     }
 
@@ -515,6 +537,10 @@ export class ClaudeCodeAdapter implements ToolAdapter {
 
     tryRmdir(resolve(workspaceDir, '.claude', 'agents'), '.claude/agents/');
     tryRmdir(resolve(workspaceDir, '.claude', 'commands'), '.claude/commands/');
+    for (const skill of def.skills) {
+      tryRmdir(resolve(workspaceDir, '.claude', 'skills', skill.id), `.claude/skills/${skill.id}/`);
+    }
+    tryRmdir(resolve(workspaceDir, '.claude', 'skills'), '.claude/skills/');
     tryRmdir(resolve(workspaceDir, '.claude'), '.claude/');
     tryRmdir(resolve(homedir(), '.claude-best', 'agents'), '~/.claude-best/agents/');
     tryRmdir(resolve(homedir(), '.claude-best', 'commands'), '~/.claude-best/commands/');
@@ -525,5 +551,17 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       success: filesSkipped.length === 0,
       message: `Uninstalled ${this.name}. Removed ${filesRemoved.length}, skipped ${filesSkipped.length}.`,
     };
+  }
+  private generateSkill(skill: SkillDef): string {
+    const content = skill.promptContent?.trim() || skill.description || skill.name;
+    if (/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(content)) {
+      return stampGenerated(`${content}\n`);
+    }
+    return stampGenerated([
+      '---',
+      `name: ${skill.id}`,
+      `description: ${JSON.stringify(skill.description || skill.name)}`,
+      '---', '', content, '',
+    ].join('\n'));
   }
 }
