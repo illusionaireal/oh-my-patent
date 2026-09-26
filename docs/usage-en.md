@@ -150,7 +150,7 @@ The node in the branch example must already exist. For an interactive view, run
 |---|---|
 | `render <project> [--specs <json\|@file>] [--phase draft\|final]` | Render specifications to SVG/PNG and update available `MAIN.md` references |
 | `status <project>` | Read the figure manifest |
-| `rerender <project> --figure <id> --source <text\|@file> [--engine mermaid\|plantuml]` | Re-render one figure; the default engine is Mermaid |
+| `rerender <project> --figure <id> --source <text\|@file> [--engine mermaid\|plantuml]` | Re-render one figure. With no engine, use the manifest, then the source extension, then Mermaid |
 
 Supply an array of [FigureSpec](../src/core/diagram-types.ts) objects. Each includes
 `figureId`, `figureNumber`, `title`, `description`, `diagramType`, `engine`,
@@ -162,10 +162,10 @@ oh-my-patent diagram render ./projects/01-private-computing --specs @./projects/
 oh-my-patent diagram status ./projects/01-private-computing
 ```
 
-Without `--specs`, the CLI always reads the project's
-`references/diagram-specs-draft.json`, even when `--phase final` is supplied.
-Use an explicit final specification file for final rendering. Set each specification's
-`phase` as well: the CLI flag labels the result, while the manifest uses the specification value.
+Without `--specs`, the CLI reads `references/diagram-specs-<phase>.json`
+(`draft` when `--phase` is omitted). `--phase final` does not fall back to the
+draft file; a missing file is an error. Set each specification's `phase` as well:
+the CLI flag labels the result, while the manifest uses the specification value.
 
 ## Uninstallation
 

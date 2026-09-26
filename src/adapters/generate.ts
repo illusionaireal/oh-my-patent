@@ -16,6 +16,8 @@ import { ToolAdapter } from './types.js';
 import { ClaudeCodeAdapter } from './claude/index.js';
 import { CodexAdapter } from './codex/index.js';
 import { OpenCodeAdapter } from './opencode/index.js';
+import { isSafeRelPath, ensureInside } from '../core/path-safety.js';
+import { isDangerousKey } from '../core/cli-args.js';
 
 // Available adapters
 const adapters: ToolAdapter[] = [
@@ -46,7 +48,7 @@ async function main(): Promise<void> {
     console.log('Options:');
     console.log('  --output <dir>   Output directory (default: ./plugins/<tool>)');
     console.log('  --plugin-dir     oh-my-patent plugin directory (default: cwd)');
-    console.log('  --workspace-dir  Patents workspace directory (default: parent of plugin-dir)');
+    console.log('  --workspace-dir  Patents workspace directory (default: plugin-dir, not its parent)');
     process.exit(0);
   }
 
@@ -84,9 +86,11 @@ async function main(): Promise<void> {
 
   console.log(`Loaded: ${def.agents.length} agents, ${def.skills.length} skills, ${def.commands.length} commands, ${def.mcpServers.length} MCP servers`);
 
-  // Resolve config values
-  const config: Record<string, unknown> = {};
+  // Resolve config values. Null prototype plus the shared key filter: a
+  // plugin.jsonc key named __proto__ must not become Object.prototype.
+  const config: Record<string, unknown> = Object.create(null);
   for (const [key, field] of Object.entries(def.config)) {
+    if (isDangerousKey(key)) continue;
     config[key] = field.default;
   }
 
@@ -102,7 +106,11 @@ async function main(): Promise<void> {
   // Write files
   let fileCount = 0;
   for (const [relPath, content] of result.files) {
+    if (!isSafeRelPath(relPath)) {
+      throw new Error(`Unsafe generated path rejected: ${relPath}`);
+    }
     const fullPath = join(outputDir, relPath);
+    ensureInside(outputDir, fullPath);
     const dir = resolve(fullPath, '..');
 
     if (!existsSync(dir)) {

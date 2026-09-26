@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-oh-my-patent is a CLI tool that orchestrates 11 specialized AI agents (defined as markdown prompts in `src/agents/`) to turn a technical idea into a complete patent disclosure document. The CLI itself does **not** run the agents — it manages the state, decision path, diagrams, and adapter configs that the agents (running in the user's editor) read and write.
+oh-my-patent is a CLI tool that orchestrates 14 agents (13 specialists plus the Archimedes orchestrator, defined as markdown prompts in `src/agents/` and registered in `plugin.jsonc`) to turn a technical idea into a complete patent disclosure document. The CLI itself does **not** run the agents — it manages the state, decision path, diagrams, and adapter configs that the agents (running in the user's editor) read and write.
 
-The agent prompts live in `src/agents/*.md` and are consumed by editors via adapters (`.claude/` for Claude Code, `.codex/` for Codex). The TypeScript code is the runtime bridge those agents call.
+The agent prompts live in `src/agents/*.md` and are consumed by editors via adapters (`.claude/` for Claude Code, `.codex/` for Codex, `.opencode/` for OpenCode). The TypeScript code is the runtime bridge those agents call.
 
 ## Commands
 
@@ -22,7 +22,7 @@ node dist/cli.js     # run the CLI from a source build (the published bin is `oh
 npx -p . oh-my-patent  # alternative way to run from local build
 ```
 
-The CLI has four domains — `path`, `diagram`, `adapt`, `tui` — each with subcommands. See `node dist/cli.js --help` for the full reference.
+The CLI has five domains — `path`, `diagram`, `adapt`, `tui`, `check` — each with subcommands. See `node dist/cli.js --help` for the full reference. Node 22+ is required (`package.json` `engines`).
 
 ### Quick Start for Local Development
 
@@ -38,10 +38,10 @@ node dist/cli.js adapt setup --workspace-dir /path/to/test/project
 
 ### Two-layer model: definitions vs. engine
 
-- **Orchestration layer** (`plugin.jsonc`, `opencode.jsonc`, `src/agents/*.md`, `src/skills/*/SKILL.md`, `src/commands/*.md`): tool-agnostic definitions of agents, skills, and commands. Pure data and prompt text.
+- **Orchestration layer** (`plugin.jsonc`, `src/agents/*.md`, `src/skills/*/SKILL.md`, `src/commands/*.md`): tool-agnostic definitions of agents, skills, and commands. Pure data and prompt text. There is no committed root `opencode.jsonc`; the tracked template is `opencode.jsonc.example`, and setup writes the workspace copy.
 - **Engine layer** (`src/core/`, `src/cli.ts`, `src/commands/*.ts`): the TypeScript runtime that operates on `.brainstorm/`, `.patent/`, `figures/`, and `references/` directories inside a user's patent project.
 
-The `src/adapters/` layer converts orchestration definitions into tool-specific configs (Claude Code's `.claude/agents/`, Codex's `.codex/skills/`, etc.). `adapters/types.ts` defines the `PortableDef` canonical format; `adapters/loader.ts` parses `plugin.jsonc` + the markdown files into it; `adapters/claude/` and `adapters/codex/` implement `ToolAdapter`.
+The `src/adapters/` layer converts orchestration definitions into tool-specific configs (Claude Code's `.claude/agents/`, Codex's `.codex/skills/`, OpenCode's `.opencode/`). `adapters/types.ts` defines the `PortableDef` canonical format; `adapters/loader.ts` parses `plugin.jsonc` + the markdown files into it; `adapters/claude/`, `adapters/codex/`, and `adapters/opencode/` implement `ToolAdapter`. `plugins/` is generated output and is gitignored — it is not a source tree.
 
 ### Workflow state machine (`src/core/state.ts`, `src/core/workflow.ts`)
 
@@ -61,7 +61,7 @@ A DAG of brainstorm rounds stored in `<project>/.brainstorm/`:
 - `path.json` — metadata, edges, current node, final decision
 - `nodes/round-{n}.json` — per-round scores, innovations, agent outputs, decisions
 - `snapshots/round-{n}-innovations.json` — innovation history snapshots
-- `branches/{branchId}/` — forked node copies for alternative explorations
+- `branches/{branchId}/.brainstorm/nodes/` and `branches/{branchId}/.brainstorm/snapshots/` — forked copies. The branch directory is a self-contained mini project (REQ-026), not a flat `branches/{id}/nodes/` tree. Branch JSON lives at `branches/{branchId}.json`.
 
 Supports forking (`path branch --from-node`), reviving abandoned innovations (`path restore`), and threshold-based exit decisions. Writes are atomic (temp + rename). `path-graph.ts` handles the forking algorithms.
 
@@ -82,7 +82,7 @@ Renders Mermaid/PlantUML source to SVG+PNG into `<project>/figures/`, then rewri
 
 ### CLI entry (`src/cli.ts`)
 
-A single dispatcher with four domains. Uses `getPluginDir()` (ESM `import.meta.url` resolution) to locate the package root — this works for global installs, `npm link`, and `node dist/cli.js`. The `adapt install` path also copies agent/command files to `~/.claude-best/` so they load regardless of where Claude Code starts.
+A single dispatcher with five domains (`path`, `diagram`, `adapt`, `tui`, `check`). Uses `getPluginDir()` (ESM `import.meta.url` resolution) to locate the package root — this works for global installs, `npm link`, and `node dist/cli.js`. The `adapt install` path also copies agent/command files to `~/.claude-best/` so they load regardless of where Claude Code starts. `diagram render` without `--specs` reads `references/diagram-specs-<phase>.json` and does not silently reuse the draft file for `--phase final`. `diagram rerender` without `--engine` uses the figure manifest, then the source extension (`.puml` / `.pu` / `.plantuml`), then Mermaid.
 
 ## File naming conventions (project runtime)
 
@@ -104,10 +104,10 @@ To invoke a specialist programmatically (in a custom integration), use the Agent
 
 ## Conventions worth knowing
 
-- **TypeScript strict mode**, ESM (`"type": "module"`), `moduleResolution: "bundler"`. Imports between source files use explicit `.js` extensions (e.g. `from './core/state.js'`) even though the source is `.ts` — this is required by the ESM + bundler-resolution setup.
+- **TypeScript strict mode**, ESM (`"type": "module"`), `module` / `moduleResolution: "NodeNext"`. Imports between source files use explicit `.js` extensions (e.g. `from './core/state.js'`) even though the source is `.ts` — NodeNext requires that.
 - **TSX/JSX**: `tui/` uses Ink+React. `tsconfig.json` sets `jsx: "react-jsx"`.
-- **Atomic writes**: state and path persistence write to a temp file then rename. Don't bypass this pattern.
-- **Safe uninstall**: adapter uninstall reads from manifest files (`.claude/manifest.json`, `.codex/manifest.json`) and removes only the exact paths that were generated — never `readdir + unlink` traversal.
+- **Atomic writes**: go through `src/core/atomic-write.ts` (temp file, optional mode on the temp file, then rename over the target). Never `unlink` the live file and then rename. Secret files such as the MCP config set `mode: 0o600` before the rename.
+- **Safe uninstall**: each adapter's `getGeneratedFilePaths()` lists the exact relative paths to remove. Do not `readdir + unlink` a directory. Prune (`--prune`) may scan managed directories, but it deletes a file only when it is no longer produced and still carries the generated marker from `src/adapters/generated-marker.ts`. There is no `.claude/manifest.json`.
 - **Patent disclosure writing style** (when editing MAIN.md or agent prompts that produce disclosure content): headings use `#` for document title only, `##`/`###` for sections; formulas use Word-compatible linear form (`$S_(load)$` not `$S_{\mathrm{load}}$`); avoid `\operatorname`, `\mathrm`, `\left`, `\right`, `\!`; keep image tags and captions on separate lines; follow the standard template (sections 零 through 十一); references use `[R#]` notation.
 - **Jurisdiction**: default `CN`; supported `CN`, `US`, `PCT` (see `plugin.jsonc` config and `src/skills/jurisdiction/`).
 
@@ -122,6 +122,6 @@ To invoke a specialist programmatically (in a custom integration), use the Agent
 
 - **ESM `.js` imports**: If you add a new TypeScript file, remember to import it with `.js` extension, not `.ts`
 - **CLI path resolution**: `getPluginDir()` in `src/cli.ts` uses `import.meta.url` to locate the package root — works for global installs, `npm link`, and local builds
-- **Adapter manifest safety**: Never modify adapter uninstall logic to traverse directories. Always use the exact paths from manifest files
+- **Adapter uninstall safety**: Never modify adapter uninstall logic to traverse directories. Always use `getGeneratedFilePaths()` and the generated-file marker. Do not invent a `.claude/manifest.json`
 - **State transitions**: The workflow state machine has explicit allowed transitions in `src/core/workflow.ts`. Invalid transitions are rejected
 - **Threshold discrepancy**: The README mentions "Novelty ≥ 7" but the actual code default in `threshold-config.ts` is `6.0`. Trust the code

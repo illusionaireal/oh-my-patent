@@ -58,7 +58,7 @@ Areas where contributions are especially welcome:
 - Documentation improvements
 - Bug fixes, especially in the adapters and the generated output under `plugins/`
 
-> **Note on jurisdictions.** The supported set is currently `CN`, `US`, and `PCT` only. Adding JP/EP/KR is not a drop-in task: it requires extending `VALID_JURISDICTIONS` in `src/core/state.ts` and the `config.jurisdiction.enum` list in `plugin.jsonc`. Note that `src/core/router.ts` already recognises `欧洲`/`EP` and `日本`/`JP` and returns those codes, which `validateState()` then rejects — that mismatch is a known bug, and correcting it is a valuable contribution in itself.
+> **Note on jurisdictions.** The supported set is currently `CN`, `US`, and `PCT` only. Adding JP/EP/KR is not a drop-in task: it requires extending `VALID_JURISDICTIONS` in `src/core/state.ts` and the `config.jurisdiction.enum` list in `plugin.jsonc`. `extractJurisdiction()` recognises `欧洲`/`EP` and `日本`/`JP` but does not emit them (REQ-017 / DEC-3), so the router and `validateState()` stay in agreement. Latin codes are whole tokens — `US` must not match inside `useful`.
 
 ### Related Documents
 

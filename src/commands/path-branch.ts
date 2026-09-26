@@ -20,6 +20,7 @@ import {
 } from '../core/path-constants.js';
 import { BrainstormPath } from '../core/brainstorm-path.js';
 import { ensureInside as ensureBranchPathInside } from '../core/path-safety.js';
+import { atomicWriteFile } from '../core/atomic-write.js';
 
 // ============================================================================
 // 类型定义
@@ -194,7 +195,7 @@ async function saveBranchIndex(projectPath: string, index: BranchIndex): Promise
 
   const indexPath = getBranchIndexPath(projectPath);
   const content = JSON.stringify(index, null, 2);
-  await fs.writeFile(indexPath, content, 'utf-8');
+  await atomicWriteFile(indexPath, content, { mkdir: false });
 }
 
 /**
@@ -214,7 +215,7 @@ async function saveBranchPath(
 
   const filePath = getBranchFilePath(projectPath, branchId);
   const content = JSON.stringify(branchPath, null, 2);
-  await fs.writeFile(filePath, content, 'utf-8');
+  await atomicWriteFile(filePath, content, { mkdir: false });
 }
 
 /**
@@ -337,7 +338,7 @@ export async function createBranchFromNode(
   
         const nodeFilePath = path.join(branchNodesDir, `round-${node.round}.json`);
         const nodeContent = JSON.stringify(node, null, 2);
-        await fs.writeFile(nodeFilePath, nodeContent, 'utf-8');
+        await atomicWriteFile(nodeFilePath, nodeContent, { mkdir: false });
   
         // 5b. 一并复制该轮的创新点快照（REQ-026：分支上下文此前缺快照，
         //     回溯分支节点时无法读到当时的创新点状态）。
@@ -348,7 +349,7 @@ export async function createBranchFromNode(
           );
           await fs.mkdir(branchSnapshotsDir, { recursive: true });
           const snapshotFilePath = path.join(branchSnapshotsDir, `round-${node.round}-innovations.json`);
-          await fs.writeFile(snapshotFilePath, JSON.stringify(snapshot, null, 2), 'utf-8');
+          await atomicWriteFile(snapshotFilePath, JSON.stringify(snapshot, null, 2), { mkdir: false });
         }
       }
     }

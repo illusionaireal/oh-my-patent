@@ -10,7 +10,7 @@ import * as path from 'path';
 /**
  * Check if a relative path is safe (no traversal, no absolute).
  *
- * - Rejects absolute paths
+ * - Rejects absolute paths, including Windows drive and UNC forms
  * - Rejects any segment that is '..'
  * - Rejects empty or non-string
  *
@@ -19,20 +19,15 @@ import * as path from 'path';
 export function isSafeRelPath(relPath: string): boolean {
   if (!relPath || typeof relPath !== 'string') return false;
   if (path.isAbsolute(relPath)) return false;
-  // Reject paths starting with / or \ (absolute on POSIX/Windows)
+  // A single leading separator is absolute (`/etc`, `\Windows`). Two leading
+  // backslashes are a UNC path (`\\server\share`). Reject both on every host:
+  // `path.isAbsolute` only understands the platform this process is running on.
   if (relPath.startsWith('/') || relPath.startsWith('\\')) return false;
-
-  // Split by both separators to be cross-platform
-  const segments = relPath.split(/[\\/]/);
-  // Any '..' segment is unsafe
-  if (segments.includes('..')) return false;
-  // Also reject if contains '..' as substring in a segment that is exactly '..'
-  // (already covered) but also reject empty segments that could be '//' ?
-  // Allow '.' and normal names.
-
-  // Additionally, resolve check: if resolve(relPath) === relPath, it's absolute (already handled)
-  // But also check for drive letter on Windows like 'C:'
+  // Drive-letter paths (`C:`, `C:\...`) are absolute on Windows.
   if (/^[a-zA-Z]:/.test(relPath)) return false;
+
+  const segments = relPath.split(/[\\/]/);
+  if (segments.includes('..')) return false;
 
   return true;
 }
@@ -65,13 +60,13 @@ export function ensureInside(baseDir: string, targetPath: string): void {
     throw new Error(`Path traversal blocked: ${targetPath} escapes ${baseDir}`);
   }
 
-  // Any '..' segment means escaping
-  if (relative.split(/[\\/]/).includes('..')) {
-    throw new Error(`Path traversal blocked: ${targetPath} escapes ${baseDir}`);
-  }
-
-  // Parent directory prefix check (covers '..', '../x', '..\x')
-  if (relative === '..' || relative.startsWith('..' + path.sep) || relative.startsWith('../') || relative.startsWith('..\\')) {
+  const escaped =
+    relative.split(/[\\/]/).includes('..') ||
+    relative === '..' ||
+    relative.startsWith(`..${path.sep}`) ||
+    relative.startsWith('../') ||
+    relative.startsWith('..\\');
+  if (escaped) {
     throw new Error(`Path traversal blocked: ${targetPath} escapes ${baseDir}`);
   }
 }

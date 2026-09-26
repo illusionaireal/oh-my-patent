@@ -141,7 +141,7 @@ oh-my-patent path markdown ./projects/01-private-computing --output path-report.
 |---|---|
 | `render <project> [--specs <json\|@file>] [--phase draft\|final]` | 渲染 SVG/PNG，并更新已有 `MAIN.md` 中的引用 |
 | `status <project>` | 读取附图清单 |
-| `rerender <project> --figure <id> --source <text\|@file> [--engine mermaid\|plantuml]` | 重渲染单张图，默认引擎为 Mermaid |
+| `rerender <project> --figure <id> --source <text\|@file> [--engine mermaid\|plantuml]` | 重渲染单张图；省略引擎时先看清单，再看源文件扩展名，最后才是 Mermaid |
 
 输入为 [FigureSpec](../src/core/diagram-types.ts) 数组。每项包含
 `figureId`、`figureNumber`、`title`、`description`、`diagramType`、`engine`、
@@ -152,9 +152,10 @@ oh-my-patent diagram render ./projects/01-private-computing --specs @./projects/
 oh-my-patent diagram status ./projects/01-private-computing
 ```
 
-省略 `--specs` 时，CLI 始终读取项目的 `references/diagram-specs-draft.json`，
-即使传入 `--phase final` 也是如此。最终渲染应显式指定最终规格文件。
-同时设置每项规格的 `phase`：CLI 参数标记返回结果，附图清单使用规格中的值。
+省略 `--specs` 时，CLI 读取 `references/diagram-specs-<phase>.json`
+（`--phase` 缺省为 `draft`）。`--phase final` 不会回退到草稿规格文件；
+文件不存在就报错。同时设置每项规格的 `phase`：CLI 参数标记返回结果，
+附图清单使用规格中的值。
 
 ## 卸载
 

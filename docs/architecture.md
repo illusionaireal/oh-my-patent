@@ -26,7 +26,7 @@
 | `src/adapters/opencode/` | OpenCode 适配器 |
 | `src/core/` | 工作流、持久化、评分、校验与附图 |
 | `src/tui/` | Ink/React 终端界面 |
-| `plugins/` | 生成的集成文件包 |
+| `plugins/` | 适配器生成产物，已加入 `.gitignore`，不是受版本控制的源码目录 |
 | `tests/` | 单元、集成与端到端测试 |
 | `docs/` | 指南、工作流参考与设计文档 |
 | `assets/brand/` | 品牌图片与使用规范 |

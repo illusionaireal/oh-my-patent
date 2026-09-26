@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, renameSync, unlinkSync, chmodSync, statSync } from 'fs';
-import { join, resolve, dirname, relative, sep } from 'path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, chmodSync, statSync } from 'fs';
+import { join, resolve, relative, sep } from 'path';
 import { execSync } from 'child_process';
 // REQ-015: the JSONC comment stripper is shared — see src/core/jsonc.ts.
 import { stripJsonComments } from './jsonc.js';
-import { randomBytes } from 'crypto';
+import { atomicWriteFileSync } from './atomic-write.js';
 
 export type CheckStatus = 'ready' | 'missing' | 'warning';
 
@@ -349,38 +349,15 @@ export function writeMcpConfig(
     : config;
   (existing[target.key] as Record<string, unknown>)[mcpId] = storedConfig;
 
-  const dir = dirname(configPath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-
-  const tempPath = `${configPath}.${Date.now()}.${randomBytes(4).toString('hex')}.tmp`;
-  let permissions: { applied: boolean; mode: number | null } = { applied: false, mode: null };
-  try {
-    writeFileSync(tempPath, JSON.stringify(existing, null, 2), { encoding: 'utf-8', flag: 'wx' });
-    permissions = hardenPermissions(tempPath);
-    try {
-      renameSync(tempPath, configPath);
-    } catch (renameErr) {
-      const code = (renameErr as NodeJS.ErrnoException).code;
-      if (code === 'EEXIST' || code === 'EACCES' || code === 'EPERM') {
-        // Windows: destination exists, need to unlink first
-        try {
-          unlinkSync(configPath);
-        } catch {
-          // ignore
-        }
-        renameSync(tempPath, configPath);
-      } else {
-        throw renameErr;
-      }
-    }
-  } catch (error) {
-    if (existsSync(tempPath)) {
-      try { unlinkSync(tempPath); } catch { /* ignore */ }
-    }
-    throw error;
-  }
+  // REQ-016: never unlink the existing config before the replacement is in
+  // place. The security-branch fallback deleted the live API-key file on
+  // EPERM/EEXIST and retried the rename; if that retry failed, the key was
+  // gone. atomicWriteFileSync renames over the target and chmod's the temp
+  // file first so the secret never lands world-readable (REQ-009).
+  atomicWriteFileSync(configPath, JSON.stringify(existing, null, 2), {
+    mode: SECRET_FILE_MODE,
+  });
+  const permissions = hardenPermissions(configPath);
 
   const git = ensureGitignored(workspaceDir, configPath);
   const modeNote = permissions.applied

@@ -71,7 +71,7 @@ describe('State Management', () => {
     expect(isValidProjectSlug('../../etc')).toBe(false);
     expect(isValidProjectSlug('../secret')).toBe(false);
     expect(isValidProjectSlug('a/b')).toBe(false);
-    expect(isValidProjectSlug('a\\b')).toBe(false);
+    expect(isValidProjectSlug('a\\b')).toBe(false); // one backslash, not two
     expect(isValidProjectSlug('')).toBe(false);
   });
 

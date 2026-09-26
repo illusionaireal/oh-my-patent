@@ -27,7 +27,7 @@ Adapter generation alone does not execute the patent workflow.
 | `src/adapters/opencode/` | OpenCode adapter |
 | `src/core/` | Workflow, persistence, scoring, validation, and diagrams |
 | `src/tui/` | Ink/React terminal interface |
-| `plugins/` | Generated integration bundles |
+| `plugins/` | Adapter output. Gitignored (see `.gitignore`); not a committed source tree |
 | `tests/` | Unit, integration, and end-to-end tests |
 | `docs/` | Guides, workflow references, and design documents |
 | `assets/brand/` | Brand artwork and usage rules |

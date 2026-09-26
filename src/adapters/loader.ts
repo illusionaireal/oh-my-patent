@@ -13,6 +13,7 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join, resolve } from 'path';
 import { parseJsonc as parseJsoncContent } from '../core/jsonc.js';
+import { isDangerousKey } from '../core/cli-args.js';
 import {
   PortableDef, AgentDef, AgentRole, AgentPermissions,
   SkillDef, CommandDef, MCPServerDef, PluginConfig
@@ -95,7 +96,7 @@ function parseYamlFrontmatter(raw: string): OpenCodeFrontmatter {
       const tMatch = tLine.trim().match(/^([\w][\w*-]*):\s*(\w+)$/);
       if (tMatch) {
         const k = tMatch[1];
-        if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+        if (isDangerousKey(k)) continue;
         (fm.tools as Record<string, boolean>)[k] = tMatch[2] === 'true';
       }
     }
@@ -114,10 +115,10 @@ function parseYamlFrontmatter(raw: string): OpenCodeFrontmatter {
       const [, key, value] = pMatch;
       // `task` and `skill` have no portable counterpart: the agent's role and
       // the workflow definition own those decisions, not the workspace file.
-      if (key === 'task' || key === 'skill') {
+      if (key === 'task' || key === 'skill' || isDangerousKey(key)) {
         continue;
       }
-      fm.tools = fm.tools ?? {};
+      fm.tools = fm.tools ?? (Object.create(null) as Record<string, boolean>);
       fm.tools[key] = value === 'allow' || value === 'true';
       if (key === 'mcp') {
         fm.tools['mcp*'] = fm.tools[key];
@@ -169,7 +170,7 @@ function parseHtmlCommentFrontmatter(content: string): { fm: OpenCodeFrontmatter
       const perms = permMatch[1].split(',').map(p => p.trim().toLowerCase());
       fm.tools = fm.tools ?? Object.create(null) as Record<string, boolean>;
       for (const p of perms) {
-        if (p === '__proto__' || p === 'constructor' || p === 'prototype') continue;
+        if (isDangerousKey(p)) continue;
         if (['write', 'edit', 'bash', 'mcp', 'mcp*', 'task', 'skill'].includes(p)) {
           (fm.tools as Record<string, boolean>)[p] = true;
         }
@@ -404,7 +405,7 @@ function loadMCPServers(configPath: string | null): MCPServerDef[] {
 
   if (config.mcp) {
     for (const [id, serverRaw] of Object.entries(config.mcp)) {
-      if (id === '__proto__' || id === 'constructor' || id === 'prototype') continue;
+      if (isDangerousKey(id)) continue;
       const s = serverRaw as Record<string, unknown>;
 
       let transport: 'local' | 'remote' = 'local';
@@ -437,9 +438,27 @@ export interface LoaderOptions {
   workspaceDir?: string;
 }
 
+/**
+ * Package version is the single source (DEC-6). `plugin.jsonc` is a fallback
+ * for fixtures that ship a definition without a package manifest.
+ */
+function readPackageVersion(pluginDir: string, fallback: string): string {
+  const pkgPath = join(pluginDir, 'package.json');
+  if (!existsSync(pkgPath)) return fallback;
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: unknown };
+    return typeof pkg.version === 'string' && pkg.version.length > 0 ? pkg.version : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function loadPortableDef(options: LoaderOptions): Promise<PortableDef> {
   const { pluginDir } = options;
-  const workspaceDir = options.workspaceDir ?? resolve(pluginDir, '..');
+  // Never default to the package parent. A global install's parent is
+  // `node_modules`, and files would be resolved there (REQ-008). Callers that
+  // have a patent workspace pass it explicitly; otherwise stay inside pluginDir.
+  const workspaceDir = options.workspaceDir ?? pluginDir;
 
   // 1. Parse plugin.jsonc
   const pluginJsoncPath = join(pluginDir, 'plugin.jsonc');
@@ -485,11 +504,10 @@ export async function loadPortableDef(options: LoaderOptions): Promise<PortableD
   const mcpServers = loadMCPServers(mcpConfigPath);
 
   // 6. Config schema - use null-prototype and filter dangerous keys to prevent pollution
-  const DANGEROUS = new Set(['__proto__', 'constructor', 'prototype']);
   const config: PluginConfig = Object.create(null);
   if (plugin.config) {
     for (const [key, value] of Object.entries(plugin.config)) {
-      if (DANGEROUS.has(key)) continue;
+      if (isDangerousKey(key)) continue;
       const v = value as Record<string, unknown>;
       (config as Record<string, unknown>)[key] = {
         type: (v.type as 'string' | 'number' | 'boolean') ?? 'string',
@@ -502,7 +520,7 @@ export async function loadPortableDef(options: LoaderOptions): Promise<PortableD
 
   return {
     name: plugin.name,
-    version: plugin.version,
+    version: readPackageVersion(pluginDir, plugin.version),
     agents,
     skills,
     commands,

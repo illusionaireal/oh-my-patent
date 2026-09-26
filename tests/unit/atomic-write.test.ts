@@ -1,5 +1,5 @@
 import { describe, test, expect, afterAll } from 'vitest';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { atomicWriteFileSync, tempPathFor } from '../../src/core/atomic-write';
@@ -66,6 +66,19 @@ describe('atomicWriteFileSync (REQ-016)', () => {
     expect(readFileSync(file, 'utf-8')).toBe('{"version":"old"}');
     // The temp file was cleaned up by the error path.
     expect(readdirSync(dir)).toEqual(['state.json']);
+  });
+
+  test('applies mode to the temp file before rename, never unlinking the target', () => {
+    const dir = tempDir();
+    const file = join(dir, 'mcp.json');
+    atomicWriteFileSync(file, '{"token":"old"}', { mode: 0o600 });
+    atomicWriteFileSync(file, '{"token":"new"}', { mode: 0o600 });
+
+    expect(readFileSync(file, 'utf-8')).toBe('{"token":"new"}');
+    if (process.platform !== 'win32') {
+      expect(statSync(file).mode & 0o777).toBe(0o600);
+    }
+    expect(readdirSync(dir)).toEqual(['mcp.json']);
   });
 
   test('tempPathFor produces a sibling path with a .tmp suffix', () => {

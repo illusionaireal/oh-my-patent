@@ -77,7 +77,7 @@ import { CodexAdapter } from './adapters/codex/index.js';
 import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { FigureSpec } from './core/diagram-types.js';
+import { FigureSpec, defaultDiagramSpecsFile } from './core/diagram-types.js';
 import { DiagramRenderer } from './core/diagram-renderer.js';
 import { insertFigureReferences } from './core/diagram-inserter.js';
 import { runFullCheck, formatReport, runJsonCheck, getMcpStatuses, buildMcpConfig, writeMcpConfig } from './core/init-checker.js';
@@ -579,11 +579,14 @@ function readMainMd(projectPath: string): string {
 }
 
 async function diagramRender(projectPath: string, opts: Record<string, string>): Promise<void> {
+  const phase = opts.phase || 'draft';
   if (!opts.specs) {
-    // Fallback: read default specs file
-    const specsFile = join(projectPath, 'references', 'diagram-specs-draft.json');
+    // The diagram agent writes references/diagram-specs-{phase}.json. Do not
+    // ignore --phase and always open the draft file.
+    const specsName = defaultDiagramSpecsFile(phase);
+    const specsFile = join(projectPath, 'references', specsName);
     if (!existsSync(specsFile)) {
-      exitWithError('No --specs provided and references/diagram-specs-draft.json not found');
+      exitWithError(`No --specs provided and references/${specsName} not found`);
     }
     opts.specs = `@${specsFile}`;
   }
@@ -594,7 +597,6 @@ async function diagramRender(projectPath: string, opts: Record<string, string>):
     return;
   }
 
-  const phase = opts.phase || 'draft';
   const figuresDir = join(projectPath, 'figures');
   const renderer = new DiagramRenderer();
   const results = await renderer.renderAll(specs, figuresDir);
@@ -780,8 +782,8 @@ Path subcommands:
   markdown <project-path> [--mode <mode>] [--target <id>]   Render Markdown report
 
 Diagram subcommands:
-  render <project-path> --specs <json|@file> [--phase <draft|final>]
-    Render all figure specs, output SVG+PNG, update MAIN.md
+  render <project-path> [--specs <json|@file>] [--phase <draft|final>]
+    Render figure specs (default file: references/diagram-specs-<phase>.json), output SVG+PNG, update MAIN.md
   status <project-path>
     Show current diagram manifest and figure list
   rerender <project-path> --figure <id> --source <mmd|@file> [--engine mermaid|plantuml]
@@ -809,7 +811,7 @@ Options:
   --phase <phase>       Render phase: draft (default) or final
   --figure <id>         Figure ID for re-render
   --source <mmd|@file>  Mermaid/PlantUML source text, or @file
-  --engine <engine>     Rendering engine: mermaid (default) or plantuml
+  --engine <engine>     Rendering engine: mermaid or plantuml (rerender default: manifest, then source extension)
   --prune               install: also delete generated files no longer produced
                         (only files carrying an oh-my-patent marker)
 `);

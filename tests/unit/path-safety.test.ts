@@ -10,6 +10,10 @@ describe('path-safety shared module', () => {
       expect(isSafeRelPath('/etc/passwd')).toBe(false);
       expect(isSafeRelPath('C:\\Windows')).toBe(false);
       expect(isSafeRelPath('a/../b')).toBe(false);
+      // One leading backslash is absolute on Windows. path.isAbsolute does not
+      // see it on Linux, so the lexical check has to.
+      expect(isSafeRelPath('\\Windows\\System32')).toBe(false);
+      expect(isSafeRelPath('\\\\server\\share')).toBe(false);
     });
     it('accepts safe relative', () => {
       expect(isSafeRelPath('a/b/c')).toBe(true);

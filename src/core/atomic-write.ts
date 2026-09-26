@@ -17,18 +17,25 @@
  * crash between "temp written" and "rename applied".
  */
 
-import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'fs';
+import { chmodSync, mkdirSync, renameSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { randomBytes } from 'crypto';
 
 export type RenameFn = typeof renameSync;
 
-/** Options for {@link atomicWriteFileSync}; all fields are for tests. */
+/** Options for {@link atomicWriteFileSync}. `rename` is for tests; `mode` is for secret files. */
 export interface AtomicWriteOptions {
   /** Replacement for the final rename step (crash simulation). */
   rename?: RenameFn;
   /** Skip parent-directory creation when the caller already did it. */
   mkdir?: boolean;
+  /**
+   * POSIX mode applied to the temp file before rename (for example `0o600`).
+   * Rename preserves the mode, so the target never appears with the default
+   * umask. Callers that store secrets must set this rather than chmod after
+   * the file already has its final name.
+   */
+  mode?: number;
 }
 
 /** Build the temp-file path used for the intermediate write. */
@@ -58,6 +65,12 @@ export function atomicWriteFileSync(
 
   try {
     writeFileSync(tempPath, content, { encoding: 'utf-8', flag: 'wx' });
+    if (options.mode !== undefined) {
+      chmodSync(tempPath, options.mode);
+    }
+    // Never unlink the target first. A crash between unlink and rename loses
+    // the previous file (REQ-016). POSIX rename replaces atomically; Node's
+    // Windows implementation uses MoveFileEx(MOVEFILE_REPLACE_EXISTING).
     rename(tempPath, filePath);
   } catch (error) {
     try {
