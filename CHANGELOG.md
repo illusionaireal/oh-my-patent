@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.3] - 2026-09-27
+
+### Fixed
+
+- Generate native Claude MCP configuration, skills and main-thread delegation permissions.
+- Preserve Codex user instructions, modified files and unrelated marketplace registrations.
+- Reject linked adapter destinations and prevent readiness checks from deleting existing directories.
+- Validate nodes and rounds before persistence; protect branch history from malformed indexes, missing nodes and collisions.
+- Enforce OpenCode MCP restrictions and retain backups when upgrading generated prompts.
+- Correct jurisdiction matching, final diagram specification defaults and generated version metadata.
+
+### Compatibility and remaining review scope
+
+- Codex preserves an existing root `AGENTS.md`; integrate plugin instructions manually when needed.
+- OpenCode upgrades marked generated files and retains their previous contents in `.opencode/.oh-my-patent-backups/`.
+- Deferred findings and unverified host, concurrency and permission scenarios remain documented in
+  [the review ledger](specs/003-audit-safety-fixes/tasks.md). This version does not claim all audit findings are resolved.
+- Version 0.3.2 is skipped because that repository tag already exists, although its package manifest still declares 0.3.1.
+
 ## [0.3.1] - 2026-09-16
 
 ### Added
