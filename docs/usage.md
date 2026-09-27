@@ -31,11 +31,11 @@ npm 安装完成后，需要显式执行这一步。
 | OpenCode | `.opencode/agent/`、`.opencode/command/`、`.opencode/skills/` |
 
 Claude Code 会向 `.mcp.json` 补充缺少的 MCP 服务，并保留已有服务配置。
-其他 Claude Code 和 Codex 生成文件会覆盖对应路径，包括工作区指令文件。
-OpenCode 安装时跳过已存在的文件。
-Claude Code 还会将工作区智能体、命令目录中的 Markdown 文件复制到
+Codex 保留已有根目录 `AGENTS.md` 并增量合并 marketplace；其余 Claude Code 和 Codex 生成文件会覆盖对应路径。
+OpenCode 跳过无生成标记的自定义文件，对已有生成文件先备份再更新。
+Claude Code 还会将本次生成的智能体、命令 Markdown 文件复制到
 `~/.claude-best/agents/` 与 `~/.claude-best/commands/`，覆盖同名文件；
-这些目录中原有的 Markdown 文件也会被复制。
+工作区中其他 Markdown 文件不会被复制。
 
 ## 平台说明
 
@@ -177,8 +177,9 @@ npm uninstall -g oh-my-patent
 各适配器按其列举的文件路径处理：
 
 - **Claude Code**：保留自定义 `.mcp.json`，并在卸载结果中标记为 skipped。
-- **Claude Code 与 Codex**：其他生成路径的文件直接删除，不比较内容。
-  对生成文件、`CLAUDE.md`、`AGENTS.md` 或共享配置路径的修改也可能被删除。
+- **Codex**：只删除与当前默认生成内容完全一致的文件；用户指令、修改过的文件和无法确认归属的旧版文件会跳过。
+  marketplace 只移除未修改的本插件条目，保留其他条目和元数据。
+- **Claude Code**：除 `.mcp.json` 外仍按生成路径删除文件；对 `CLAUDE.md` 或生成提示词的修改可能被删除。
 - **Claude Code**：还会删除 `~/.claude-best/` 中已注册智能体和命令对应的文件；
   其他工作区可能也在使用这些文件。
 - **OpenCode**：只删除内容与当前生成结果一致的文件；修改过或内容不同的旧版文件会跳过。
@@ -188,3 +189,15 @@ npm uninstall -g oh-my-patent
 
 实现依据：[CLI](../src/cli.ts)、[Claude 适配器](../src/adapters/claude/index.ts)、
 [Codex 适配器](../src/adapters/codex/index.ts)、[OpenCode 适配器](../src/adapters/opencode/index.ts)。
+
+### 安装与升级的数据保留规则
+
+- Codex 安装保留已有的根目录 `AGENTS.md`；从 `plugins/oh-my-patent/AGENTS.md` 按需整合指令。
+  marketplace 配置损坏或存在冲突的同名条目时拒绝覆盖。
+- OpenCode 重装会更新带本插件生成标记的提示词，并把旧内容保留到 `.opencode/.oh-my-patent-backups/`。
+  自定义代理应移除生成标记；备份不会随卸载删除。
+- MCP 禁止代理使用 OpenCode 的 `"*_*": deny` 规则，覆盖后续添加的服务器；该保守规则也限制带下划线的自定义工具。
+  启用 MCP 不会自动放宽工作区的其他限制。
+- 安装、生成与卸载拒绝或跳过目标路径中的符号链接和 Windows junction。
+  这不是针对并发恶意替换目录的完整沙箱。
+- `path record` 要求正整数轮次、合法完整节点和已有前一轮；拒绝输入时保持原节点、快照和路径不变。
