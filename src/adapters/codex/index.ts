@@ -22,7 +22,7 @@
 
 import { join, resolve } from 'path';
 import {
-  existsSync, readdirSync, rmdirSync, rmSync,
+  existsSync, readFileSync, readdirSync, rmdirSync, rmSync,
 } from 'fs';
 import {
   PortableDef, AgentDef, CommandDef, SkillDef, ToolAdapter, GenerateResult, UninstallResult
@@ -663,10 +663,18 @@ export class CodexAdapter implements ToolAdapter {
   async uninstall(def: PortableDef, workspaceDir: string): Promise<UninstallResult> {
     const filesRemoved: string[] = [];
     const filesSkipped: string[] = [];
+    const defaults = Object.fromEntries(Object.entries(def.config).map(([key, field]) => [key, field.default]));
+    const expected = (await this.generate(def, defaults)).files;
 
     const removeExact = (fullPath: string, label: string) => {
       try {
         if (existsSync(fullPath)) {
+          // A generated path is not proof of ownership. Preserve user-authored
+          // files, edits and output from configurations we cannot reconstruct.
+          if (readFileSync(fullPath, 'utf8') !== expected.get(label)) {
+            filesSkipped.push(label);
+            return;
+          }
           rmSync(fullPath, { force: true });
           filesRemoved.push(label);
         }

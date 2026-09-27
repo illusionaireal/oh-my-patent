@@ -456,6 +456,10 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       if (name === 'opencode' && existsSync(fullPath)) {
         continue;
       }
+      if (name === 'codex' && relPath === 'AGENTS.md' && existsSync(fullPath)) {
+        console.error('Preserved existing AGENTS.md; integrate plugin instructions from plugins/oh-my-patent/AGENTS.md.');
+        continue;
+      }
       const installedContent = name === 'claude-code' && relPath === '.mcp.json' && existsSync(fullPath)
         ? mergeMcpConfig(readFileSync(fullPath, 'utf-8'), content)
         : content;
