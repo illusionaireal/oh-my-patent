@@ -31,6 +31,7 @@
 import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import {
   initBrainstormDirectory,
@@ -72,6 +73,7 @@ import {
 import { loadPortableDef } from './adapters/loader.js';
 import { runAdaptGenerate } from './adapters/run-generate.js';
 import { pruneGeneratedFiles } from './adapters/prune.js';
+import { GENERATED_MARKER } from './adapters/generated-marker.js';
 import { ClaudeCodeAdapter } from './adapters/claude/index.js';
 import { mergeMcpConfig } from './adapters/claude/mcp-config.js';
 import { atomicWriteFileSync } from './core/atomic-write.js';
@@ -490,7 +492,18 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
         mkdirSync(dir, { recursive: true });
       }
       if (name === 'opencode' && existsSync(fullPath)) {
-        continue;
+        const previous = readFileSync(fullPath, 'utf8');
+        if (!previous.includes(GENERATED_MARKER) || previous === content) continue;
+        // Retain the exact previous bytes even if a generated prompt was edited.
+        // This also makes security permission upgrades effective on reinstall.
+        const digest = createHash('sha256').update(previous).digest('hex');
+        const backup = resolve(workspaceDir, '.opencode', '.oh-my-patent-backups', `${digest}.md`);
+        ensureUnlinkedPath(workspaceDir, backup);
+        if (existsSync(backup) && readFileSync(backup, 'utf8') !== previous) {
+          throw new Error('OpenCode backup conflict; existing generated file preserved');
+        }
+        if (!existsSync(backup)) atomicWriteFileSync(backup, previous, { mode: 0o600 });
+        console.error('Updated generated OpenCode file; previous content retained in .opencode/.oh-my-patent-backups/.');
       }
       if (name === 'codex' && relPath === 'AGENTS.md' && existsSync(fullPath)) {
         console.error('Preserved existing AGENTS.md; integrate plugin instructions from plugins/oh-my-patent/AGENTS.md.');

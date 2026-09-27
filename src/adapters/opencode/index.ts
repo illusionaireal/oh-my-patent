@@ -138,6 +138,10 @@ export class OpenCodeAdapter implements ToolAdapter {
       `  task: ${agent.role === 'primary' ? 'allow' : 'deny'}`,
       '  skill: allow',
     ];
+    // MCP tools are named <server>_<tool>. Cover servers added after generation
+    // as well as those in the portable definition. Never grant a blanket allow:
+    // that would relax workspace restrictions and built-in safety guards.
+    if (!agent.permissions.mcp) lines.push('  "*_*": deny');
     if (agent.model) lines.push(`model: ${JSON.stringify(agent.model)}`);
     if (agent.temperature !== undefined) lines.push(`temperature: ${agent.temperature}`);
     lines.push('---', '', agent.promptContent.trim() || agent.description || agent.name, '');
