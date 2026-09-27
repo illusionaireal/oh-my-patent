@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { getMcpStatuses, writeMcpConfig } from '../../src/core/init-checker';
+import { checkRuntime, getMcpStatuses, writeMcpConfig } from '../../src/core/init-checker.js';
 
 describe('init checker MCP configuration', () => {
   const tempDirs: string[] = [];
@@ -17,6 +17,17 @@ describe('init checker MCP configuration', () => {
     for (const dir of tempDirs.splice(0)) {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  test('preserves an existing temporary-name directory and cleans only its own probe', () => {
+    const workspace = createWorkspace();
+    const existing = join(workspace, '.init-check-tmp');
+    mkdirSync(existing);
+    writeFileSync(join(existing, 'user.txt'), 'user data');
+    const result = checkRuntime(workspace);
+    expect(result.find(check => check.name === 'workspace-writable')?.status).toBe('ready');
+    expect(readFileSync(join(existing, 'user.txt'), 'utf8')).toBe('user data');
+    expect(readdirSync(workspace)).toEqual(['.init-check-tmp']);
   });
 
   test('updates codex.json in a Codex workspace and preserves existing settings', () => {

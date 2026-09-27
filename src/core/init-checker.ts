@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, renameSync, unlinkSync, chmodSync, statSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmdirSync, rmSync, readdirSync, renameSync, unlinkSync, chmodSync, statSync } from 'fs';
 import { join, resolve, dirname, relative, sep } from 'path';
 import { execSync } from 'child_process';
 // REQ-015: the JSONC comment stripper is shared — see src/core/jsonc.ts.
@@ -473,10 +473,11 @@ export function checkRuntime(workspaceDir: string): CheckResult[] {
     results.push({ category: 'runtime', name: 'node', status: 'missing', detail: 'Node.js 未找到', guidance: '安装 Node.js' });
   }
 
-  const testDir = join(workspaceDir, '.init-check-tmp');
   try {
-    mkdirSync(testDir, { recursive: true });
-    rmSync(testDir, { recursive: true });
+    // Only remove the empty directory exclusively created by this invocation.
+    // A fixed name could already contain user data (or point to another directory).
+    const testDir = mkdtempSync(join(workspaceDir, '.init-check-tmp-'));
+    rmdirSync(testDir);
     results.push({ category: 'runtime', name: 'workspace-writable', status: 'ready', detail: '工作目录可写' });
   } catch {
     results.push({ category: 'runtime', name: 'workspace-writable', status: 'missing', detail: '工作目录不可写', guidance: '检查目录权限' });
