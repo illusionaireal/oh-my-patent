@@ -48,7 +48,7 @@ export function tempPathFor(filePath: string): string {
  */
 export function atomicWriteFileSync(
   filePath: string,
-  content: string,
+  content: string | Uint8Array,
   options: AtomicWriteOptions = {},
 ): void {
   if (options.mkdir !== false) {

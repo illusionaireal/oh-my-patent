@@ -492,17 +492,18 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
         mkdirSync(dir, { recursive: true });
       }
       if (name === 'opencode' && existsSync(fullPath)) {
-        const previous = readFileSync(fullPath, 'utf8');
+        const previousBytes = readFileSync(fullPath);
+        const previous = previousBytes.toString('utf8');
         if (!previous.includes(GENERATED_MARKER) || previous === content) continue;
         // Retain the exact previous bytes even if a generated prompt was edited.
         // This also makes security permission upgrades effective on reinstall.
-        const digest = createHash('sha256').update(previous).digest('hex');
+        const digest = createHash('sha256').update(previousBytes).digest('hex');
         const backup = resolve(workspaceDir, '.opencode', '.oh-my-patent-backups', `${digest}.md`);
         ensureUnlinkedPath(workspaceDir, backup);
-        if (existsSync(backup) && readFileSync(backup, 'utf8') !== previous) {
+        if (existsSync(backup) && !readFileSync(backup).equals(previousBytes)) {
           throw new Error('OpenCode backup conflict; existing generated file preserved');
         }
-        if (!existsSync(backup)) atomicWriteFileSync(backup, previous, { mode: 0o600 });
+        if (!existsSync(backup)) atomicWriteFileSync(backup, previousBytes, { mode: 0o600 });
         console.error('Updated generated OpenCode file; previous content retained in .opencode/.oh-my-patent-backups/.');
       }
       if (name === 'codex' && relPath === 'AGENTS.md' && existsSync(fullPath)) {
