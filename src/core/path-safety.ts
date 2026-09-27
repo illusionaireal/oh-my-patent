@@ -6,6 +6,30 @@
  */
 
 import * as path from 'path';
+import { lstatSync } from 'node:fs';
+
+/** Reject links at the root and every existing destination component.
+ * Recheck immediately before mutation. This is not a lock against concurrent
+ * hostile directory replacement; callers must use a trusted workspace owner.
+ */
+export function ensureUnlinkedPath(baseDir: string, targetPath: string): void {
+  ensureInside(baseDir, targetPath);
+  const root = path.resolve(baseDir);
+  const parts = path.relative(root, path.resolve(targetPath)).split(path.sep).filter(Boolean);
+  let current = root;
+  for (let index = 0; index <= parts.length; index++) {
+    if (index > 0) current = path.join(current, parts[index - 1]);
+    try {
+      if (lstatSync(current).isSymbolicLink()) {
+        throw new Error(`Linked destination blocked: ${current}`);
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      // Missing parents cannot contain existing children.
+      break;
+    }
+  }
+}
 
 /**
  * Check if a relative path is safe (no traversal, no absolute).

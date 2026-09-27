@@ -12,7 +12,7 @@ import { join, resolve } from 'path';
 import { loadPortableDef, LoaderOptions } from './loader.js';
 import type { PortableDef, ToolAdapter } from './types.js';
 import { isDangerousKey } from '../core/cli-args.js';
-import { ensureInside, isSafeRelPath } from '../core/path-safety.js';
+import { ensureInside, ensureUnlinkedPath, isSafeRelPath } from '../core/path-safety.js';
 
 /**
  * Loader signature — injectable so tests can count calls with a plain spy
@@ -85,6 +85,11 @@ export async function runAdaptGenerate(options: RunAdaptGenerateOptions): Promis
     const targetDir = outputDir
       ? join(outputDir, name)
       : resolve(pluginDir, 'plugins', name);
+    const outputRoot = outputDir ? resolve(outputDir) : resolve(pluginDir);
+    for (const relPath of result.files.keys()) {
+      if (!isSafeRelPath(relPath)) throw new Error(`Unsafe generated path blocked: ${relPath}`);
+      ensureUnlinkedPath(outputRoot, resolve(targetDir, relPath));
+    }
     let fileCount = 0;
     for (const [relPath, content] of result.files) {
       if (!isSafeRelPath(relPath)) {
@@ -92,6 +97,7 @@ export async function runAdaptGenerate(options: RunAdaptGenerateOptions): Promis
       }
       const fullPath = resolve(targetDir, relPath);
       ensureInside(targetDir, fullPath);
+      ensureUnlinkedPath(outputRoot, fullPath);
       const dir = resolve(fullPath, '..');
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });

@@ -20,6 +20,7 @@ import {
 } from '../core/path-constants.js';
 import { BrainstormPath } from '../core/brainstorm-path.js';
 import { ensureInside as ensureBranchPathInside } from '../core/path-safety.js';
+import { atomicWriteFile } from '../core/atomic-write.js';
 
 // ============================================================================
 // 类型定义
@@ -166,13 +167,20 @@ async function loadBranchIndex(projectPath: string): Promise<BranchIndex> {
     const data = JSON.parse(content);
 
     // 验证数据结构
-    if (!data.branches || !Array.isArray(data.branches)) {
-      return { branches: [], lastBranchNumber: 0 };
+    if (!data || !Array.isArray(data.branches)
+      || !Number.isSafeInteger(data.lastBranchNumber) || data.lastBranchNumber < 0
+      || !data.branches.every((branch: BranchInfo) => branch
+        && isValidBranchId(branch.branchId) && isValidPathId(branch.parentPathId)
+        && typeof branch.branchPointNodeId === 'string'
+        && /^round-\d+$/.test(branch.branchPointNodeId)
+        && typeof branch.branchReason === 'string' && typeof branch.createdAt === 'string'
+        && ['active', 'completed', 'abandoned'].includes(branch.status))) {
+      throw new Error('Invalid branch index data structure');
     }
 
     return {
       branches: data.branches,
-      lastBranchNumber: data.lastBranchNumber || 0,
+      lastBranchNumber: data.lastBranchNumber,
     };
   } catch (error) {
     // 文件不存在
@@ -194,7 +202,7 @@ async function saveBranchIndex(projectPath: string, index: BranchIndex): Promise
 
   const indexPath = getBranchIndexPath(projectPath);
   const content = JSON.stringify(index, null, 2);
-  await fs.writeFile(indexPath, content, 'utf-8');
+  await atomicWriteFile(indexPath, content);
 }
 
 /**
@@ -214,7 +222,7 @@ async function saveBranchPath(
 
   const filePath = getBranchFilePath(projectPath, branchId);
   const content = JSON.stringify(branchPath, null, 2);
-  await fs.writeFile(filePath, content, 'utf-8');
+  await atomicWriteFile(filePath, content);
 }
 
 /**
@@ -302,11 +310,31 @@ export async function createBranchFromNode(
   await initBranchDirectory(projectPath);
   const index = await loadBranchIndex(projectPath);
   const branchNumber = index.lastBranchNumber + 1;
+  if (!Number.isSafeInteger(branchNumber)) throw new Error('Branch counter exhausted');
   const branchId = generateBranchId(originalPath.id, branchNumber);
 
   // 3.1 关键修复：生成完整 branchId 后、任何文件写入前完成校验，避免长 ID 导致孤儿文件
   // 原逻辑在 saveBranchPath 才校验，此时节点文件已写入，会遗留不在索引中的分支目录
   assertValidBranchId(branchId);
+
+  const branchRoot = path.join(getBranchesDir(projectPath), branchId);
+  ensureBranchPathInside(getBranchesDir(projectPath), branchRoot);
+  // Reserve a new directory exclusively. Failure here must never enter the
+  // cleanup block, which owns only the newly reserved branch.
+  try {
+    await fs.lstat(getBranchFilePath(projectPath, branchId));
+    throw new Error(`Branch ${branchId} already exists`);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  try {
+    await fs.mkdir(branchRoot);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new Error(`Branch ${branchId} already exists`);
+    }
+    throw error;
+  }
 
   // 4. 复制该节点及之前所有节点到新路径
   const nodesToCopy = originalPath.nodes.slice(0, nodeIndex + 1);
@@ -327,6 +355,7 @@ export async function createBranchFromNode(
     // 5. 保存分支路径节点文件
     for (const copiedNodeId of nodesToCopy) {
       const node = await loadNode(projectPath, copiedNodeId);
+      if (!node) throw new Error(`Source node ${copiedNodeId} not found`);
       if (node) {
         // 为分支创建独立的节点文件。分支目录是自包含的迷你项目：布局与
         // <projectPath>/.brainstorm/ 同构（REQ-026），因此把分支目录当作
@@ -337,7 +366,7 @@ export async function createBranchFromNode(
   
         const nodeFilePath = path.join(branchNodesDir, `round-${node.round}.json`);
         const nodeContent = JSON.stringify(node, null, 2);
-        await fs.writeFile(nodeFilePath, nodeContent, 'utf-8');
+        await atomicWriteFile(nodeFilePath, nodeContent);
   
         // 5b. 一并复制该轮的创新点快照（REQ-026：分支上下文此前缺快照，
         //     回溯分支节点时无法读到当时的创新点状态）。
@@ -348,7 +377,7 @@ export async function createBranchFromNode(
           );
           await fs.mkdir(branchSnapshotsDir, { recursive: true });
           const snapshotFilePath = path.join(branchSnapshotsDir, `round-${node.round}-innovations.json`);
-          await fs.writeFile(snapshotFilePath, JSON.stringify(snapshot, null, 2), 'utf-8');
+          await atomicWriteFile(snapshotFilePath, JSON.stringify(snapshot, null, 2));
         }
       }
     }

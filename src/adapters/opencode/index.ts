@@ -17,6 +17,7 @@ import {
   UninstallResult,
 } from '../types.js';
 import { stampGenerated } from '../generated-marker.js';
+import { ensureUnlinkedPath } from '../../core/path-safety.js';
 
 export class OpenCodeAdapter implements ToolAdapter {
   readonly name = 'opencode';
@@ -81,6 +82,7 @@ export class OpenCodeAdapter implements ToolAdapter {
     for (const relPath of this.getGeneratedFilePaths(def)) {
       const fullPath = resolve(workspaceDir, relPath);
       try {
+        ensureUnlinkedPath(workspaceDir, fullPath);
         if (existsSync(fullPath) && readFileSync(fullPath, 'utf-8') === this.fileContent(def, relPath)) {
           rmSync(fullPath, { force: true });
           filesRemoved.push(relPath);
@@ -101,6 +103,7 @@ export class OpenCodeAdapter implements ToolAdapter {
     ];
     for (const directory of directories) {
       try {
+        ensureUnlinkedPath(workspaceDir, directory);
         if (existsSync(directory) && readdirSync(directory).length === 0) {
           rmdirSync(directory);
           filesRemoved.push(directory.slice(workspaceDir.length + 1));
@@ -135,6 +138,10 @@ export class OpenCodeAdapter implements ToolAdapter {
       `  task: ${agent.role === 'primary' ? 'allow' : 'deny'}`,
       '  skill: allow',
     ];
+    // MCP tools are named <server>_<tool>. Cover servers added after generation
+    // as well as those in the portable definition. Never grant a blanket allow:
+    // that would relax workspace restrictions and built-in safety guards.
+    if (!agent.permissions.mcp) lines.push('  "*_*": deny');
     if (agent.model) lines.push(`model: ${JSON.stringify(agent.model)}`);
     if (agent.temperature !== undefined) lines.push(`temperature: ${agent.temperature}`);
     lines.push('---', '', agent.promptContent.trim() || agent.description || agent.name, '');

@@ -26,27 +26,38 @@ completion hint; installation is an explicit step after npm installation.
 
 | Adapter | Files written in the workspace |
 |---|---|
-| Claude Code | `.claude/agents/`, `.claude/commands/`, `.claude/settings.json`, `CLAUDE.md` |
+| Claude Code | `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.mcp.json`, `CLAUDE.md` |
 | Codex | `.codex/agents/`, `.codex/commands/`, `.codex/skills/`, `AGENTS.md`, `codex.json`, `plugins/oh-my-patent/`, `.agents/plugins/marketplace.json` |
 | OpenCode | `.opencode/agent/`, `.opencode/command/`, `.opencode/skills/` |
 
-Claude Code and Codex overwrite files at generated paths, including workspace
-instruction files. OpenCode skips existing files during installation.
-Claude Code also copies Markdown files from the workspace's agent and command
+Claude Code merges missing MCP servers into `.mcp.json`, preserving existing
+server entries. Codex preserves an existing root `AGENTS.md` and merges its marketplace
+registration; other Claude Code and Codex generated paths are overwritten. OpenCode
+preserves unmarked custom files and backs up marked generated files before updating them.
+Claude Code also copies this generation's agent and command Markdown files
 directories into `~/.claude-best/agents/` and `~/.claude-best/commands/`,
-overwriting matching names. This includes existing Markdown files in those directories.
+overwriting matching names. Other existing workspace Markdown files are not copied.
 
 ## Platform notes
 
 Open the same workspace in your host and load its generated integration before using
 `/archimedes`. The adapter output differs by platform:
 
-- **Claude Code:** workspace agent and command definitions plus `CLAUDE.md`.
+- **Claude Code:** workspace agents, commands, skills, MCP configuration, and `CLAUDE.md`.
+  Launch `claude --agent archimedes` to run the orchestrator as the main thread
+  with delegation enabled. A nested subagent cannot orchestrate other subagents.
+
 - **Codex:** instruction files and a prompt catalog, plus a local plugin in
   `plugins/oh-my-patent/` and a marketplace manifest. Enable the local plugin using
   the plugin support in your installed Codex version. `codex.json` is a manifest
   for wrappers; it does not make every catalog entry a native callable subagent.
 - **OpenCode:** agent, command, and skill definitions under `.opencode/`.
+
+For installations made before this correction, move any `mcpServers` entries
+from `.claude/settings.json` into the root `.mcp.json`, merging existing servers.
+Use `type: "http"` for remote HTTP servers. Setup leaves the old settings file
+intact, so unrelated permissions and hooks are preserved. See the official
+[MCP configuration reference](https://code.claude.com/docs/en/mcp#project-scope).
 
 If a command is missing, confirm the workspace path, inspect the generated files,
 and reload the host integration. Specialist dispatch requires the host's actual
@@ -180,9 +191,12 @@ npm uninstall -g oh-my-patent
 Add `--tool claude-code`, `--tool codex`, or `--tool opencode` to remove one
 integration. The adapters target their enumerated file paths:
 
-- **Claude Code and Codex** delete files at those paths without comparing their
-  contents. Edits to generated files, `CLAUDE.md`, `AGENTS.md`, or shared
-  configuration paths can therefore be deleted.
+- **Claude Code** preserves a customized `.mcp.json` and reports it as skipped.
+- **Codex** removes only files matching the current default generated content. User
+  instructions, edited files and unrecognized older output are skipped. Marketplace
+  cleanup removes only the unchanged plugin registration, retaining other entries and metadata.
+- **Claude Code** otherwise deletes files at generated paths; edits to `CLAUDE.md`
+  or generated prompts can still be deleted.
 - **Claude Code** also removes registered agent and command files from
   `~/.claude-best/`. Those files may be shared by other workspaces.
 - **OpenCode** deletes a file only if it matches the current generated content;
@@ -193,3 +207,19 @@ Project deliverables such as `MAIN.md`, `references/`, `.brainstorm/`, and
 
 Implementation: [CLI](../src/cli.ts), [Claude adapter](../src/adapters/claude/index.ts),
 [Codex adapter](../src/adapters/codex/index.ts), [OpenCode adapter](../src/adapters/opencode/index.ts).
+
+### Installation and upgrade preservation
+
+- Codex installation keeps an existing root `AGENTS.md`; integrate instructions from
+  `plugins/oh-my-patent/AGENTS.md` as needed. Invalid marketplace data or a conflicting
+  same-name registration causes installation to fail without replacing that configuration.
+- OpenCode reinstalls refresh marked generated prompts and retain their previous bytes
+  under `.opencode/.oh-my-patent-backups/`. Remove the generated marker to maintain a
+  custom agent. Backups survive uninstall.
+- MCP-disabled OpenCode agents use `"*_*": deny`, covering servers added later. This
+  conservative rule also restricts underscore-named custom tools. Enabling MCP does not
+  grant broader workspace permissions.
+- Installation, generation and uninstall reject or skip destination symlinks/junctions.
+  These checks are not a sandbox against concurrent hostile directory replacement.
+- `path record` requires a positive integer round, a valid complete node and the previous
+  round. Rejected input leaves the existing node, snapshot and path unchanged.

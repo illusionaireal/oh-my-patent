@@ -31,7 +31,8 @@
 import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
-import { readFileSync, copyFileSync, readdirSync, statSync } from 'fs';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import {
   initBrainstormDirectory,
   savePath,
@@ -72,16 +73,20 @@ import {
 import { loadPortableDef } from './adapters/loader.js';
 import { runAdaptGenerate } from './adapters/run-generate.js';
 import { pruneGeneratedFiles } from './adapters/prune.js';
+import { GENERATED_MARKER } from './adapters/generated-marker.js';
 import { ClaudeCodeAdapter } from './adapters/claude/index.js';
+import { mergeMcpConfig } from './adapters/claude/mcp-config.js';
+import { atomicWriteFileSync } from './core/atomic-write.js';
 import { CodexAdapter } from './adapters/codex/index.js';
+import { mergeMarketplace } from './adapters/codex/marketplace.js';
 import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { FigureSpec } from './core/diagram-types.js';
+import { FigureSpec, defaultDiagramSpecsFile } from './core/diagram-types.js';
 import { DiagramRenderer } from './core/diagram-renderer.js';
 import { insertFigureReferences } from './core/diagram-inserter.js';
 import { runFullCheck, formatReport, runJsonCheck, getMcpStatuses, buildMcpConfig, writeMcpConfig } from './core/init-checker.js';
-import { ensureInside, isSafeRelPath } from './core/path-safety.js';
+import { ensureInside, ensureUnlinkedPath, isSafeRelPath } from './core/path-safety.js';
 import { parseArgs, isDangerousKey } from './core/cli-args.js';
 
 // ============================================================================
@@ -160,8 +165,10 @@ async function pathInit(projectPath: string): Promise<void> {
 }
 
 async function pathRecord(projectPath: string, opts: Record<string, string>): Promise<void> {
-  const round = parseInt(opts.round || '0', 10);
-  if (round < 1) exitWithError('--round is required and must be >= 1');
+  const round = Number(opts.round);
+  if (!/^\d+$/.test(opts.round ?? '') || !Number.isSafeInteger(round) || round < 1) {
+    exitWithError('--round is required and must be a positive safe integer');
+  }
 
   if (!opts.data) exitWithError('--data is required (JSON string or @file)');
 
@@ -173,6 +180,19 @@ async function pathRecord(projectPath: string, opts: Record<string, string>): Pr
     scores?: InnovationScore[];
     decision?: BrainstormNode['decision'];
   };
+  if (!data || typeof data !== 'object' || Array.isArray(data) ||
+    (data.projectId !== undefined && typeof data.projectId !== 'string') ||
+    (data.topic !== undefined && typeof data.topic !== 'string')) {
+    exitWithError('--data must be an object with string projectId/topic');
+  }
+
+  // Validate the complete node before any files (including snapshots) change.
+  const node = createInitialNode(round);
+  if (data.agentOutputs !== undefined) node.agentOutputs = data.agentOutputs;
+  if (data.innovations !== undefined) node.innovations = data.innovations;
+  if (data.scores !== undefined) node.scores = data.scores;
+  if (data.decision !== undefined) node.decision = data.decision;
+  if (!isValidBrainstormNode(node)) exitWithError('Invalid BrainstormNode data structure');
 
   // Load or create path
   let pathData = await loadPath(projectPath);
@@ -187,12 +207,10 @@ async function pathRecord(projectPath: string, opts: Record<string, string>): Pr
   if (data.projectId && !pathData.projectId) pathData.projectId = data.projectId;
   if (data.topic && !pathData.topic) pathData.topic = data.topic;
 
-  // Create node
-  const node = createInitialNode(round);
-  if (data.agentOutputs) node.agentOutputs = data.agentOutputs;
-  if (data.innovations) node.innovations = data.innovations;
-  if (data.scores) node.scores = data.scores;
-  if (data.decision) node.decision = data.decision;
+  if (round > 1 && (!pathData.nodes.includes(`round-${round - 1}`) ||
+    !await loadNode(projectPath, `round-${round - 1}`))) {
+    exitWithError('Previous round must exist before recording the next round');
+  }
 
   // Save node
   await saveNode(node, projectPath);
@@ -439,6 +457,27 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
 
     const result = await adapter.generate(def, config);
 
+    // Preflight all paths before the first mutation, including shared config.
+    const globalCopies = new Map<string, string>();
+    for (const [relPath, content] of result.files) {
+      if (!isSafeRelPath(relPath)) throw new Error(`Unsafe generated path blocked: ${relPath}`);
+      ensureUnlinkedPath(workspaceDir, resolve(workspaceDir, relPath));
+      if (name === 'claude-code' &&
+        [join('.claude', 'agents'), join('.claude', 'commands')].includes(dirname(relPath))) {
+        const globalPath = resolve(homedir(), '.claude-best', relPath.slice('.claude'.length + 1));
+        ensureUnlinkedPath(homedir(), globalPath);
+        globalCopies.set(globalPath, content);
+      }
+    }
+
+    // Validate shared configuration before any files are installed.
+    const marketplacePath = join('.agents', 'plugins', 'marketplace.json');
+    if (name === 'codex' && existsSync(resolve(workspaceDir, marketplacePath))) {
+      result.files.set(marketplacePath, mergeMarketplace(
+        readFileSync(resolve(workspaceDir, marketplacePath), 'utf8'), result.files.get(marketplacePath)!,
+      ));
+    }
+
     // Write directly into workspaceDir
     let fileCount = 0;
     for (const [relPath, content] of result.files) {
@@ -447,52 +486,43 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       }
       const fullPath = resolve(workspaceDir, relPath);
       ensureInside(workspaceDir, fullPath);
+      ensureUnlinkedPath(workspaceDir, fullPath);
       const dir = resolve(fullPath, '..');
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
       if (name === 'opencode' && existsSync(fullPath)) {
+        const previousBytes = readFileSync(fullPath);
+        const previous = previousBytes.toString('utf8');
+        if (!previous.includes(GENERATED_MARKER) || previous === content) continue;
+        // Retain the exact previous bytes even if a generated prompt was edited.
+        // This also makes security permission upgrades effective on reinstall.
+        const digest = createHash('sha256').update(previousBytes).digest('hex');
+        const backup = resolve(workspaceDir, '.opencode', '.oh-my-patent-backups', `${digest}.md`);
+        ensureUnlinkedPath(workspaceDir, backup);
+        if (existsSync(backup) && !readFileSync(backup).equals(previousBytes)) {
+          throw new Error('OpenCode backup conflict; existing generated file preserved');
+        }
+        if (!existsSync(backup)) atomicWriteFileSync(backup, previousBytes, { mode: 0o600 });
+        console.error('Updated generated OpenCode file; previous content retained in .opencode/.oh-my-patent-backups/.');
+      }
+      if (name === 'codex' && relPath === 'AGENTS.md' && existsSync(fullPath)) {
+        console.error('Preserved existing AGENTS.md; integrate plugin instructions from plugins/oh-my-patent/AGENTS.md.');
         continue;
       }
-      writeFileSync(fullPath, content, 'utf-8');
+      const installedContent = name === 'claude-code' && relPath === '.mcp.json' && existsSync(fullPath)
+        ? mergeMcpConfig(readFileSync(fullPath, 'utf-8'), content)
+        : content;
+      atomicWriteFileSync(fullPath, installedContent,
+        name === 'claude-code' && relPath === '.mcp.json' ? { mode: 0o600 } : {});
       fileCount++;
     }
 
-    // For ccb (Claude Code Best): also copy agent + command files to ~/.claude-best/
-    // so they appear regardless of where ccb was started.
-    if (name === 'claude-code') {
-      // Copy agents
-      const generatedAgentsDir = resolve(workspaceDir, '.claude', 'agents');
-      const ccbAgentsDir = join(homedir(), '.claude-best', 'agents');
-      if (existsSync(generatedAgentsDir)) {
-        if (!existsSync(ccbAgentsDir)) {
-          mkdirSync(ccbAgentsDir, { recursive: true });
-        }
-        for (const file of readdirSync(generatedAgentsDir)) {
-          if (file.endsWith('.md')) {
-            const src = resolve(generatedAgentsDir, file);
-            const dst = resolve(ccbAgentsDir, file);
-            copyFileSync(src, dst);
-            fileCount++;
-          }
-        }
-      }
-      // Copy commands
-      const generatedCommandsDir = resolve(workspaceDir, '.claude', 'commands');
-      const ccbCommandsDir = join(homedir(), '.claude-best', 'commands');
-      if (existsSync(generatedCommandsDir)) {
-        if (!existsSync(ccbCommandsDir)) {
-          mkdirSync(ccbCommandsDir, { recursive: true });
-        }
-        for (const file of readdirSync(generatedCommandsDir)) {
-          if (file.endsWith('.md')) {
-            const src = resolve(generatedCommandsDir, file);
-            const dst = resolve(ccbCommandsDir, file);
-            copyFileSync(src, dst);
-            fileCount++;
-          }
-        }
-      }
+    // Copy only this generation's output, never arbitrary workspace files.
+    for (const [destination, content] of globalCopies) {
+      ensureUnlinkedPath(homedir(), destination);
+      atomicWriteFileSync(destination, content);
+      fileCount++;
     }
 
     // Optional: remove output from a previous definition that this run no
@@ -579,11 +609,12 @@ function readMainMd(projectPath: string): string {
 }
 
 async function diagramRender(projectPath: string, opts: Record<string, string>): Promise<void> {
+  const phase = opts.phase || 'draft';
   if (!opts.specs) {
-    // Fallback: read default specs file
-    const specsFile = join(projectPath, 'references', 'diagram-specs-draft.json');
+    const specsName = defaultDiagramSpecsFile(phase);
+    const specsFile = join(projectPath, 'references', specsName);
     if (!existsSync(specsFile)) {
-      exitWithError('No --specs provided and references/diagram-specs-draft.json not found');
+      exitWithError(`No --specs provided and references/${specsName} not found`);
     }
     opts.specs = `@${specsFile}`;
   }
@@ -594,7 +625,6 @@ async function diagramRender(projectPath: string, opts: Record<string, string>):
     return;
   }
 
-  const phase = opts.phase || 'draft';
   const figuresDir = join(projectPath, 'figures');
   const renderer = new DiagramRenderer();
   const results = await renderer.renderAll(specs, figuresDir);

@@ -19,6 +19,18 @@ export type DiagramType = 'architecture' | 'flowchart' | 'sequence' | 'state' | 
 export type Engine = 'mermaid' | 'plantuml';
 
 /**
+ * Specs file `diagram render` reads when `--specs` is omitted.
+ *
+ * The diagram agent writes `references/diagram-specs-{phase}.json`. Passing
+ * `--phase final` must not silently reuse the draft file.
+ */
+export function defaultDiagramSpecsFile(phase: string | undefined): string {
+  return phase?.toLowerCase() === 'final'
+    ? 'diagram-specs-final.json'
+    : 'diagram-specs-draft.json';
+}
+
+/**
  * 渲染阶段
  */
 export type RenderPhase = 'draft' | 'final';

@@ -22,13 +22,16 @@
 
 import { join, resolve } from 'path';
 import {
-  existsSync, readdirSync, rmdirSync, rmSync,
+  existsSync, readFileSync, readdirSync, rmdirSync, rmSync,
 } from 'fs';
 import {
   PortableDef, AgentDef, CommandDef, SkillDef, ToolAdapter, GenerateResult, UninstallResult
 } from '../types.js';
 import { WORKFLOW_STAGE_ORDER } from '../../core/workflow.js';
 import { stampGenerated } from '../generated-marker.js';
+import { removeMarketplaceEntry } from './marketplace.js';
+import { atomicWriteFileSync } from '../../core/atomic-write.js';
+import { ensureUnlinkedPath } from '../../core/path-safety.js';
 
 // ============================================================================
 // Codex adapter
@@ -663,10 +666,27 @@ export class CodexAdapter implements ToolAdapter {
   async uninstall(def: PortableDef, workspaceDir: string): Promise<UninstallResult> {
     const filesRemoved: string[] = [];
     const filesSkipped: string[] = [];
+    const defaults = Object.fromEntries(Object.entries(def.config).map(([key, field]) => [key, field.default]));
+    const expected = (await this.generate(def, defaults)).files;
 
     const removeExact = (fullPath: string, label: string) => {
       try {
+        ensureUnlinkedPath(workspaceDir, fullPath);
         if (existsSync(fullPath)) {
+          // A generated path is not proof of ownership. Preserve user-authored
+          // files, edits and output from configurations we cannot reconstruct.
+          const current = readFileSync(fullPath, 'utf8');
+          if (current !== expected.get(label)) {
+            if (label === join('.agents', 'plugins', 'marketplace.json')) {
+              const updated = removeMarketplaceEntry(current, expected.get(label)!);
+              if (updated !== null) {
+                atomicWriteFileSync(fullPath, updated);
+                return;
+              }
+            }
+            filesSkipped.push(label);
+            return;
+          }
           rmSync(fullPath, { force: true });
           filesRemoved.push(label);
         }
@@ -683,6 +703,7 @@ export class CodexAdapter implements ToolAdapter {
     // 2. Safe empty-dir cleanup (only if empty)
     const tryRmdir = (dir: string, label: string) => {
       try {
+        ensureUnlinkedPath(workspaceDir, dir);
         if (existsSync(dir) && readdirSync(dir).length === 0) {
           rmdirSync(dir);
           filesRemoved.push(label);

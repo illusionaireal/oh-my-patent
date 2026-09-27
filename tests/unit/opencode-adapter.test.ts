@@ -13,6 +13,21 @@ const pluginDir = join(__dirname, '../..');
 const workspaceDir = join(pluginDir, '..');
 
 describe('OpenCodeAdapter', () => {
+  test('denies server-prefixed MCP tools without granting broader permissions when enabled', async () => {
+    const def = await loadPortableDef({ pluginDir, workspaceDir });
+    const agent = def.agents[0];
+    const adapter = new OpenCodeAdapter();
+    const denied = await adapter.generate({ ...def, agents: [{ ...agent,
+      permissions: { ...agent.permissions, mcp: false },
+    }] }, {});
+    const allowed = await adapter.generate({ ...def, agents: [{ ...agent,
+      permissions: { ...agent.permissions, mcp: true },
+    }] }, {});
+    const file = join('.opencode', 'agent', agent.id + '.md');
+    expect(denied.files.get(file)).toContain('  "*_*": deny');
+    expect(allowed.files.get(file)).not.toContain('"*_*"');
+    expect(denied.files.get(file)).not.toContain('read: allow');
+  });
   test('generates native agents, commands, and skills', async () => {
     const def = await loadPortableDef({ pluginDir, workspaceDir });
     const result = await new OpenCodeAdapter().generate(def, {});

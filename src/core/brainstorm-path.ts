@@ -351,6 +351,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
 function isValidTransformation(value: unknown): boolean {
   if (!isRecord(value)) return false;
   return (
@@ -376,8 +380,8 @@ function isValidInnovationSnapshot(value: unknown): boolean {
     typeof value.id === 'string' &&
     typeof value.title === 'string' &&
     typeof value.problem === 'string' &&
-    Array.isArray(value.coreSolution) &&
-    Array.isArray(value.differences) &&
+    isStringArray(value.coreSolution) &&
+    isStringArray(value.differences) &&
     ['active', 'merged', 'abandoned'].includes(value.status as string) &&
     (value.mergedInto === undefined || typeof value.mergedInto === 'string') &&
     (value.archiveReason === undefined || typeof value.archiveReason === 'string') &&
@@ -402,7 +406,7 @@ function isValidRoundDecision(value: unknown): boolean {
   return (
     ['ITERATE', 'PASS_TO_DRAFT', 'FORCE_PASS'].includes(value.action as string) &&
     typeof value.reason === 'string' &&
-    Array.isArray(value.recommendations)
+    isStringArray(value.recommendations)
   );
 }
 
@@ -446,8 +450,11 @@ export function isValidBrainstormNode(data: unknown): data is BrainstormNode {
   return (
     typeof node.id === 'string' &&
     typeof node.round === 'number' &&
-    Number.isFinite(node.round) &&
+    Number.isSafeInteger(node.round) && node.round >= 1 &&
+    node.id === `round-${node.round}` &&
     Array.isArray(node.agentOutputs) &&
+    node.agentOutputs.every(item => isRecord(item) && typeof item.agentId === 'string' &&
+      typeof item.outputFile === 'string' && typeof item.summary === 'string' && isStringArray(item.keyPoints)) &&
     Array.isArray(node.innovations) &&
     node.innovations.every((item) => isValidInnovationSnapshot(item)) &&
     Array.isArray(node.scores) &&
