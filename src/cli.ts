@@ -163,8 +163,10 @@ async function pathInit(projectPath: string): Promise<void> {
 }
 
 async function pathRecord(projectPath: string, opts: Record<string, string>): Promise<void> {
-  const round = parseInt(opts.round || '0', 10);
-  if (round < 1) exitWithError('--round is required and must be >= 1');
+  const round = Number(opts.round);
+  if (!/^\d+$/.test(opts.round ?? '') || !Number.isSafeInteger(round) || round < 1) {
+    exitWithError('--round is required and must be a positive safe integer');
+  }
 
   if (!opts.data) exitWithError('--data is required (JSON string or @file)');
 
@@ -176,6 +178,19 @@ async function pathRecord(projectPath: string, opts: Record<string, string>): Pr
     scores?: InnovationScore[];
     decision?: BrainstormNode['decision'];
   };
+  if (!data || typeof data !== 'object' || Array.isArray(data) ||
+    (data.projectId !== undefined && typeof data.projectId !== 'string') ||
+    (data.topic !== undefined && typeof data.topic !== 'string')) {
+    exitWithError('--data must be an object with string projectId/topic');
+  }
+
+  // Validate the complete node before any files (including snapshots) change.
+  const node = createInitialNode(round);
+  if (data.agentOutputs !== undefined) node.agentOutputs = data.agentOutputs;
+  if (data.innovations !== undefined) node.innovations = data.innovations;
+  if (data.scores !== undefined) node.scores = data.scores;
+  if (data.decision !== undefined) node.decision = data.decision;
+  if (!isValidBrainstormNode(node)) exitWithError('Invalid BrainstormNode data structure');
 
   // Load or create path
   let pathData = await loadPath(projectPath);
@@ -190,12 +205,10 @@ async function pathRecord(projectPath: string, opts: Record<string, string>): Pr
   if (data.projectId && !pathData.projectId) pathData.projectId = data.projectId;
   if (data.topic && !pathData.topic) pathData.topic = data.topic;
 
-  // Create node
-  const node = createInitialNode(round);
-  if (data.agentOutputs) node.agentOutputs = data.agentOutputs;
-  if (data.innovations) node.innovations = data.innovations;
-  if (data.scores) node.scores = data.scores;
-  if (data.decision) node.decision = data.decision;
+  if (round > 1 && (!pathData.nodes.includes(`round-${round - 1}`) ||
+    !await loadNode(projectPath, `round-${round - 1}`))) {
+    exitWithError('Previous round must exist before recording the next round');
+  }
 
   // Save node
   await saveNode(node, projectPath);

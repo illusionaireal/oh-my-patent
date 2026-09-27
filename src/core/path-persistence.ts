@@ -108,6 +108,7 @@ export async function saveNode(
   node: BrainstormNode,
   projectPath: string
 ): Promise<void> {
+  if (!isValidBrainstormNode(node)) throw new Error('Invalid BrainstormNode data structure');
   const nodesDir = path.join(projectPath, BRAINSTORM_DIR, NODES_DIR);
   const filePath = path.join(nodesDir, `round-${node.round}.json`);
 
