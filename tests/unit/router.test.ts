@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { classifyIntent, IntentType } from '../../src/core/router';
+import { classifyIntent, extractJurisdiction, IntentType } from '../../src/core/router';
 
 describe('Intent Router', () => {
   test('classifies "新建项目" as NEW_PROJECT', () => {
@@ -106,6 +106,19 @@ describe('Intent Router', () => {
     const result = classifyIntent('检索欧洲PCT专利');
     expect(result.type).toBe(IntentType.SEARCH);
     expect(result.extracted?.jurisdiction).toBe('PCT');
+  });
+
+  test('does not treat Latin codes as substrings (useful/user/keep)', () => {
+    expect(classifyIntent('检索 useful encryption 专利').extracted?.jurisdiction).toBeUndefined();
+    expect(classifyIntent('search for user authentication patents').extracted?.jurisdiction).toBeUndefined();
+    expect(classifyIntent('search US patents on homomorphic encryption').extracted?.jurisdiction).toBe('US');
+    // EP/JP are recognized and then dropped (REQ-017). Assert the recognition
+    // itself so a substring match cannot hide behind that drop.
+    expect(extractJurisdiction('please keep the draft')).toBeUndefined();
+    expect(extractJurisdiction('EP only')).toBeUndefined();
+    expect(extractJurisdiction('检索欧洲专利')).toBeUndefined();
+    expect(extractJurisdiction('a useful approach')).toBeUndefined();
+    expect(extractJurisdiction('file in the US')).toBe('US');
   });
 
   test('REQ-017: extracts jurisdiction PCT', () => {

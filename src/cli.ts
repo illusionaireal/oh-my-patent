@@ -82,7 +82,7 @@ import { mergeMarketplace } from './adapters/codex/marketplace.js';
 import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { FigureSpec } from './core/diagram-types.js';
+import { FigureSpec, defaultDiagramSpecsFile } from './core/diagram-types.js';
 import { DiagramRenderer } from './core/diagram-renderer.js';
 import { insertFigureReferences } from './core/diagram-inserter.js';
 import { runFullCheck, formatReport, runJsonCheck, getMcpStatuses, buildMcpConfig, writeMcpConfig } from './core/init-checker.js';
@@ -608,11 +608,12 @@ function readMainMd(projectPath: string): string {
 }
 
 async function diagramRender(projectPath: string, opts: Record<string, string>): Promise<void> {
+  const phase = opts.phase || 'draft';
   if (!opts.specs) {
-    // Fallback: read default specs file
-    const specsFile = join(projectPath, 'references', 'diagram-specs-draft.json');
+    const specsName = defaultDiagramSpecsFile(phase);
+    const specsFile = join(projectPath, 'references', specsName);
     if (!existsSync(specsFile)) {
-      exitWithError('No --specs provided and references/diagram-specs-draft.json not found');
+      exitWithError(`No --specs provided and references/${specsName} not found`);
     }
     opts.specs = `@${specsFile}`;
   }
@@ -623,7 +624,6 @@ async function diagramRender(projectPath: string, opts: Record<string, string>):
     return;
   }
 
-  const phase = opts.phase || 'draft';
   const figuresDir = join(projectPath, 'figures');
   const renderer = new DiagramRenderer();
   const results = await renderer.renderAll(specs, figuresDir);

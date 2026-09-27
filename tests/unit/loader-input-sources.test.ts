@@ -108,3 +108,50 @@ describe('agent definition source', () => {
     expect(def.agents).toHaveLength(14);
   });
 });
+
+describe('package version source (DEC-6)', () => {
+  let scratch: string;
+
+  beforeAll(() => {
+    scratch = mkdtempSync(join(tmpdir(), 'omp-ver-src-'));
+  });
+
+  afterAll(() => {
+    if (existsSync(scratch)) {
+      rmSync(scratch, { recursive: true, force: true });
+    }
+  });
+
+  test('package.json wins over a stale plugin.jsonc version', async () => {
+    const pluginDir = join(scratch, 'plugin');
+    mkdirSync(pluginDir, { recursive: true });
+    writeFileSync(join(pluginDir, 'plugin.jsonc'), JSON.stringify({
+      name: 'oh-my-patent',
+      version: '0.0.1',
+      agents: [],
+      skills: [],
+      commands: [],
+      config: {},
+    }));
+    writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ version: '9.9.9' }));
+
+    const def = await loadPortableDef({ pluginDir, workspaceDir: pluginDir });
+    expect(def.version).toBe('9.9.9');
+  });
+
+  test('falls back to plugin.jsonc when package.json has no version', async () => {
+    const pluginDir = join(scratch, 'plugin-fallback');
+    mkdirSync(pluginDir, { recursive: true });
+    writeFileSync(join(pluginDir, 'plugin.jsonc'), JSON.stringify({
+      name: 'oh-my-patent',
+      version: '0.3.1',
+      agents: [],
+      skills: [],
+      commands: [],
+    }));
+    writeFileSync(join(pluginDir, 'package.json'), '{}');
+
+    const def = await loadPortableDef({ pluginDir, workspaceDir: pluginDir });
+    expect(def.version).toBe('0.3.1');
+  });
+});
