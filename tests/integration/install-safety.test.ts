@@ -74,6 +74,19 @@ test('standalone generation rejects a linked adapter output directory', () => {
   expect(existsSync(join(outside, '.codex'))).toBe(false);
 });
 
+test('legacy generator also rejects linked output descendants', () => {
+  const output = workspace(), outside = workspace();
+  const link = join(output, '.codex');
+  symlinkSync(outside, link, process.platform === 'win32' ? 'junction' : 'dir');
+  links.push(link);
+  const result = spawnSync(process.execPath, [resolve('dist/adapters/generate.js'), 'codex',
+    '--plugin-dir', process.cwd(), '--workspace-dir', workspace(), '--output', output],
+  { encoding: 'utf8', timeout: 20000 });
+  expect(result.status).not.toBe(0);
+  expect(result.stderr).toContain('Linked destination blocked');
+  expect(existsSync(join(outside, 'agents'))).toBe(false);
+});
+
 test('Claude rejects linked global copy destinations before writing workspace files', () => {
   const dir = workspace(), home = workspace(), outside = workspace();
   const link = join(home, '.claude-best');
