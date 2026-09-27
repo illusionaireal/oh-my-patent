@@ -1,6 +1,6 @@
 {
   "name": "oh-my-patent",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "Archimedes, your Eureka-to-patent guide. An AI patent plugin for Claude Code, Codex, and OpenCode that turns technical ideas into patent disclosures with traceable, forkable decision paths.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
