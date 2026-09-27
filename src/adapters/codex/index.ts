@@ -31,6 +31,7 @@ import { WORKFLOW_STAGE_ORDER } from '../../core/workflow.js';
 import { stampGenerated } from '../generated-marker.js';
 import { removeMarketplaceEntry } from './marketplace.js';
 import { atomicWriteFileSync } from '../../core/atomic-write.js';
+import { ensureUnlinkedPath } from '../../core/path-safety.js';
 
 // ============================================================================
 // Codex adapter
@@ -670,6 +671,7 @@ export class CodexAdapter implements ToolAdapter {
 
     const removeExact = (fullPath: string, label: string) => {
       try {
+        ensureUnlinkedPath(workspaceDir, fullPath);
         if (existsSync(fullPath)) {
           // A generated path is not proof of ownership. Preserve user-authored
           // files, edits and output from configurations we cannot reconstruct.
@@ -701,6 +703,7 @@ export class CodexAdapter implements ToolAdapter {
     // 2. Safe empty-dir cleanup (only if empty)
     const tryRmdir = (dir: string, label: string) => {
       try {
+        ensureUnlinkedPath(workspaceDir, dir);
         if (existsSync(dir) && readdirSync(dir).length === 0) {
           rmdirSync(dir);
           filesRemoved.push(label);

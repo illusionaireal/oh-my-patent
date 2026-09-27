@@ -20,6 +20,7 @@ import {
 } from '../types.js';
 import { WORKFLOW_STAGE_ORDER } from '../../core/workflow.js';
 import { stampGenerated } from '../generated-marker.js';
+import { ensureUnlinkedPath } from '../../core/path-safety.js';
 
 // ============================================================================
 // Claude Code adapter
@@ -483,8 +484,9 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     const { homedir } = await import('os');
 
     // Remove exact generated files only — never readdir + unlink an entire directory
-    const removeExact = (fullPath: string, label: string) => {
+    const removeExact = (fullPath: string, label: string, baseDir = workspaceDir) => {
       try {
+        ensureUnlinkedPath(baseDir, fullPath);
         if (existsSync(fullPath)) {
           rmSync(fullPath, { force: true });
           filesRemoved.push(label);
@@ -496,6 +498,12 @@ export class ClaudeCodeAdapter implements ToolAdapter {
 
     // 1. Workspace files
     for (const relPath of this.getGeneratedFilePaths(def)) {
+      try {
+        ensureUnlinkedPath(workspaceDir, resolve(workspaceDir, relPath));
+      } catch {
+        filesSkipped.push(relPath);
+        continue;
+      }
       // .mcp.json is shared configuration. Remove it only when it is still
       // exactly our generated default; custom servers/credentials belong to
       // the user and must survive uninstall.
@@ -517,15 +525,16 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     const ccbAgentsDir = resolve(homedir(), '.claude-best', 'agents');
     const ccbCommandsDir = resolve(homedir(), '.claude-best', 'commands');
     for (const agent of def.agents) {
-      removeExact(resolve(ccbAgentsDir, `${agent.id}.md`), join('~/.claude-best/agents', `${agent.id}.md`));
+      removeExact(resolve(ccbAgentsDir, `${agent.id}.md`), join('~/.claude-best/agents', `${agent.id}.md`), homedir());
     }
     for (const cmd of def.commands) {
-      removeExact(resolve(ccbCommandsDir, `${cmd.id}.md`), join('~/.claude-best/commands', `${cmd.id}.md`));
+      removeExact(resolve(ccbCommandsDir, `${cmd.id}.md`), join('~/.claude-best/commands', `${cmd.id}.md`), homedir());
     }
 
     // 3. Safe empty-dir cleanup (only if the directory is now empty)
-    const tryRmdir = (dir: string, label: string) => {
+    const tryRmdir = (dir: string, label: string, baseDir = workspaceDir) => {
       try {
+        ensureUnlinkedPath(baseDir, dir);
         if (existsSync(dir) && readdirSync(dir).length === 0) {
           rmdirSync(dir);
           filesRemoved.push(label);
@@ -542,8 +551,8 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     }
     tryRmdir(resolve(workspaceDir, '.claude', 'skills'), '.claude/skills/');
     tryRmdir(resolve(workspaceDir, '.claude'), '.claude/');
-    tryRmdir(resolve(homedir(), '.claude-best', 'agents'), '~/.claude-best/agents/');
-    tryRmdir(resolve(homedir(), '.claude-best', 'commands'), '~/.claude-best/commands/');
+    tryRmdir(resolve(homedir(), '.claude-best', 'agents'), '~/.claude-best/agents/', homedir());
+    tryRmdir(resolve(homedir(), '.claude-best', 'commands'), '~/.claude-best/commands/', homedir());
 
     return {
       filesRemoved,

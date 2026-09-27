@@ -31,7 +31,7 @@
 import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
-import { readFileSync, copyFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import {
   initBrainstormDirectory,
   savePath,
@@ -84,7 +84,7 @@ import { FigureSpec } from './core/diagram-types.js';
 import { DiagramRenderer } from './core/diagram-renderer.js';
 import { insertFigureReferences } from './core/diagram-inserter.js';
 import { runFullCheck, formatReport, runJsonCheck, getMcpStatuses, buildMcpConfig, writeMcpConfig } from './core/init-checker.js';
-import { ensureInside, isSafeRelPath } from './core/path-safety.js';
+import { ensureInside, ensureUnlinkedPath, isSafeRelPath } from './core/path-safety.js';
 import { parseArgs, isDangerousKey } from './core/cli-args.js';
 
 // ============================================================================
@@ -442,6 +442,19 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
 
     const result = await adapter.generate(def, config);
 
+    // Preflight all paths before the first mutation, including shared config.
+    const globalCopies = new Map<string, string>();
+    for (const [relPath, content] of result.files) {
+      if (!isSafeRelPath(relPath)) throw new Error(`Unsafe generated path blocked: ${relPath}`);
+      ensureUnlinkedPath(workspaceDir, resolve(workspaceDir, relPath));
+      if (name === 'claude-code' &&
+        [join('.claude', 'agents'), join('.claude', 'commands')].includes(dirname(relPath))) {
+        const globalPath = resolve(homedir(), '.claude-best', relPath.slice('.claude'.length + 1));
+        ensureUnlinkedPath(homedir(), globalPath);
+        globalCopies.set(globalPath, content);
+      }
+    }
+
     // Validate shared configuration before any files are installed.
     const marketplacePath = join('.agents', 'plugins', 'marketplace.json');
     if (name === 'codex' && existsSync(resolve(workspaceDir, marketplacePath))) {
@@ -458,6 +471,7 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       }
       const fullPath = resolve(workspaceDir, relPath);
       ensureInside(workspaceDir, fullPath);
+      ensureUnlinkedPath(workspaceDir, fullPath);
       const dir = resolve(fullPath, '..');
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
@@ -477,41 +491,11 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
       fileCount++;
     }
 
-    // For ccb (Claude Code Best): also copy agent + command files to ~/.claude-best/
-    // so they appear regardless of where ccb was started.
-    if (name === 'claude-code') {
-      // Copy agents
-      const generatedAgentsDir = resolve(workspaceDir, '.claude', 'agents');
-      const ccbAgentsDir = join(homedir(), '.claude-best', 'agents');
-      if (existsSync(generatedAgentsDir)) {
-        if (!existsSync(ccbAgentsDir)) {
-          mkdirSync(ccbAgentsDir, { recursive: true });
-        }
-        for (const file of readdirSync(generatedAgentsDir)) {
-          if (file.endsWith('.md')) {
-            const src = resolve(generatedAgentsDir, file);
-            const dst = resolve(ccbAgentsDir, file);
-            copyFileSync(src, dst);
-            fileCount++;
-          }
-        }
-      }
-      // Copy commands
-      const generatedCommandsDir = resolve(workspaceDir, '.claude', 'commands');
-      const ccbCommandsDir = join(homedir(), '.claude-best', 'commands');
-      if (existsSync(generatedCommandsDir)) {
-        if (!existsSync(ccbCommandsDir)) {
-          mkdirSync(ccbCommandsDir, { recursive: true });
-        }
-        for (const file of readdirSync(generatedCommandsDir)) {
-          if (file.endsWith('.md')) {
-            const src = resolve(generatedCommandsDir, file);
-            const dst = resolve(ccbCommandsDir, file);
-            copyFileSync(src, dst);
-            fileCount++;
-          }
-        }
-      }
+    // Copy only this generation's output, never arbitrary workspace files.
+    for (const [destination, content] of globalCopies) {
+      ensureUnlinkedPath(homedir(), destination);
+      atomicWriteFileSync(destination, content);
+      fileCount++;
     }
 
     // Optional: remove output from a previous definition that this run no
