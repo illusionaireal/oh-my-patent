@@ -29,6 +29,8 @@ import {
 } from '../types.js';
 import { WORKFLOW_STAGE_ORDER } from '../../core/workflow.js';
 import { stampGenerated } from '../generated-marker.js';
+import { removeMarketplaceEntry } from './marketplace.js';
+import { atomicWriteFileSync } from '../../core/atomic-write.js';
 
 // ============================================================================
 // Codex adapter
@@ -671,7 +673,15 @@ export class CodexAdapter implements ToolAdapter {
         if (existsSync(fullPath)) {
           // A generated path is not proof of ownership. Preserve user-authored
           // files, edits and output from configurations we cannot reconstruct.
-          if (readFileSync(fullPath, 'utf8') !== expected.get(label)) {
+          const current = readFileSync(fullPath, 'utf8');
+          if (current !== expected.get(label)) {
+            if (label === join('.agents', 'plugins', 'marketplace.json')) {
+              const updated = removeMarketplaceEntry(current, expected.get(label)!);
+              if (updated !== null) {
+                atomicWriteFileSync(fullPath, updated);
+                return;
+              }
+            }
             filesSkipped.push(label);
             return;
           }

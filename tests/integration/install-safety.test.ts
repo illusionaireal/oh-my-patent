@@ -47,3 +47,35 @@ test('Codex uninstall preserves preexisting instructions and modified generated 
   expect(readFileSync(instructions, 'utf8')).toBe('USER INSTRUCTIONS');
   expect(existsSync(join(dir, 'plugins', 'oh-my-patent', 'AGENTS.md'))).toBe(false);
 });
+
+test('Codex install and uninstall retain unrelated marketplace entries and metadata', async () => {
+  const dir = workspace();
+  const file = join(dir, '.agents', 'plugins', 'marketplace.json');
+  const original = { name: 'personal', custom: { keep: true }, plugins: [
+    { name: 'other-plugin', source: { source: 'local', path: './other' }, extra: 42 },
+  ] };
+  put(file, JSON.stringify(original));
+  for (let i = 0; i < 2; i++) {
+    const result = cli(dir, 'adapt', 'install', '--tool', 'codex');
+    expect(result.status, result.stderr).toBe(0);
+  }
+  const installed = JSON.parse(readFileSync(file, 'utf8'));
+  expect(installed.plugins).toHaveLength(2);
+  expect(installed.plugins[0]).toEqual(original.plugins[0]);
+  expect(installed.custom).toEqual(original.custom);
+  const def = await loadPortableDef({ pluginDir: process.cwd(), workspaceDir: dir });
+  await new CodexAdapter().uninstall(def, dir);
+  expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual(original);
+});
+
+test.each(['{broken', '{"plugins":{}}', JSON.stringify({ plugins: [
+  { name: 'oh-my-patent', source: { source: 'local', path: './user-owned' } },
+] })])('Codex refuses invalid or conflicting marketplace without installing files: %s', content => {
+  const dir = workspace();
+  const file = join(dir, '.agents', 'plugins', 'marketplace.json');
+  put(file, content);
+  const result = cli(dir, 'adapt', 'install', '--tool', 'codex');
+  expect(result.status).not.toBe(0);
+  expect(readFileSync(file, 'utf8')).toBe(content);
+  expect(existsSync(join(dir, '.codex'))).toBe(false);
+});

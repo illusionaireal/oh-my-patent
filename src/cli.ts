@@ -76,6 +76,7 @@ import { ClaudeCodeAdapter } from './adapters/claude/index.js';
 import { mergeMcpConfig } from './adapters/claude/mcp-config.js';
 import { atomicWriteFileSync } from './core/atomic-write.js';
 import { CodexAdapter } from './adapters/codex/index.js';
+import { mergeMarketplace } from './adapters/codex/marketplace.js';
 import { OpenCodeAdapter } from './adapters/opencode/index.js';
 import { ToolAdapter, GenerateResult } from './adapters/types.js';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
@@ -440,6 +441,14 @@ async function adaptInstall(pluginDir: string, opts: Record<string, string>): Pr
     }
 
     const result = await adapter.generate(def, config);
+
+    // Validate shared configuration before any files are installed.
+    const marketplacePath = join('.agents', 'plugins', 'marketplace.json');
+    if (name === 'codex' && existsSync(resolve(workspaceDir, marketplacePath))) {
+      result.files.set(marketplacePath, mergeMarketplace(
+        readFileSync(resolve(workspaceDir, marketplacePath), 'utf8'), result.files.get(marketplacePath)!,
+      ));
+    }
 
     // Write directly into workspaceDir
     let fileCount = 0;
