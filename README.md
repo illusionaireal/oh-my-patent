@@ -1,3 +1,5 @@
+> **Skill-first preview (0.4.0 alpha):** A portable single-entry package and JSON runtime are available in this branch. See [installation and migration](docs/skill.md) and [actual compatibility status](docs/compatibility.md). Host certification and marketplace publication are pending.
+
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -16,43 +18,45 @@
 
 **Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
 
-An AI patent plugin for **Claude Code, Codex, and OpenCode**.
+An Agent Skill for patent workflows, with **Claude Code, Codex, and OpenCode** as first-wave host candidates.
 Archimedes orchestrates specialist agents across research, ideation, drafting,
 review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Run these commands in your patent workspace. Setup writes editor configuration;
-see [installation behavior](./docs/usage-en.md#installation) before using an existing workspace.
+Build this preview from the checkout (Node.js >=22), then install into your patent
+workspace. Review [installation and migration](docs/skill.md) first.
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
+npm ci
+npm run build
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-Open that workspace in your AI coding tool, load the generated integration, and start with:
+Open that workspace in your AI coding tool, select the `oh-my-patent` Skill, and start with:
 
 ```text
-/archimedes
-> Create a patent project about homomorphic encryption in privacy-preserving computing.
+Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
 
-Use `--tool claude-code`, `--tool codex`, or `--tool opencode` to configure one
-platform. Without `--tool`, setup targets all three. See the
-[platform notes](./docs/usage-en.md#platform-notes) if the entry point is unavailable.
+Select one host with `--tool claude-code`, `--tool codex`, or `--tool opencode`.
+The installer requires an explicit host and installs one complete Skill without changing
+global instructions or MCP configuration. Real host discovery and workflow acceptance
+remain [unverified](docs/compatibility.md). No alpha release has been published by this work.
 
 <details>
 <summary>For AI assistants helping users install this</summary>
 
-Choose the user's patent workspace, review the installation behavior above, and run:
+Use the built checkout or the exact candidate artifact. Inspect the selected host's
+installation plan and respect existing workspace files:
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
 ```
 
-Then help the user load the integration and start a project with `/archimedes`.
+Install the reviewed plan, then load `oh-my-patent`. `/archimedes` and the historical
+multi-entry plugin layout are available only through explicit `--legacy` adapter use.
 
 </details>
 
@@ -63,7 +67,7 @@ Then help the user load the integration and start a project with `/archimedes`.
 | Coordinate specialist agents | Research, ideation, patentability assessment, drafting, review, and technical responses under one orchestrator |
 | Keep decisions traceable | Saved rounds, scores, innovation snapshots, and reasons in `.brainstorm/`; branch from a recorded node or restore an idea |
 | Resume recorded work | Workflow state in `.patent/state.json` and agent outputs in `references/` provide context for continuing a project |
-| Generate patent figures | Mermaid or PlantUML sources rendered to SVG and PNG, with figure references inserted into `MAIN.md` |
+| Generate patent figures | Specifications and editable SVG, optional local rendering or approved host image tools, with provenance and current review |
 | Inspect progress | CLI queries, Markdown reports, a terminal UI, and environment checks |
 
 The project brings the disclosure, its supporting material, and its decision history

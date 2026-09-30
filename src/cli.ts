@@ -780,6 +780,11 @@ async function diagramRerender(projectPath: string, opts: Record<string, string>
 // ============================================================================
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'runtime') {
+    process.argv.splice(2, 1);
+    await import('./runtime/skill-entry.js');
+    return;
+  }
   const args = process.argv.slice(2);
 
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
@@ -923,6 +928,23 @@ Options:
   } else if (domain === 'adapt') {
     const pluginDir = opts['plugin-dir'] ? resolve(opts['plugin-dir']) : getPluginDir();
     const workspaceDir = opts['workspace-dir'] ? resolve(opts['workspace-dir']) : getDefaultWorkspaceDir();
+    if (opts.legacy !== 'true') {
+      const { managePortable, rollbackPortable, recoverPortableLock } = await import('./adapters/portable-install.js');
+      if (subcommand === 'rollback') {
+        rollbackPortable(workspaceDir, opts.backup || '');
+        console.log(JSON.stringify({ ok: true, rolled_back: opts.backup }));
+      } else if (subcommand === 'recover-lock') {
+        recoverPortableLock(workspaceDir, opts['owner-token'] || '');
+        console.log(JSON.stringify({ ok: true, lock_recovered: true }));
+      } else {
+        if (!['generate', 'install', 'setup', 'uninstall'].includes(subcommand)) exitWithError('Use adapt generate|install|uninstall|rollback|recover-lock');
+        const action = subcommand === 'setup' ? 'install' : subcommand as 'install' | 'generate' | 'uninstall';
+        const destination = action === 'generate' ? resolve(opts.output || join(pluginDir, 'plugins', opts.tool || '')) : workspaceDir;
+        const result = managePortable(pluginDir, destination, opts.tool || '', action, opts['dry-run'] === 'true');
+        console.log(JSON.stringify({ ok: true, ...result as object }));
+      }
+      return;
+    }
     switch (subcommand) {
       case 'generate': {
         await adaptGenerate(pluginDir, opts);

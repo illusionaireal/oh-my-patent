@@ -1,5 +1,10 @@
 # Usage and CLI reference
 
+> This page documents the historical multi-entry plugin workflow. For the 0.4.0
+> single-entry preview use [Skill installation and migration](skill.md). Historical
+> `adapt` examples on this page require `--legacy`; portable installation requires an
+> explicit `--tool`. Do not install both layouts into the same discovery scope.
+
 [Documentation](./README-en.md) · [中文](./usage.md)
 
 ## Installation

@@ -1,3 +1,5 @@
+> **Skill-first 预览版（0.4.0 alpha）：** 本分支已提供可搬移的单入口包和 JSON 运行时。参见[安装与迁移](docs/skill.md)及[实际兼容状态](docs/compatibility.md)。宿主验收及市场发布尚未完成。
+
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -16,42 +18,43 @@
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-面向 **Claude Code、Codex、OpenCode** 的 AI 专利插件。
+面向专利工作流的 Agent Skill，首批宿主候选为 **Claude Code、Codex、OpenCode**。
 由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
 并保留可追溯、可分叉的决策路径。
 
 ## 快速开始
 
-在你的专利工作区运行以下命令。Setup 会写入编辑器配置；
-用于已有工作区之前，请先查看[安装行为](./docs/usage.md#安装)。
+在本分支源码目录构建预览版（Node.js >=22），再安装到你的专利工作区。
+用于已有工作区之前，请先查看[安装与迁移](docs/skill.md)。
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
+npm ci
+npm run build
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-在 AI 编程工具中打开这个工作区，加载生成的集成，然后输入：
+在 AI 编程工具中打开这个工作区，选择 `oh-my-patent` Skill，然后输入：
 
 ```text
-/archimedes
-> 基于同态加密在隐私计算中的应用，新建一个专利项目。
+使用 oh-my-patent，基于同态加密在隐私计算中的应用新建一个专利项目。
 ```
 
-使用 `--tool claude-code`、`--tool codex` 或 `--tool opencode` 可以只配置一个平台。
-省略 `--tool` 时会配置全部三个平台。入口不可用时，请查看[平台说明](./docs/usage.md#平台说明)。
+必须使用 `--tool claude-code`、`--tool codex` 或 `--tool opencode` 选择一个宿主。
+默认只安装一个完整 Skill，不修改全局指令或 MCP 配置。
+真实宿主发现与工作流仍[待验收](docs/compatibility.md)；本轮未发布 alpha 版本。
 
 <details>
 <summary>给协助安装的 AI 助手</summary>
 
-确认用户的专利工作区，阅读上面的安装行为说明，然后运行：
+使用已构建的源码或对应候选产物，检查所选宿主的安装计划并保留工作区现有文件：
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
 ```
 
-接着帮助用户加载集成，并通过 `/archimedes` 开始专利项目。
+应用已核对的安装计划后，加载 `oh-my-patent`。
+历史多入口插件和 `/archimedes` 仅用于显式 `--legacy` 适配器路径。
 
 </details>
 
@@ -62,7 +65,7 @@ oh-my-patent check --workspace-dir .
 | 协调专业智能体 | 由主编排器组织检索、构思、可专利性评估、撰写、审查与技术答复 |
 | 追溯决策过程 | 在 `.brainstorm/` 中保存轮次、评分、创新点快照与理由；从已记录节点分叉或恢复创新点 |
 | 继续已有工作 | 从 `.patent/state.json` 读取阶段状态，结合 `references/` 中的智能体产出继续项目 |
-| 生成专利附图 | 将 Mermaid 或 PlantUML 源码渲染为 SVG、PNG，并向 `MAIN.md` 插入附图引用 |
+| 生成专利附图 | 先定义规格，再生成可编辑 SVG；可选本地渲染器及经批准的宿主生图，保留溯源和审阅记录 |
 | 查看进度 | 提供 CLI 查询、Markdown 报告、终端界面和环境检查 |
 
 交底书、支撑材料和决策历史保存在同一个项目目录中。

@@ -38,6 +38,7 @@ plugins/
 
 # npm package files
 *.tgz
+release-artifacts/
 
 # Accidentally created directories (from CLI testing)
 --help/

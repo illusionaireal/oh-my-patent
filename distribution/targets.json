@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "wave": 1,
+      "project_path": ".claude/skills/oh-my-patent",
+      "note": "Use an isolated project; shared Claude plugin discovery is not verified.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    },
+    {
+      "id": "codex",
+      "name": "Codex CLI/IDE",
+      "wave": 1,
+      "project_path": ".agents/skills/oh-my-patent",
+      "note": "One canonical shared copy; do not add a duplicate plugin entry.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "wave": 1,
+      "project_path": ".agents/skills/oh-my-patent",
+      "note": "Alternative isolated .opencode/skills path must not coexist with a shared copy.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor local",
+      "wave": 2,
+      "project_path": ".agents/skills/oh-my-patent",
+      "note": "Cloud Cursor is a separate untested surface.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    },
+    {
+      "id": "github-copilot",
+      "name": "GitHub Copilot VS Code",
+      "wave": 2,
+      "project_path": ".agents/skills/oh-my-patent",
+      "note": "Copilot CLI and cloud agent require separate tests.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    },
+    {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "wave": 2,
+      "project_path": ".agents/skills/oh-my-patent",
+      "note": "Alternative .gemini/skills path must not coexist with a shared copy.",
+      "artifact_ready": true,
+      "install_verified": false,
+      "workflow_verified": false,
+      "catalog_status": "not_submitted",
+      "tested_version": null,
+      "test_date": null
+    }
+  ]
+}

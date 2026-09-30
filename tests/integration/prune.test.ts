@@ -11,7 +11,7 @@ const cliPath = resolve(repoRoot, 'dist/cli.js');
  * Agents that were declared by an earlier version of plugin.jsonc and are
  * still present in some workspaces. `generate()` only writes and `uninstall()`
  * derives its list from the current definition, so neither removes them —
- * `adapt install --prune` is the fix under test here.
+ * `adapt install --legacy --prune` is the fix under test here.
  */
 const LEGACY_AGENTS = [
   'patent-architect',
@@ -24,7 +24,7 @@ const LEGACY_AGENTS = [
 /** Agent files a current definition produces, counted without pruning. */
 const CURRENT_AGENT_COUNT = 14;
 
-describe('adapt install --prune', () => {
+describe('adapt install --legacy --prune', () => {
   let workspaceDir: string;
   let fakeHome: string;
 
@@ -61,7 +61,7 @@ describe('adapt install --prune', () => {
   });
 
   const install = (extraArgs: string) => execSync(
-    `node "${cliPath}" adapt install --tool claude-code --workspace-dir "${workspaceDir}" ${extraArgs}`,
+    `node "${cliPath}" adapt install --legacy --tool claude-code --workspace-dir "${workspaceDir}" ${extraArgs}`,
     { encoding: 'utf-8', env: { ...process.env, USERPROFILE: fakeHome, HOME: fakeHome } },
   );
 

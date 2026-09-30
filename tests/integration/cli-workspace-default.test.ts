@@ -5,9 +5,9 @@ import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 
 /**
- * REQ-008: `adapt install` / `setup` / `uninstall` defaulted the workspace to the
+ * REQ-008: `adapt install --legacy` / `setup` / `uninstall` defaulted the workspace to the
  * package's *parent* directory. With a global install that is
- * `.../node_modules`, so `oh-my-patent adapt install` wrote editor configs into
+ * `.../node_modules`, so `oh-my-patent adapt install --legacy` wrote editor configs into
  * node_modules and the README had to tell everyone to pass `--workspace-dir .`.
  *
  * The default is now the current working directory. These tests run the real CLI
@@ -45,7 +45,7 @@ describe('adapt workspace default (REQ-008)', () => {
   }
 
   test('install without --workspace-dir writes into the current directory', () => {
-    const output = runCli('adapt install --tool opencode', workspace);
+    const output = runCli('adapt install --legacy --tool opencode', workspace);
     expect(installedDir(output)).toBe(resolve(workspace));
 
     expect(existsSync(join(workspace, '.opencode', 'agent', 'archimedes.md'))).toBe(true);
@@ -63,10 +63,10 @@ describe('adapt workspace default (REQ-008)', () => {
   test('uninstall without --workspace-dir finds what install wrote', () => {
     // Both must resolve the same default, otherwise uninstall would look in the
     // package parent and silently remove nothing.
-    const before = runCli('adapt install --tool opencode', workspace);
+    const before = runCli('adapt install --legacy --tool opencode', workspace);
     expect(installedDir(before)).toBe(resolve(workspace));
 
-    runCli('adapt uninstall --tool opencode', workspace);
+    runCli('adapt uninstall --legacy --tool opencode', workspace);
     expect(existsSync(join(workspace, '.opencode', 'agent', 'archimedes.md'))).toBe(false);
   });
 

@@ -13,14 +13,14 @@ import { GENERATED_MARKER, stampGenerated } from '../../src/adapters/generated-m
  * REQ-050: generated output must not be re-ingested as input.
  *
  * `loadAgents()` reads `<workspaceDir>/.opencode/agent/*.md` as a workspace
- * override, and `adapt install --tool opencode` writes its generated agents
+ * override, and `adapt install --legacy --tool opencode` writes its generated agents
  * into that same directory. Before the fix the second load therefore read the
  * adapter's own output back:
  *
  *   - `description: "x"` re-read as `"\"x\""`, one more quoting layer per cycle;
  *   - every permission collapsed to `false`, because the generated frontmatter
  *     uses an OpenCode `permission:` block that the parser did not understand;
- *   - consequently `adapt uninstall` skipped all 14 agent files, since it
+ *   - consequently `adapt uninstall --legacy` skipped all 14 agent files, since it
  *     compares the file on disk with freshly generated content.
  *
  * These tests pin the two halves of the fix: the parser understands the format

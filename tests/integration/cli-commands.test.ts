@@ -88,12 +88,12 @@ describe('CLI Commands', () => {
     });
   });
 
-  describe('adapt generate', () => {
+  describe('adapt generate --legacy', () => {
     test('should generate claude-code adapter', () => {
       const outputPath = resolve(testDir, 'test-adapt-claude');
 
       const output = execSync(
-        `node "${cliPath}" adapt generate --tool claude-code --output "${outputPath}"`,
+        `node "${cliPath}" adapt generate --legacy --tool claude-code --output "${outputPath}"`,
         { encoding: 'utf-8' }
       );
 
@@ -113,7 +113,7 @@ describe('CLI Commands', () => {
       const outputPath = resolve(testDir, 'test-adapt-codex');
 
       const output = execSync(
-        `node "${cliPath}" adapt generate --tool codex --output "${outputPath}"`,
+        `node "${cliPath}" adapt generate --legacy --tool codex --output "${outputPath}"`,
         { encoding: 'utf-8' }
       );
 
@@ -131,7 +131,7 @@ describe('CLI Commands', () => {
       const outputPath = resolve(testDir, 'test-adapt-opencode');
 
       const output = execSync(
-        `node "${cliPath}" adapt generate --tool opencode --output "${outputPath}"`,
+        `node "${cliPath}" adapt generate --legacy --tool opencode --output "${outputPath}"`,
         { encoding: 'utf-8' }
       );
 
@@ -153,7 +153,7 @@ describe('CLI Commands', () => {
       writeFileSync(customAgent, 'custom agent\n', 'utf-8');
 
       const output = execSync(
-        `node "${cliPath}" adapt install --tool opencode --workspace-dir "${outputPath}"`,
+        `node "${cliPath}" adapt install --legacy --tool opencode --workspace-dir "${outputPath}"`,
         { encoding: 'utf-8' }
       );
 
@@ -167,7 +167,7 @@ describe('CLI Commands', () => {
 
       try {
         execSync(
-          `node "${cliPath}" adapt generate --tool invalid-tool --output "${outputPath}"`,
+          `node "${cliPath}" adapt generate --legacy --tool invalid-tool --output "${outputPath}"`,
           { encoding: 'utf-8', stdio: 'pipe' }
         );
         // 不应该到达这里

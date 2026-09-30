@@ -25,7 +25,10 @@ concurrency:
 jobs:
   verify:
     name: Verify
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -45,3 +48,9 @@ jobs:
       # 因此这里不需要再单独跑一次 build。
       - name: Test
         run: npm test
+      - name: Verify generated Skill is current
+        run: git diff --exit-code -- skills/oh-my-patent
+      - name: Build release artifacts
+        run: npm run package:skill
+      - name: Test the actual tarball and ZIP
+        run: npm run verify:artifacts

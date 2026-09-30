@@ -25,6 +25,8 @@ export type RenameFn = typeof renameSync;
 
 /** Options for {@link atomicWriteFileSync}. */
 export interface AtomicWriteOptions {
+  /** Flush temporary file contents before the rename commit. */
+  flush?: boolean;
   /** Replacement for the final rename step (crash simulation). */
   rename?: RenameFn;
   /** Skip parent-directory creation when the caller already did it. */
@@ -59,7 +61,7 @@ export function atomicWriteFileSync(
   const rename = options.rename ?? renameSync;
 
   try {
-    writeFileSync(tempPath, content, { encoding: 'utf-8', flag: 'wx', mode: options.mode });
+    writeFileSync(tempPath, content, { encoding: 'utf-8', flag: 'wx', mode: options.mode, flush: options.flush });
     rename(tempPath, filePath);
   } catch (error) {
     try {
