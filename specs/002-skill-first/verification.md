@@ -5,7 +5,8 @@ Local original master was 4c6b9b9; implementation uses an isolated worktree from
 specified baseline. Its 232-file upstream difference is not part of this change.
 
 Results and open release gates are recorded here as checks actually execute.
-No host/model sessions, paid generation, market submission or publishing has run.
+The initial local checks below preceded host/model execution. A supplemental real-host
+pilot is recorded at the end; no market submission or publishing has run.
 
 ## Local candidate — 2026-09-30
 
@@ -71,7 +72,7 @@ checks explicitly used 22.23.3. Linux CI, macOS and network filesystems are unve
 Read-only checks found Claude Code 2.1.174, Codex CLI 0.155.1 and OpenCode 1.18.33.
 Their presence does not establish authenticated accounts, models, discovery, tool
 permissions or egress interception. No real retrieval/image service was certified.
-Host/model tokens and test costs are unobserved, not measured as zero.
+At that checkpoint, host/model tokens and test costs were unobserved, not measured as zero.
 
 Original plan section 10.3 proposes US$50 for a pilot and US$300 overall but explicitly
 does not authorize paid execution. Before launching host sessions, obtain a concrete
@@ -79,3 +80,39 @@ pilot budget and confirm accounts/models/rates, then run prepared cases against 
 exact candidate. Preserve failures/traces, review three complete deliverables and
 rerun affected cells. Unit tests, mocked handoffs and host self-review cannot grant
 stable release readiness.
+
+## Supplemental Codex/OpenCode pilot — 2026-09-30
+
+The user explicitly requested one initial run with Codex `gpt-6-luna` and an OpenCode
+free model. Both used ZIP SHA-256
+`033b8b7fee6841066e71383287aea97546c20ffc284c1c7b0f66c52620253959`, synthetic sensor
+input and an explicit Skill invocation. These assisted smoke attempts do not count as
+unchanged cases in the 420-case matrix, which remains unverified.
+
+- Codex CLI 0.155.1 completed in approximately 3m12s, saved a disclosure draft and
+  three supporting documents, and used bundled runtime project creation/advancement.
+  Independent runtime validation succeeded: revision 1, RESEARCH pending, no lock or
+  recovery required. No actual retrieval or external upload tool call was observed.
+  Follow-up findings: draft text was embedded in a PowerShell command body despite
+  the Skill's command-line-content restriction; the source fixture remains outside
+  the project, so moving the project alone does not preserve that source reference.
+- OpenCode CLI 1.18.33 first encountered MiMo rate limiting and Ling HTTP 404. Its
+  default paid title-model request was rejected for insufficient funds; the local
+  configuration was then corrected to pin both primary and small models to free
+  Nemotron. An ancestor-repository exploration attempt was stopped; the final attempt
+  used an independent Git workspace with task/external-directory permissions denied.
+- The final `opencode/nemotron-3.5-lightning-free` run read the installed Skill but
+  encountered an upstream 504 idle timeout and retries. It ended naturally with
+  exit 0 after about 8m19s, leaving an empty MAIN.md and no runtime project state.
+  Validation returned MISSING_FILE. This run failed the requested output criterion;
+  provider problems prevent attributing the failure solely to the Skill or model.
+- Codex reported 391,230 input tokens (353,280 cached) and 7,860 output tokens.
+  Its actual monetary charge is unknown. The final OpenCode attempt reported zero
+  per-step cost; account billing was not independently checked. US$50 is not a
+  measured spend or a CLI-enforced budget limit.
+
+Full synthetic traces, exact prompts, metrics, validation results, integrity checks
+and evidence hashes remain in ignored `.audit-reports/host-smoke-20260930/`.
+See its `REPORT.md` and `setup.md`. Both 44-file installed copies match the ZIP.
+No candidate code or packaged Skill was changed during this pilot. The standard
+matrix, human acceptance and release gates remain open.
