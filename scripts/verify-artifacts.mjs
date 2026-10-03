@@ -28,7 +28,9 @@ for (const [name, hash] of Object.entries(manifest.artifact_checksums)) if(creat
 const root = mkdtempSync(join(tmpdir(),'omp 产物 space-'));
 try {
   const tarName = Object.keys(manifest.artifact_checksums).find(n=>n.endsWith('.tgz'));
-  execFileSync('tar',['-xf',join(artifacts,tarName),'-C',root]);
+  // Windows tar can misencode Unicode argv paths. Keep the Unicode/space relocation
+  // check: Node sets cwd, while tar reads the gzip bytes from stdin using ASCII args.
+  execFileSync('tar',['-xzf','-'],{cwd:root,input:readFileSync(join(artifacts,tarName))});
   const tarCount=verifyFolder(join(root,'package/skills/oh-my-patent'));
   for (const name of ['package.json','plugin.jsonc']) if(JSON.parse(readFileSync(join(root,'package',name),'utf8')).version !== manifest.version) throw new Error(`Version mismatch: ${name}`);
   const script = join(root,'package/skills/oh-my-patent/scripts/runtime.mjs');

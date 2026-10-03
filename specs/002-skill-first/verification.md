@@ -140,3 +140,11 @@ Linux / Node 22.23.3: lint and build passed; the full suite passed 439/439 tests
 runtime is 130,601 bytes and Skill ZIP is 258,207 bytes. These local checks do not
 certify real host discovery or workflow acceptance. The PR's Windows/Linux CI and
 the existing host/human acceptance gates remain separate; no publication was run.
+
+The first PR CI run (`37149905055`, commit `40261a8`) passed all 439 tests on both
+Ubuntu and Windows, and Ubuntu passed artifact verification. Windows artifact
+verification exposed a system-tar argument encoding failure for the Chinese temporary
+directory (`omp ?? space-...`). The verifier now supplies gzip bytes on stdin and lets
+Node set the Unicode working directory, retaining Unicode/space relocation coverage
+without passing those paths through tar's argument decoder. This follow-up is checked
+by the same archive verification step on the next CI run.
