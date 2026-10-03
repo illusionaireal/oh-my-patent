@@ -103,7 +103,7 @@ export function managePortable(pluginRoot: string, workspace: string, host: stri
   }
   const changes = new Map<string, Change>();
   const conflicts: string[] = [];
-  const legacy = JSON.parse(readFileSync(join(pluginRoot, 'distribution/legacy-fingerprints.json'), 'utf8')).targets[host] as Record<string, string> | undefined;
+  const legacy = JSON.parse(readFileSync(join(pluginRoot, 'distribution/legacy-fingerprints.json'), 'utf8')).targets[host] as Record<string, string[]> | undefined;
   if (action !== 'uninstall') {
     // A canonical/shared copy must not be silently duplicated in alternate scopes.
     for (const name of ['.agents/skills/oh-my-patent', '.claude/skills/oh-my-patent', '.opencode/skills/oh-my-patent', '.cursor/skills/oh-my-patent', '.github/skills/oh-my-patent', '.gemini/skills/oh-my-patent']) {
@@ -118,7 +118,8 @@ export function managePortable(pluginRoot: string, workspace: string, host: stri
       if (name.startsWith(target.project_path + '/')) continue;
       const current = bytes(workspace, name);
       if (current === null) continue;
-      if (digest(Buffer.from(current, 'base64')) !== expected) {
+      // Exact baseline outputs from both LF and CRLF sources; never normalize user bytes.
+      if (!expected.includes(digest(Buffer.from(current, 'base64')))) {
         // Unrelated workspace rules/configuration are not managed artifacts.
         if (['AGENTS.md', 'CLAUDE.md', '.mcp.json'].includes(name) && !Buffer.from(current, 'base64').toString('utf8').includes('oh-my-patent')) continue;
         conflicts.push(`${name} (legacy file modified or ownership unknown)`); continue;

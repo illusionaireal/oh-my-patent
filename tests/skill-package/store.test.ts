@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runOperation } from '../../src/runtime/operations.js';
@@ -35,6 +36,53 @@ describe('coordinated state', () => {
     const result = await store.mutate(request, build);
     expect(result).toMatchObject({ revision: 1 });
     expect(readFileSync(join(root, 'references/new.md'), 'utf8')).toBe('new evidence');
+  });
+  it.each(['before_write', 'before_rename'])('recovers after process exit at journal %s', async boundary => {
+    const root = temp(); await runOperation(create(root));
+    const before = readFileSync(join(root, '.patent/state.json'));
+    const request = { interface_version: 1 as const, operation: 'path.record', project: root, operation_id: 'interrupted', expected: { revision: 0 }, params: { node: { innovations: [] } } };
+    // Exit at the real fs boundary: skip finally blocks and leave the dead owner's lock.
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import fs from 'node:fs';
+      import { syncBuiltinESMExports } from 'node:module';
+      import { resolve } from 'node:path';
+      import { pathToFileURL } from 'node:url';
+      const write = fs.writeFileSync, rename = fs.renameSync;
+      fs.writeFileSync = function(file, ...args) {
+        if (process.argv[1] === 'before_write' && typeof file === 'string' && /journal\\.json\\..*\\.tmp$/.test(file)) process.exit(77);
+        return write.call(this, file, ...args);
+      };
+      fs.renameSync = function(from, to) {
+        if (process.argv[1] === 'before_rename' && String(to).endsWith('journal.json')) process.exit(77);
+        return rename.call(this, from, to);
+      };
+      syncBuiltinESMExports();
+      const { runOperation } = await import(pathToFileURL(resolve('dist/runtime/operations.js')).href);
+      await runOperation(JSON.parse(fs.readFileSync(0, 'utf8')));
+    `, boundary], { input: JSON.stringify(request), encoding: 'utf8' });
+    expect(child.status, child.stderr).toBe(77);
+    const directory = join(root, '.patent/transactions/interrupted');
+    expect(existsSync(join(directory, 'journal.json'))).toBe(false);
+    expect(readdirSync(directory)).toHaveLength(boundary === 'before_write' ? 0 : 1);
+    expect(inspectProject(root)).toMatchObject({ state: { revision: 0 }, coordination: { locked: true, recovery_required: false } });
+    const owner = JSON.parse(readFileSync(join(root, '.patent/write.lock'), 'utf8'));
+    await runOperation({ interface_version: 1, operation: 'project.recoverLock', project: root, params: { owner_token: owner.token } });
+    expect(readFileSync(join(root, '.patent/state.json')).equals(before)).toBe(true);
+    expect(await runOperation({ interface_version: 1, operation: 'project.validate', project: root })).toMatchObject({ state: { revision: 0 } });
+    const result = await runOperation(request);
+    expect(result).toMatchObject({ revision: 1 });
+    expect(await runOperation(request)).toEqual(result);
+  });
+  it('does not ignore an existing malformed journal', async () => {
+    const root = temp(); await runOperation(create(root));
+    const state = readFileSync(join(root, '.patent/state.json'));
+    const directory = join(root, '.patent/transactions/corrupt'); mkdirSync(directory);
+    writeFileSync(join(directory, 'journal.json'), '{truncated');
+    expect(() => inspectProject(root)).toThrow();
+    await expect(new ProjectStore(root).mutate({ operation_id: 'next', expected: { revision: 0 } }, () => {
+      throw new Error('must not build after journal corruption');
+    })).rejects.toThrow(SyntaxError);
+    expect(readFileSync(join(root, '.patent/state.json')).equals(state)).toBe(true);
   });
   it('returns a committed result even when the caller lost the response', async () => {
     const root = temp(); await runOperation(create(root)); const store = new ProjectStore(root);

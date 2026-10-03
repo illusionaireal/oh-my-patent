@@ -116,3 +116,27 @@ and evidence hashes remain in ignored `.audit-reports/host-smoke-20260930/`.
 See its `REPORT.md` and `setup.md`. Both 44-file installed copies match the ZIP.
 No candidate code or packaged Skill was changed during this pilot. The standard
 matrix, human acceptance and release gates remain open.
+
+## Review fixes — 2026-10-04
+
+Two defects were reproduced against `67e4210` and corrected without changing the
+`0.4.0-alpha.0` designation or any host-verification flag:
+
+- The legacy allowlist now accepts exact adapter outputs from both LF and CRLF source
+  checkouts of the pinned 0.3.3 baseline. All original hashes remain accepted. Full
+  installation fixtures cover Claude Code, Codex and OpenCode; six upgrade/rollback
+  cases preserve exact original bytes, and six edited-file cases block all mutation.
+  `node scripts/build-legacy-fixtures.mjs` regenerates the fixture and fingerprints
+  from the baseline Git object. Tests use the committed fixture without fetching history.
+- Inspection and recovery ignore transaction directories whose journal was never
+  published. The writer applies no project files before publishing the prepared
+  journal. Real child-process exits before temporary-file writing and before journal
+  rename verify explicit dead-owner lock recovery, unchanged state, and idempotent
+  retry. Temporary evidence is retained; an existing malformed journal still fails
+  closed. Existing prepared-transaction rollback checks remain in place.
+
+Linux / Node 22.23.3: lint and build passed; the full suite passed 439/439 tests in
+61 files; ZIP and tarball verification passed with 44 Skill resources. The rebuilt
+runtime is 130,601 bytes and Skill ZIP is 258,207 bytes. These local checks do not
+certify real host discovery or workflow acceptance. The PR's Windows/Linux CI and
+the existing host/human acceptance gates remain separate; no publication was run.

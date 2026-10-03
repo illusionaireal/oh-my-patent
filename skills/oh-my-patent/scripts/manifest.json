@@ -3,7 +3,7 @@
   "interface_version": 1,
   "state_schema_version": 1,
   "node": ">=22",
-  "runtime_bytes": 130512,
+  "runtime_bytes": 130601,
   "inputs": [
     "node_modules/saxes/saxes.js",
     "node_modules/xmlchars/xml/1.0/ed5.js",
@@ -85,7 +85,7 @@
     "src/core/path-persistence.ts": "2c49f2221b49ce7f35dce6dc55a2f921921b29f41f20db17e85e1d777cfb37e7",
     "src/core/path-safety.ts": "daa3dabd8d77d886e9bf3aef92ca7c3460bc9ec18c28466d01ea53b7b78efc93",
     "src/core/project-config.ts": "323aa6399642e4c9cbdec75f15afc7acbfb7b99d252dd48a0230c02de04f3985",
-    "src/core/project-store.ts": "4d821fb11367bb35328363c7dea383096776c8ec06aadf5f9d848c59829a2744",
+    "src/core/project-store.ts": "8b935ff52260f9a550f3b48387d80ce1fc70e243e144815e1f165f18fb2bb2a8",
     "src/core/state.ts": "e35f729f974ae160ede7f01ff82673dbc7e764586a5d032bcba2d75516749afc",
     "src/core/workflow-stages.ts": "aef1be752e91109088987126fe67dd3e573708520132ca5e10a72e43c45dff66",
     "src/core/workflow.ts": "db2f0b29940ac2bcd3013dfe4b65e8d2ecaa45990ca1fb48c8352c8d8d3caf45",
@@ -143,7 +143,7 @@
     "references/workflow.md": "f8f082138b2e31a44380ff72a5b16287eaedd78c53775a031d448edb0f36c014",
     "scripts/licenses/saxes.txt": "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e",
     "scripts/licenses/xmlchars.txt": "45d196313c2647d313cc65ca9b093d2d6974b64d35ee7346f2c60c9d518dff2c",
-    "scripts/runtime.mjs": "87efb38775fcf5dcef7214cc2f52f1094f8dcb37d0cb9b36a44cf2883a3aa64d",
+    "scripts/runtime.mjs": "6ca21405007f813a1c8e28c3cc8c7e99450f6f3e66baf5bb237e09da5c5d1c49",
     "SKILL.md": "4b1e7f0174ed108ce55bde0391b8f92fdb817b639e2c64e41caa86529354384e"
   }
 }

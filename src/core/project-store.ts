@@ -40,7 +40,10 @@ export function inspectProject(root: string): { state: PatentState | null; state
   const directory = projectFile(root, '.patent/transactions');
   const recoveryRequired = existsSync(directory) && readdirSync(directory).some(id => {
     const file = projectFile(root, `.patent/transactions/${id}/journal.json`);
-    return JSON.parse(readFileSync(file, 'utf8')).status === 'prepared';
+    const journal = readOrNull(file);
+    // No project files are applied until the prepared journal has been renamed into place.
+    // A directory/temp left before that point is not a prepared transaction.
+    return journal !== null && JSON.parse(journal).status === 'prepared';
   });
   return { state: text === null ? null : JSON.parse(text), state_digest: text === null ? null : digest(text), coordination: { locked: existsSync(projectFile(root, '.patent/write.lock')), recovery_required: recoveryRequired } };
 }
@@ -101,7 +104,9 @@ export class ProjectStore {
     if (!existsSync(directory)) return;
     for (const id of readdirSync(directory).sort()) {
       const file = projectFile(this.root, `.patent/transactions/${id}/journal.json`);
-      const journal = JSON.parse(readFileSync(file, 'utf8')) as Journal;
+      const text = readOrNull(file);
+      if (text === null) continue; // Interrupted before preparation; retain any temp evidence.
+      const journal = JSON.parse(text) as Journal;
       if (journal.status !== 'prepared') continue;
       for (const name of Object.keys(journal.after)) {
         const value = readOrNull(projectFile(this.root, name));

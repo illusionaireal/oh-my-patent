@@ -2190,7 +2190,8 @@ function inspectProject(root) {
   const directory = projectFile(root, ".patent/transactions");
   const recoveryRequired = existsSync(directory) && readdirSync(directory).some((id) => {
     const file = projectFile(root, `.patent/transactions/${id}/journal.json`);
-    return JSON.parse(readFileSync(file, "utf8")).status === "prepared";
+    const journal = readOrNull(file);
+    return journal !== null && JSON.parse(journal).status === "prepared";
   });
   return { state: text === null ? null : JSON.parse(text), state_digest: text === null ? null : digest(text), coordination: { locked: existsSync(projectFile(root, ".patent/write.lock")), recovery_required: recoveryRequired } };
 }
@@ -2261,7 +2262,9 @@ var ProjectStore = class {
     if (!existsSync(directory)) return;
     for (const id of readdirSync(directory).sort()) {
       const file = projectFile(this.root, `.patent/transactions/${id}/journal.json`);
-      const journal = JSON.parse(readFileSync(file, "utf8"));
+      const text = readOrNull(file);
+      if (text === null) continue;
+      const journal = JSON.parse(text);
       if (journal.status !== "prepared") continue;
       for (const name of Object.keys(journal.after)) {
         const value = readOrNull(projectFile(this.root, name));

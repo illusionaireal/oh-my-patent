@@ -50,6 +50,8 @@ verified dead owner on this host, then roll back the interrupted backup. Recover
 never uses lock age. Rollback shares the installer lock and preserves later user edits.
 
 Old generated entries are matched against 0.3.3 baseline hashes, backed up and removed.
+The allowlist covers exact outputs from both LF and CRLF source checkouts; it does not
+normalize installed files or treat arbitrary whitespace changes as unmodified content.
 A marker or filename alone does not justify deletion. Modified or unknown old entries
 remain in place and block migration; review dry-run conflicts and resolve explicitly.
 Ancestor/user scopes are inspected, never rewritten. Arbitrary plugin discovery scopes
