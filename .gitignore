@@ -32,6 +32,7 @@ progress.md
 # longer versioned (DEC-1 in specs/001-review-remediation). Regenerate with:
 #   npm run build && node dist/cli.js adapt generate
 plugins/
+skill-installations/
 
 # Audit reports directory (keep locally for reference, don't commit)
 .audit-reports/

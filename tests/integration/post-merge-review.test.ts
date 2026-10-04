@@ -32,7 +32,7 @@ describe('Claude framework contracts', () => {
     const existing = { custom: { command: 'mine' }, patsnap_search: { type: 'http', url: 'https://example.com/private' } };
     writeFileSync(join(workspace, '.mcp.json'), JSON.stringify({ mcpServers: existing }));
     for (let i = 0; i < 2; i++) {
-      execFileSync(process.execPath, [join(process.cwd(), 'dist/cli.js'), 'adapt', 'install', '--legacy', '--tool', 'claude-code', '--workspace-dir', workspace], {
+      execFileSync(process.execPath, [join(process.cwd(), 'dist/cli.js'), 'adapt', 'install', '--tool', 'claude-code', '--workspace-dir', workspace], {
         env: { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome },
       });
     }
@@ -40,7 +40,7 @@ describe('Claude framework contracts', () => {
     expect(saved.mcpServers).toMatchObject(existing);
     expect(readFileSync(join(workspace, '.claude', 'settings.json'), 'utf8')).toBe(settings);
     expect(existsSync(join(workspace, '.claude', 'skills', 'prior-art-search', 'SKILL.md'))).toBe(true);
-    execFileSync(process.execPath, [join(process.cwd(), 'dist/cli.js'), 'adapt', 'uninstall', '--legacy', '--tool', 'claude-code', '--workspace-dir', workspace], {
+    execFileSync(process.execPath, [join(process.cwd(), 'dist/cli.js'), 'adapt', 'uninstall', '--tool', 'claude-code', '--workspace-dir', workspace], {
       env: { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome },
     });
     expect(JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8')).mcpServers).toMatchObject(existing);

@@ -1,80 +1,121 @@
-# Portable oh-my-patent Skill (0.4.0 alpha)
+# Installation modes (0.4.0 alpha)
 
-Archimedes is now available as a self-contained Agent Skill. Node.js >=22 is required
-for persisted projects. The package does not need this repository, a global CLI,
-node_modules, a provider SDK or a remote renderer after installation.
+The original Archimedes plugin remains the default, with all **14 agents, 6 skills,
+and 9 commands**. The portable Agent Skill is an additional installation option.
+Neither mode replaces the other. Node.js >=22 is required.
 
-This is an implementation preview. Real host discovery/workflow certification, paid
-image-provider validation and marketplace submission remain pending. See
+The candidate remains `0.4.0-alpha.0`. Real-host Skill discovery/workflow acceptance,
+paid image-provider validation and marketplace submission remain pending. See
 [compatibility](compatibility.md) and the [verification ledger](../specs/002-skill-first/verification.md).
-The format follows the [Agent Skills specification](https://agentskills.io/specification).
 
-## Local installation verified by automated tests
+## Original Archimedes plugin
 
-From a built checkout or installed npm package, first inspect the dry-run:
+From a source checkout:
 
 ```sh
 npm ci
 npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
 node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-Select one tool. The installer does not default to installing every host. Claude Code
-uses an isolated `.claude/skills/oh-my-patent` directory. Codex and OpenCode use one
-shared `.agents/skills/oh-my-patent` copy with reference-counted ownership. Do not install
-Claude alongside that shared copy until the isolated plugin-discovery route is tested.
-No new AGENTS.md, CLAUDE.md, MCP settings or global copies are installed.
+The command retains the original multi-entry plugin workflow. `--mode plugin` is an
+explicit equivalent; `--legacy` remains a compatibility alias. Plugin adapters support
+Claude Code, Codex and OpenCode. Omitting `--tool` retains the original all-adapters
+behavior. Use the host-specific Archimedes entry and commands described in the
+[usage guide](usage-en.md). The original plugin prompts remain in `src/agents` and
+`src/skills`; portable runtime instructions have separate source overrides.
+
+```sh
+node dist/cli.js adapt uninstall --mode plugin --tool codex --workspace-dir <workspace>
+```
+
+Plugin uninstall and `--prune` preserve the optional portable Skill. `--dry-run` is a
+Skill-mode option; plugin mode rejects it before writing rather than implying a preview.
+
+## Additional portable Skill
+
+Build the checkout as above, then select one host and inspect the dry-run:
+
+```sh
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+```
+
+Skill mode requires an explicit `--tool`. It adds one complete portable package,
+with bundled role resources and runtime. It leaves original plugin agents, skills,
+commands, customizations, AGENTS.md, CLAUDE.md, MCP and marketplace settings intact.
+It does not migrate existing project state or require uninstalling the plugin.
+
+Claude Code uses `.claude/skills/oh-my-patent`. Codex and OpenCode use one shared
+`.agents/skills/oh-my-patent` copy with reference-counted ownership. The six candidate
+host locations are in [distribution/targets.json](../distribution/targets.json).
+Do not duplicate the portable Skill across shared and host-specific discovery roots.
+These duplicate checks concern copies of the portable Skill, not the original plugin.
+
+Choose the plugin or Skill entry when starting work. Filesystem coexistence is covered
+by automated tests; host discovery and activation of both entry types together are
+unverified. The original Codex plugin includes an overview Skill named `oh-my-patent`,
+so resolution of that name alongside the portable entry needs host acceptance.
+Use a separate workspace when evaluating the Skill independently.
 
 Alternatively extract the complete `oh-my-patent` folder from the generated Skill ZIP
-into the selected host's skill directory. Keep all references/assets/scripts together.
-`node <installed-skill>/scripts/runtime.mjs --doctor` verifies the local runtime only;
-it does not establish that the host discovers or activates the Skill.
+into the selected host's skill directory. Keep references/assets/scripts together.
+The copied package needs no repository, global CLI, node_modules, provider SDK or
+remote renderer. `node <installed-skill>/scripts/runtime.mjs --doctor` checks only
+the local runtime, not host discovery. The format follows the
+[Agent Skills specification](https://agentskills.io/specification).
 
-The six candidate locations are in [distribution/targets.json](../distribution/targets.json).
-Fixed-version `skills` installer and native marketplace instructions are deliberately
-not published as verified commands before clean-environment host tests run.
+Fixed-version third-party installer and native marketplace commands remain unverified.
+Ancestor/user portable scopes are inspected, never rewritten. Filesystem checks are
+not proof of host deduplication.
 
-## Upgrade, removal and rollback
+## Skill updates, removal and rollback
 
-Re-run install to update only this Skill. Local modifications cause a conflict before
-any mutation. Shared package removal retains the copy while another selected host owns
-it. Use `adapt uninstall --tool <host> --workspace-dir <workspace> --dry-run` first.
-An install/uninstall result includes backup_id; `adapt rollback --backup <id>
---workspace-dir <workspace>` restores exact previous bytes unless subsequent user edits
-conflict. Backups live outside discovery roots under `.oh-my-patent/backups/` as JSON.
-An interrupted installation blocks new changes until its backup is rolled back. If a
-process left `.oh-my-patent/install.lock`, inspect its owner first. Use
-`adapt recover-lock --owner-token <token> --workspace-dir <workspace>` only for a
-verified dead owner on this host, then roll back the interrupted backup. Recovery
-never uses lock age. Rollback shares the installer lock and preserves later user edits.
+Re-run install with `--mode skill` to update only that Skill. Modified Skill files
+cause a conflict before mutation; modified plugin files do not block installation.
+Shared removal retains the copy while another selected host owns it.
 
-Old generated entries are matched against 0.3.3 baseline hashes, backed up and removed.
-The allowlist covers exact outputs from both LF and CRLF source checkouts; it does not
-normalize installed files or treat arbitrary whitespace changes as unmodified content.
-A marker or filename alone does not justify deletion. Modified or unknown old entries
-remain in place and block migration; review dry-run conflicts and resolve explicitly.
-Ancestor/user scopes are inspected, never rewritten. Arbitrary plugin discovery scopes
-still require host-level inspection; filesystem checks are not host deduplication proof.
+```sh
+node dist/cli.js adapt uninstall --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt uninstall --mode skill --tool codex --workspace-dir <workspace>
+node dist/cli.js adapt rollback --mode skill --backup <id> --workspace-dir <workspace>
+```
 
-`--legacy` preserves the old adapter generation path for compatibility work. It creates
-the old multi-entry layout and must not coexist with the portable package. Existing
-legacy projects retain their CLI path functions. Migrated projects use the shared JSON
-runtime (`oh-my-patent runtime --input request.json`); old writers reject them. Unmodified
-older binaries cannot be remotely constrained by this release.
+Install/uninstall returns `backup_id`. Rollback restores exact previous bytes unless
+later user edits conflict. Backups live outside discovery roots under
+`.oh-my-patent/backups/` as JSON. An interrupted installation blocks new changes until
+its backup is rolled back. If a process left `.oh-my-patent/install.lock`, inspect its
+owner first. `adapt recover-lock --mode skill --owner-token <token> --workspace-dir
+<workspace>` requires a verified dead owner on this host. Recovery never uses lock
+age; rollback shares the lock and preserves later user edits.
 
-## Confidentiality and figures
+Plugin generation defaults to `plugins/<tool>/` (custom output: `<dir>/<tool>/`).
+Skill generation requires `--mode skill` and defaults to `skill-installations/<tool>/`
+(custom `--output` is the exact destination). Generated outputs do not overwrite
+one another.
 
-No public PlantUML fallback remains. Configuring a URL does not authorize disclosure.
-Remote calls through the shared renderer require exact content/recipient/purpose consent
-and a durable local audit. Redirects and automatic retries are disabled. Host search and
-image tools without a verified interception layer remain instruction-only; confidential
-mode disables them. The cloud model provider's handling of the session is a separate
-boundary, so this package is not a promise of fully local processing.
+## Optional project migration
 
-Direct SVG requires no remote renderer. Define a figure spec, validate self-contained SVG
+Installing either mode leaves project state unchanged. Existing plugin projects can
+continue using their original CLI path functions. To use the versioned Skill runtime
+with an existing project, explicitly dry-run and review `project.migrate` before
+migration. Migrated projects use the bundled JSON runtime or CLI runtime bridge
+(`oh-my-patent runtime --input request.json`); old writers reject their schema.
+Unmodified older binaries cannot be remotely constrained. Do not mix runtimes in a
+migrated project or remove version fields to bypass a guard.
+
+## Skill confidentiality and figures
+
+Shared runtime rendering has no public PlantUML fallback. A URL alone does not authorize
+disclosure. Its remote calls require exact content/recipient/purpose consent and a
+local audit; redirects and automatic retries are disabled. Host search and image tools
+without verified interception remain instruction-only; Skill confidential mode disables
+them. Model-provider processing is a separate boundary, not fully local processing.
+
+Direct SVG needs no remote renderer. Define a figure spec, validate self-contained SVG
 before preview, review technical and visual consistency, then register current input
-hashes. Changes invalidate prior review. Image generation is optional and unverified.
+hashes. Changes invalidate prior review. Image generation remains optional and unverified.
+These portable instructions do not replace the original plugin's role prompts.
 
 ## Maintainer checks
 
@@ -85,7 +126,7 @@ npm run package:skill
 npm run verify:artifacts
 ```
 
-The package builder emits a ZIP, npm tarball, release manifest and SHA256SUMS. CI rebuilds
-the committed generated Skill and compares it, then exercises actual packed artifacts.
-Publishing uses the verified tarball with --ignore-scripts. Alpha versions use npm's
-`next` tag. These scripts do not publish anything during local verification.
+The builder emits a Skill ZIP and the npm tarball containing both installation modes,
+a release manifest and SHA256SUMS. CI checks deterministic generated Skill files and
+actual packed artifacts. Publication uses the verified tarball with `--ignore-scripts`;
+alpha versions use npm's `next` tag. Verification scripts do not publish anything.

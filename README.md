@@ -1,4 +1,4 @@
-> **Skill-first preview (0.4.0 alpha):** A portable single-entry package and JSON runtime are available in this branch. See [installation and migration](docs/skill.md) and [actual compatibility status](docs/compatibility.md). Host certification and marketplace publication are pending.
+> **0.4.0 alpha preview:** Adds an optional portable Skill installation mode. The original Archimedes plugin remains the default with 14 agents, 6 skills, and 9 commands. See [installation modes](docs/skill.md) and [compatibility status](docs/compatibility.md). Host acceptance and publication are pending.
 
 # oh-my-patent
 
@@ -18,47 +18,49 @@
 
 **Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
 
-An Agent Skill for patent workflows, with **Claude Code, Codex, and OpenCode** as first-wave host candidates.
+A patent workflow plugin for **Claude Code, Codex, and OpenCode**, with an additional portable Agent Skill mode.
 Archimedes orchestrates specialist agents across research, ideation, drafting,
 review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Build this preview from the checkout (Node.js >=22), then install into your patent
-workspace. Review [installation and migration](docs/skill.md) first.
+Build this preview from the checkout (Node.js >=22), then install the original
+Archimedes plugin into your patent workspace:
 
 ```bash
 npm ci
 npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
 node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-Open that workspace in your AI coding tool, select the `oh-my-patent` Skill, and start with:
+The default plugin mode retains all **14 agents, 6 skills, and 9 commands**.
+Use `--mode plugin` to select it explicitly. Open the workspace in your AI coding
+tool and use Archimedes or the host's plugin commands; see the [usage guide](docs/usage-en.md).
+
+For the additional portable Skill mode, select one host and inspect its plan:
+
+```bash
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+```
+
+Then select the `oh-my-patent` Skill and start with:
 
 ```text
 Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
 
-Select one host with `--tool claude-code`, `--tool codex`, or `--tool opencode`.
-The installer requires an explicit host and installs one complete Skill without changing
-global instructions or MCP configuration. Real host discovery and workflow acceptance
-remain [unverified](docs/compatibility.md). No alpha release has been published by this work.
+| Installation mode | Installed entry points | Selection |
+| --- | --- | --- |
+| Original plugin (default) | Archimedes + 14 agents, 6 skills, 9 commands | `adapt install [--mode plugin] --tool <host>` |
+| Additional Skill | One portable entry with bundled role resources and runtime | `adapt install --mode skill --tool <host>` |
 
-<details>
-<summary>For AI assistants helping users install this</summary>
-
-Use the built checkout or the exact candidate artifact. Inspect the selected host's
-installation plan and respect existing workspace files:
-
-```bash
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
-```
-
-Install the reviewed plan, then load `oh-my-patent`. `/archimedes` and the historical
-multi-entry plugin layout are available only through explicit `--legacy` adapter use.
-
-</details>
+Skill installation preserves existing plugin files, customizations, workspace rules
+and MCP configuration. Each mode has its own uninstall command. Choose which entry
+you invoke; simultaneous host discovery and mixed use of both modes in one project
+remain unverified. Installing the Skill does not migrate existing project state.
+See [installation modes and optional migration](docs/skill.md).
+The candidate remains `0.4.0-alpha.0`; no alpha publication has run in this work.
 
 ## What you can do
 

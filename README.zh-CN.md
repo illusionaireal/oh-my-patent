@@ -1,4 +1,4 @@
-> **Skill-first 预览版（0.4.0 alpha）：** 本分支已提供可搬移的单入口包和 JSON 运行时。参见[安装与迁移](docs/skill.md)及[实际兼容状态](docs/compatibility.md)。宿主验收及市场发布尚未完成。
+> **0.4.0 alpha 预览版：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。参见[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。宿主验收与发布尚未完成。
 
 # oh-my-patent
 
@@ -18,45 +18,45 @@
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-面向专利工作流的 Agent Skill，首批宿主候选为 **Claude Code、Codex、OpenCode**。
+面向 **Claude Code、Codex、OpenCode** 的专利工作流插件，另提供可选的便携 Agent Skill 安装模式。
 由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
 并保留可追溯、可分叉的决策路径。
 
 ## 快速开始
 
-在本分支源码目录构建预览版（Node.js >=22），再安装到你的专利工作区。
-用于已有工作区之前，请先查看[安装与迁移](docs/skill.md)。
+在本分支源码目录构建预览版（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
 
 ```bash
 npm ci
 npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
 node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-在 AI 编程工具中打开这个工作区，选择 `oh-my-patent` Skill，然后输入：
+默认插件模式完整保留 **14 个智能体、6 项技能、9 个命令**；也可显式指定 `--mode plugin`。
+在 AI 编程工具中打开工作区，使用 Archimedes 或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
+
+如需新增的便携 Skill 模式，选择一个宿主，先检查安装计划：
+
+```bash
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+```
+
+随后选择 `oh-my-patent` Skill，输入：
 
 ```text
 使用 oh-my-patent，基于同态加密在隐私计算中的应用新建一个专利项目。
 ```
 
-必须使用 `--tool claude-code`、`--tool codex` 或 `--tool opencode` 选择一个宿主。
-默认只安装一个完整 Skill，不修改全局指令或 MCP 配置。
-真实宿主发现与工作流仍[待验收](docs/compatibility.md)；本轮未发布 alpha 版本。
+| 安装模式 | 安装入口 | 选择方式 |
+| --- | --- | --- |
+| 原有插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
+| 新增 Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
 
-<details>
-<summary>给协助安装的 AI 助手</summary>
-
-使用已构建的源码或对应候选产物，检查所选宿主的安装计划并保留工作区现有文件：
-
-```bash
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace> --dry-run
-```
-
-应用已核对的安装计划后，加载 `oh-my-patent`。
-历史多入口插件和 `/archimedes` 仅用于显式 `--legacy` 适配器路径。
-
-</details>
+Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
+请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
+安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
+候选版本仍为 `0.4.0-alpha.0`，本轮未执行发布。
 
 ## 能做什么
 

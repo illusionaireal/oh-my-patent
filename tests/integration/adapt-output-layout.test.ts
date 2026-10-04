@@ -5,7 +5,7 @@ import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 
 /**
- * REQ-007: `adapt generate --legacy --output <dir>` pointed every adapter at the same
+ * REQ-007: `adapt generate --output <dir>` pointed every adapter at the same
  * directory, so the three of them overwrote one another's root-level files
  * (`CLAUDE.md`, `AGENTS.md`, `codex.json`) and only the last adapter survived.
  *
@@ -22,7 +22,7 @@ import { join, resolve } from 'path';
 const cliPath = resolve(process.cwd(), 'dist/cli.js');
 const TOOLS = ['claude-code', 'codex', 'opencode'];
 
-describe('adapt generate --legacy --output layout (REQ-007)', () => {
+describe('adapt generate --output layout (REQ-007)', () => {
   let outDir = '';
 
   beforeAll(() => {
@@ -33,7 +33,7 @@ describe('adapt generate --legacy --output layout (REQ-007)', () => {
   });
 
   test('each adapter gets its own subdirectory', () => {
-    const output = execSync(`node "${cliPath}" adapt generate --legacy --output "${outDir}"`, {
+    const output = execSync(`node "${cliPath}" adapt generate --output "${outDir}"`, {
       encoding: 'utf-8',
     });
     const lines = output

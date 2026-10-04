@@ -13,7 +13,6 @@ const baseline = 'fc40901943e2ffb742167ea4848de7a0c321b77e';
 const staging = mkdtempSync(join(root, '.test-legacy-baseline-'));
 const snapshot = join(staging, 'snapshot');
 const variants = {};
-const targets = {};
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 function setSourceEndings(directory, ending) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -44,19 +43,12 @@ try {
       const generated = await new module[exportName]().generate(def, config);
       const files = Object.fromEntries([...generated.files].map(([name, content]) => [name.replace(/\\/g, '/'), content]));
       variants[variant][host] = files;
-      targets[host] ??= {};
-      for (const [name, content] of Object.entries(files)) {
-        const hashes = targets[host][name] ??= [];
-        const hash = sha(content);
-        if (!hashes.includes(hash)) hashes.push(hash);
-      }
     }
   }
   const fixture = brotliCompressSync(JSON.stringify({ baseline, variants }) + '\n');
   const destination = join(root, 'tests/fixtures/legacy-installations');
   mkdirSync(destination, { recursive: true });
   writeFileSync(join(destination, '0.3.3.json.br'), fixture);
-  writeFileSync(join(root, 'distribution/legacy-fingerprints.json'), JSON.stringify({ baseline, targets }, null, 2) + '\n');
   console.log(JSON.stringify({ baseline, variants: Object.keys(variants), fixture_bytes: fixture.length, fixture_sha256: sha(fixture) }));
 } finally {
   rmSync(staging, { recursive: true, force: true });

@@ -13,7 +13,7 @@ import type { ToolAdapter } from '../../src/adapters/types';
 
 /**
  * REQ-051: only codex used to write a generation fingerprint. opencode output
- * and claude command files carried none, so `adapt install --legacy --prune` could
+ * and claude command files carried none, so `adapt install --prune` could
  * never recognise them — and the original REQ-013 test wrote its own marker
  * into the fixture, testing the fixture instead of the implementation.
  *
@@ -92,7 +92,7 @@ describe('prune removes real generated output it no longer produces (REQ-051)', 
         expect(commandId, 'definition has at least one command').toBeTruthy();
 
         const firstInstall = execSync(
-          `node "${cliPath}" adapt install --legacy --tool ${tool} --workspace-dir "${workspaceDir}"`,
+          `node "${cliPath}" adapt install --tool ${tool} --workspace-dir "${workspaceDir}"`,
           { encoding: 'utf-8', env: { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome } },
         );
         expect(firstInstall).toContain('"ok":true');
@@ -116,7 +116,7 @@ describe('prune removes real generated output it no longer produces (REQ-051)', 
         writeFileSync(resolve(workspaceDir, ownPath), '# My own command\n', 'utf-8');
 
         const secondInstall = execSync(
-          `node "${cliPath}" adapt install --legacy --tool ${tool} --workspace-dir "${workspaceDir}" --prune`,
+          `node "${cliPath}" adapt install --tool ${tool} --workspace-dir "${workspaceDir}" --prune`,
           { encoding: 'utf-8', env: { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome } },
         );
         const lastJsonLine = secondInstall
@@ -143,14 +143,14 @@ describe('clean install followed by clean uninstall (REQ-050)', () => {
     const workspaceDir = mkdtempSync(join(tmpdir(), 'omp-fp-uninst-'));
     try {
       const installOut = execSync(
-        `node "${cliPath}" adapt install --legacy --tool opencode --workspace-dir "${workspaceDir}"`,
+        `node "${cliPath}" adapt install --tool opencode --workspace-dir "${workspaceDir}"`,
         { encoding: 'utf-8' },
       );
       expect(installOut).toContain('"ok":true');
       expect(existsSync(join(workspaceDir, '.opencode', 'agent', 'archimedes.md'))).toBe(true);
 
       const uninstallOut = execSync(
-        `node "${cliPath}" adapt uninstall --legacy --tool opencode --workspace-dir "${workspaceDir}"`,
+        `node "${cliPath}" adapt uninstall --tool opencode --workspace-dir "${workspaceDir}"`,
         { encoding: 'utf-8' },
       );
       const result = JSON.parse(

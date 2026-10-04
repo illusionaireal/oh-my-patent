@@ -66,3 +66,7 @@ For DONE with no figures, pass figures_not_required=true and human_decision=true
 To omit an optional figure, pass omitted_figures=[{figure_id,reason}], the specification
 digest and human_decision=true. Required figures cannot be omitted. The runtime saves
 the final decision under `.patent/decisions/<operation_id>.json` for later inspection.
+
+Installing this optional Skill leaves original plugin files and project state intact.
+An unmigrated plugin project can continue with its existing CLI. Migration is a separate
+explicit operation; after migration use this runtime for the project, not old writers.

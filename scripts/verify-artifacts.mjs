@@ -33,6 +33,11 @@ try {
   execFileSync('tar',['-xzf','-'],{cwd:root,input:readFileSync(join(artifacts,tarName))});
   const tarCount=verifyFolder(join(root,'package/skills/oh-my-patent'));
   for (const name of ['package.json','plugin.jsonc']) if(JSON.parse(readFileSync(join(root,'package',name),'utf8')).version !== manifest.version) throw new Error(`Version mismatch: ${name}`);
+  const plugin = JSON.parse(readFileSync(join(root, 'package/plugin.jsonc'), 'utf8'));
+  for (const [kind, count] of [['agents', 14], ['skills', 6], ['commands', 9]]) {
+    if (plugin[kind].length !== count) throw new Error(`Original plugin ${kind} inventory changed`);
+    for (const entry of plugin[kind]) readFileSync(join(root, 'package', entry.file));
+  }
   const script = join(root,'package/skills/oh-my-patent/scripts/runtime.mjs');
   const doctor = JSON.parse(execFileSync(process.execPath,[script,'--doctor'],{cwd:root,encoding:'utf8'}));
   if(!doctor.ok) throw new Error('Packed runtime doctor failed');

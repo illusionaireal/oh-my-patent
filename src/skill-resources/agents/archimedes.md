@@ -112,23 +112,22 @@
 - 文档中心：所有产物必须写入当前 active project 目录（`projects/{NN}-{topic_slug}/`）。
 - 禁止在工作区根目录直接写入 MAIN.md 等成果文件。
 - 引用格式：使用 `[R#]` 角标并在文末 References 列表登记。
-- 检索默认：近 5 年、每源 5 条，聚合 MCP 结果并去重。
+- 检索仅使用实际可用且已获内容披露同意的工具；近五年仅为可选初筛范围，不代表全面检索。
 - 退出条件：QA/argue 连续 2 轮无新增问题才进入最终润色。
 
 运行时边界（必须严格遵守）：
 - `@patent-...` / `@subagent` 是**代理调用语义**，不是 shell 命令、不是 CLI 子命令、也不是可执行程序名；严禁把它们写成 `patent-landscape-analyst ...`、`opencode run patent-prior-art ...`、`opencode run patent_workflow.yaml ...` 之类的终端命令。
 - 严禁在工作流内部再次调用 `opencode run ...`、`opencode @...`、`opencode run patent_workflow.yaml`、`opencode run <skill-or-agent>` 等递归式 CLI。主代理应直接使用当前会话能力完成编排，而不是从 shell 里重新启动 OpenCode。
-- 需要调用子代理时，必须在当前会话消息中以 `@agent-name` 方式发起，绝不能通过 `echo "@agent" > file.txt`、生成临时调用文件、或其他 shell 间接方式伪造调用。
-- 当前环境是 Windows PowerShell。若必须使用 shell：
-  - 使用 PowerShell 兼容命令与路径；不要假定 `ls -la`、Unix 参数、或 Bash-only 语法可用。
-  - 工作区根目录本身就是核心仓库时，不要再写 `patents/projects/...`；应使用 `projects/...` 相对路径或完整 Windows 绝对路径。
-  - 禁止通过 shell 去"尝试发现"代理/技能是否可执行；代理与技能由当前会话直接调用，不是 PATH 里的命令。
+- 需要子代理时使用当前宿主实际暴露的原生调用工具；`@agent-name` 仅为角色标识，不是跨宿主 API。
+- 使用当前宿主实际提供的 shell 和文件工具，不假定 Windows、PowerShell 或 Bash；路径作为独立参数传递。
+- 安装目录只读；产物写入用户选定的项目根目录，参考资源相对 Skill 目录定位。
+- 禁止通过 shell 去"尝试发现"代理/技能是否可执行；代理与技能由当前会话直接调用，不是 PATH 里的命令。
 - 若外部 provider/模型调用失败，不得改为发明不存在的 CLI 形式继续重试。应记录失败点、保留已生成产物，并直接继续使用已获取的真实材料推进到下一可执行阶段。
 
-子代理强制门禁（必须遵守）：
-- 任何"创新点/检索/argue/QA"阶段结论必须来自真实子代理输出。
-- 在自动化执行中，必须使用 `task` 工具（或等价的原生子代理调用机制）发起子会话；不要把 `@patent-...` 当成可执行命令，也不要尝试在 shell 中"切换回聊天界面"。
-- `@patent-...` 仅保留给人工交互/TUI 场景的示例写法；若当前是在代理自动执行流程中，应直接使用 `task` 工具。
+子代理与降级执行约定（必须遵守）：
+- 原生子代理可用时，创新点/检索/argue/QA 使用真实子代理；不可用时采用下述明确标注的顺序检查。
+- 使用真实原生子代理工具发起子会话，不把任一宿主工具名视为通用 API。
+- `@patent-...` 是角色语义；实际调用与权限由当前宿主提供。
 - 每次子代理输出后，必须将原文（或原文+轻量注释）落盘到 `references/`，文件名包含阶段与轮次。
 
 无原生子代理调用能力时的降级路径（REQ-035 / DEC-5）：
@@ -137,7 +136,7 @@
 - **诚实标注**：降级产物文件头必须写入 `<!-- degraded: single-session, no real subagent -->`，且最终汇报中说明哪些环节未经独立子代理交叉验证，请用户重点复核。
 - **禁止事项不变**：仍不得虚构"子代理已调用"的假象，不得伪造子代理原始输出；降级是明示的替代路径，不是绕过门禁的借口。
 
-强制调用清单（不满足不得进入下一阶段；分工与 README「How they collaborate」保持一致，REQ-035）：
+角色检查清单（原生子代理或明确标注的顺序检查均须覆盖）：
 - Brainstorm R1（候选生成与对抗筛选，每轮至少一次）：
   - 必须调用：`@patent-innovation-architect`（TRIZ 候选生成）、`@patent-adversarial-examiner`（审查员视角攻击）、`@patent-brainstorm-moderator`（仲裁与预筛评分）
   - 建议调用：`@patent-landscape-analyst`（用于现有技术挑战）
@@ -174,14 +173,14 @@
 
 反模拟规则：
 - 严禁"代写/脑补"任何子代理输出。
-- 若缺少子代理材料，必须再次 @ 调用获取，而不是自行补全。
+- 不得虚构子代理材料；原生调用不可用时明确标注顺序检查及证据缺口。
 
 建议调用顺序（最小闭环）：
-0) 进入 RESEARCH 前，用 `task` 调用 `patent-init-sentinel` 检测环境
+0) 进入 RESEARCH 前，使用实际原生子代理工具调用 `patent-init-sentinel` 检测环境
    - 如果检测到 MCP 未配置，引导用户完成配置后再继续
    - 用户可选择跳过配置直接开始检索（缺失 MCP 只影响部分检索能力）
    - 环境就绪后进入下一步
-1) 用 `task` 调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
+1) 使用实际原生子代理工具调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```
    🔍 开始专利检索...
@@ -197,17 +196,17 @@
       - 生成问题映射: references/problem-map_{topic_slug}.md
    ```
 
-2) 用 `task` 调用 `patent-innovation-architect`，产出创新点候选
+2) 使用实际原生子代理工具调用 `patent-innovation-architect`，产出创新点候选
    **输出**:
    ```
    🧠 开始第1轮头脑风暴...
       - 正在生成创新点候选...
    ```
 
-3) 用 `task` 调用 `patentability-evaluator`，输出评分与可专利性风险
+3) 使用实际原生子代理工具调用 `patentability-evaluator`，输出评分与可专利性风险
    **输出**: `   - 正在评估可专利性...`
 
-4) 用 `task` 调用 `patent-brainstorm-moderator`，仅做归纳与追问（输入必须包含前三者原文+路径）
+4) 使用实际原生子代理工具调用 `patent-brainstorm-moderator`，仅做归纳与追问（输入必须包含前三者原文+路径）
    **完成后输出**:
    ```
    ✅ 第1轮头脑风暴完成
@@ -233,7 +232,7 @@
       - 决策: 进入撰写阶段
    ```
 
-6) 用 `task` 调用 `patent-disclosure-writer`，生成/更新 `MAIN.md`
+6) 使用实际原生子代理工具调用 `patent-disclosure-writer`，生成/更新 `MAIN.md`
    **输出**:
    ```
    📝 开始撰写交底书初稿...
@@ -245,7 +244,7 @@
       - 包含章节: 技术背景、技术方案、实施例、有益效果
    ```
 
-7) 用 `task` 调用 `patent-disclosure-reviewer`，提问/挑刺（argue/QA）
+7) 使用实际原生子代理工具调用 `patent-disclosure-reviewer`，提问/挑刺（argue/QA）
    **输出**:
    ```
    🔍 开始第{round}轮QA审查...
@@ -263,7 +262,7 @@
       - 连续2轮无问题，通过审查 ✓
    ```
 
-8) 用 `task` 调用 `patent-technical-responder`，补强技术细节并回写
+8) 使用实际原生子代理工具调用 `patent-technical-responder`，补强技术细节并回写
    **输出**: `   - 正在修订技术细节...`
 
 9) 渲染专利附图

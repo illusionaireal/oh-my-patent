@@ -148,3 +148,40 @@ directory (`omp ?? space-...`). The verifier now supplies gzip bytes on stdin an
 Node set the Unicode working directory, retaining Unicode/space relocation coverage
 without passing those paths through tar's argument decoder. This follow-up is checked
 by the same archive verification step on the next CI run.
+
+The follow-up PR CI run `37150114027` on `f22583b` passed Ubuntu and Windows,
+including all 439 tests and both archive checks. This is automated CI evidence;
+host and human acceptance remain open.
+
+## Additive installation correction — 2026-10-04
+
+The user clarified that Skill mode supplements the original Archimedes plugin;
+it must not collapse or replace its 14 agents, 6 skills and 9 commands. This
+supersedes the earlier plugin-removal migration design and fingerprint allowlist.
+
+- `adapt` defaults to the original plugin. `--mode plugin` is explicit selection;
+  `--legacy` remains a compatibility alias. `--mode skill` selects the additional
+  portable package and still requires one host. Unsupported mode/flag combinations
+  fail before writing; plugin and Skill generation use separate output directories.
+- Original plugin prompts are restored. Portable adaptations live under
+  `src/skill-resources` and are read only by the Skill builder. All original entry
+  points remain packaged; archive verification checks the full 14/6/9 inventory.
+- Skill install, update, uninstall and rollback leave original plugin files and
+  user edits intact. The unused deletion allowlist is removed. Full LF/CRLF 0.3.3
+  fixtures now verify additive preservation instead of replacement/rejection.
+- Real CLI tests cover all three original hosts: default plugin installation,
+  additive Skill installation, plugin reinstall with pruning, independent plugin
+  uninstall and Skill uninstall. Plugin pruning preserves portable role resources
+  even when those references contain historical generated-agent markers.
+- The interrupted-transaction journal fix and its process-exit regressions remain.
+  Installing the Skill does not migrate project state; explicit project migration
+  retains its existing review/dry-run/backup contract.
+
+Linux / Node 22.23.3: lint/build passed, 446/446 tests passed in 62 files, and
+packed tarball/ZIP checks passed. The Skill still has 44 files, runtime 130,601
+bytes, ZIP 258,843 bytes. A repeated Skill build retained manifest SHA-256
+`4d3dcd822f6acb69f0936ae876283384a1e3b35038e476257656c54564876e01`.
+
+Version remains `0.4.0-alpha.0`; host-verification flags remain false. Revised PR
+CI is required for this correction. Filesystem coexistence does not certify combined
+host activation or mixed runtimes in one project. No merging or publication was run.

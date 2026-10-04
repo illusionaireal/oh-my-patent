@@ -5,6 +5,10 @@ description: Turn technical ideas or source materials into traceable patent disc
 
 # Archimedes — from Eureka to a patent disclosure
 
+This is the optional Skill installation mode. The original Archimedes plugin retains
+its separate agents, skills and commands. Installing this package does not migrate
+plugin projects; use one selected runtime for each project.
+
 Guide the user from technical facts to reviewable disclosure materials. Keep Archimedes'
 curiosity and rigor. Distinguish supplied facts, observed implementation, proposed
 design, unresolved questions and actual prior-art evidence throughout.

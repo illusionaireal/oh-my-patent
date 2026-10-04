@@ -1,15 +1,23 @@
-# Skill-first distribution contract
+# Plugin and optional Skill distribution contract
 
 Implementation baseline: `fc40901943e2ffb742167ea4848de7a0c321b77e` (0.3.3).
-Source: the user-approved 2026-09-30 skill-first execution plan. This specification
-records its implementation decisions; it does not certify host behavior or a release.
+Source: the 2026-09-30 execution plan, corrected by the user on 2026-10-04 to add
+Skill mode alongside the original plugin. This specification records implementation
+decisions; it does not certify host behavior or a release.
 
 ## Boundaries
 
-One portable `oh-my-patent` Skill, Archimedes persona, English routing and bilingual
+The original Archimedes plugin remains the default: 14 agents, 6 skills, 9 commands,
+existing adapters and original prompts. `--mode plugin` selects it explicitly;
+`--legacy` remains a compatibility alias. `--mode skill` opts into the additional
+portable package. Neither installer takes ownership of the other mode.
+
+The Skill mode provides one portable `oh-my-patent` Skill, Archimedes persona, English routing and bilingual
 discovery, existing Chinese role sources. Resources resolve from the installation;
 outputs resolve from the explicit project. Node 22 is required for persistence.
-No global rules files, nested agent CLIs, provider SDKs, or mandatory network service.
+Skill mode adds no global rules files, nested agent CLIs, provider SDKs, or mandatory
+network service. The runtime/figure/disclosure contract below describes Skill mode;
+original plugin projects retain their existing CLI workflow until explicit migration.
 Keep the ten existing stages and existing path algorithms. Independent search and
 review tasks never fabricate completion of the full workflow.
 
@@ -89,16 +97,22 @@ unverified; mocks certify only handoff behavior.
 
 ## Installation and release
 
-Source of truth: `src/skill-entry`, existing roles/capabilities/core. Generated portable
+Plugin source of truth: `plugin.jsonc`, `src/agents`, `src/skills`, existing commands
+and adapters. Skill source: `src/skill-entry`, `src/skill-resources` portable overrides,
+shared role/capability sources and core. Overrides do not replace plugin prompts. Generated portable
 folder: `skills/oh-my-patent`, exactly one SKILL.md, no symlinks. esbuild Node 22 ESM,
 all non-builtin dependencies bundled; no CLI/TUI/React/Ink/adapters in dependency graph.
 Runtime <=2 MiB, ZIP <=8 MiB; deterministic source/resource hashes and license inventory.
 
 Five shared-scan hosts use one `.agents/skills` copy; Claude isolated outside shared
 roots. No host discovery/installation/workflow certification from filesystem tests.
-Old generated entries are removed only after ownership and unchanged content checks;
-backup outside discovery roots, preserve user edits and unrelated skills, dry-run and
-rollback first. Marker alone cannot prove a file remains unmodified.
+Skill installation must preserve all original plugin files and user edits, including
+workspace instructions, MCP and marketplace configuration. No automatic replacement
+or project-state migration. Skill updates/uninstall/rollback manage only their own
+registered files, with backups outside discovery roots and dry-run previews. Plugin
+pruning must preserve portable Skill resources even when they contain agent markers.
+Generate outputs are separate: `plugins/<host>` and `skill-installations/<host>`.
+Combined host activation is unverified; select an entry and runtime explicitly.
 
 Build/test/package once; publish the same verified tarball with --ignore-scripts.
 Track artifact_ready, install_verified, workflow_verified, catalog_status independently.

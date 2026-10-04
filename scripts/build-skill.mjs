@@ -28,13 +28,15 @@ files.set('assets/config.defaults.json', Buffer.from(JSON.stringify(DEFAULT_PROJ
 const resources = [];
 for (const name of walk(join(root, 'src/agents')).filter(n => n.endsWith('.md'))) {
   const target = `references/role-${name}`;
-  const body = source(`src/agents/${name}`).toString('utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/\r\n/g, '\n');
+  const override = `src/skill-resources/agents/${name}`;
+  const body = source(existsSync(join(root, override)) ? override : `src/agents/${name}`).toString('utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/\r\n/g, '\n');
   files.set(target, Buffer.from(body)); resources.push(`- [${name.slice(0,-3)}](${target}) — load only for this role's current task.`);
 }
 for (const name of walk(join(root, 'src/skills')).filter(n => n.endsWith('/SKILL.md'))) {
   const id = name.split('/')[0];
   const target = `references/capability-${id}.md`;
-  files.set(target, Buffer.from(source(`src/skills/${name}`).toString('utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/\r\n/g, '\n')));
+  const override = `src/skill-resources/capabilities/${id}.md`;
+  files.set(target, Buffer.from(source(existsSync(join(root, override)) ? override : `src/skills/${name}`).toString('utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/\r\n/g, '\n')));
   if (['disclosure-template', 'evidence-card'].includes(id)) {
     const template = files.get(target).toString('utf8').match(/```markdown\n([\s\S]*?)```/);
     if (!template) throw new Error(`Template source missing: ${id}`);

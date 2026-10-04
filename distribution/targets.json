@@ -19,7 +19,7 @@
       "name": "Codex CLI/IDE",
       "wave": 1,
       "project_path": ".agents/skills/oh-my-patent",
-      "note": "One canonical shared copy; do not add a duplicate plugin entry.",
+      "note": "One canonical portable Skill copy. Original plugin files are preserved; combined host activation is unverified.",
       "artifact_ready": true,
       "install_verified": false,
       "workflow_verified": false,

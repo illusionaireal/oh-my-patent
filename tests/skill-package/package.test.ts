@@ -37,3 +37,12 @@ it('contains exactly one entry, complete resources and a consistent checksum man
   expect(manifest.runtime_bytes).toBeLessThanOrEqual(2 * 1024 * 1024);
   expect(manifest.inputs.some((name: string) => /src\/(cli|tui|adapters)|node_modules\/(ink|react)/.test(name))).toBe(false);
 });
+it('keeps portable runtime instructions separate from original plugin prompts', () => {
+  const original = readFileSync('src/agents/patent-init-sentinel.md', 'utf8');
+  const portable = readFileSync('skills/oh-my-patent/references/role-patent-init-sentinel.md', 'utf8');
+  expect(original).toContain('node dist/cli.js check --json');
+  expect(portable).toContain('scripts/runtime.mjs --doctor');
+  expect(portable).not.toBe(original);
+  const manifest = JSON.parse(readFileSync('skills/oh-my-patent/scripts/manifest.json', 'utf8'));
+  expect(manifest.sources['src/skill-resources/agents/patent-init-sentinel.md']).toBeDefined();
+});
