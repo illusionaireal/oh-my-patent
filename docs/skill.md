@@ -126,7 +126,50 @@ npm run package:skill
 npm run verify:artifacts
 ```
 
-The builder emits a Skill ZIP and the npm tarball containing both installation modes,
-a release manifest and SHA256SUMS. CI checks deterministic generated Skill files and
+The builder emits a Skill ZIP, the original plugin npm tarball, an independent
+`oh-my-patent-skill` npm tarball, a release manifest and SHA256SUMS. CI checks deterministic generated Skill files and
 actual packed artifacts. Publication uses the verified tarball with `--ignore-scripts`;
 alpha versions use npm's `next` tag. Verification scripts do not publish anything.
+
+
+## Independent npm Skill publication
+
+The original `oh-my-patent` npm package and its release workflow remain available.
+The new **Publish standalone Skill** workflow (`.github/workflows/npm-publish-skill.yml`)
+publishes only `oh-my-patent-skill`, built from the generated portable package.
+The standalone archive has its own package.json/README and the exact same 44 Skill
+resources; it contains no plugin CLI/source tree or runtime npm dependencies.
+
+The independent package inherits the repository version, currently `0.4.0-alpha.0`.
+Its metadata is in `distribution/skill-package.json`. Alpha releases use `next`;
+stable publication remains blocked until first-wave host installation and workflow
+verification pass. Publication does not mark a host verified or submit a marketplace entry.
+
+After this workflow reaches the default branch, open GitHub Actions → **Publish
+standalone Skill** → **Run workflow**, select the intended branch/tag, and leave
+`dry_run` enabled for a trial. Disable it to publish the verified tarball. The workflow
+reuses the existing `PRE` environment and `NPM_TOKEN` secret; that token must be
+allowed to create/publish `oh-my-patent-skill`. The package name is proposed by this
+change; registry ownership and actual publication have not been established.
+
+The build job checks/tests/packages the selected commit and uploads immutable
+artifacts. The publish job verifies commit identity, selected package, dist-tag and
+SHA-256, then publishes only the standalone tarball with `--ignore-scripts`.
+It does not rebuild the package or trigger the original plugin publication workflow.
+
+Local checks (the final command performs an npm dry-run):
+
+```sh
+npm run package:skill
+npm run verify:artifacts
+npm run publish:skill -- --dry-run
+```
+
+After publication, `npm install --save-dev --ignore-scripts oh-my-patent-skill@next`
+downloads the standalone package. npm installation alone does not register the Skill
+with a host. Keep the complete directory together and use the selected host's Skill
+location or a third-party installer's local-directory input. See the generated package
+[README](../distribution/skill-package-README.md) for an example based on the
+[skills CLI's documented local-path support](https://github.com/vercel-labs/skills).
+That installer path and real host activation still need acceptance; do not infer
+certification from npm publication.

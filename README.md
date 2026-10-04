@@ -60,7 +60,9 @@ and MCP configuration. Each mode has its own uninstall command. Choose which ent
 you invoke; simultaneous host discovery and mixed use of both modes in one project
 remain unverified. Installing the Skill does not migrate existing project state.
 See [installation modes and optional migration](docs/skill.md).
-The candidate remains `0.4.0-alpha.0`; no alpha publication has run in this work.
+The candidate remains `0.4.0-alpha.0`. An independent **Publish standalone Skill**
+workflow packages `oh-my-patent-skill` for npm; see [publication instructions](docs/skill.md#independent-npm-skill-publication).
+No npm publication has run in this work.
 
 ## What you can do
 

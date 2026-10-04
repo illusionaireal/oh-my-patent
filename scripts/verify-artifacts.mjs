@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { standalonePublishPlan } from './standalone-skill-package.mjs';
 const artifacts = resolve('release-artifacts');
 const manifest = JSON.parse(readFileSync(join(artifacts,'release-manifest.json'),'utf8'));
 const sha = data => createHash('sha256').update(data).digest('hex');
@@ -11,11 +12,11 @@ const walk = (dir, prefix = '') => readdirSync(dir, {withFileTypes:true}).flatMa
   if (e.isSymbolicLink()) throw new Error('Linked packaged resource');
   return e.isDirectory() ? walk(join(dir,e.name),prefix+e.name+'/') : [prefix+e.name];
 }).sort();
-function verifyFolder(folder) {
+function verifyFolder(folder, extras = []) {
   const bytes = readFileSync(join(folder,'scripts/manifest.json'));
   if (sha(bytes) !== manifest.skill_manifest_digest) throw new Error('Skill manifest differs from release');
   const skill = JSON.parse(bytes), names = walk(folder);
-  if (skill.package_version !== manifest.version || names.filter(n=>n.endsWith('SKILL.md')).length !== 1 || JSON.stringify(names) !== JSON.stringify([...Object.keys(skill.files),'scripts/manifest.json'].sort())) throw new Error('Invalid Skill inventory/version');
+  if (skill.package_version !== manifest.version || names.filter(n=>n.endsWith('SKILL.md')).length !== 1 || JSON.stringify(names) !== JSON.stringify([...Object.keys(skill.files),'scripts/manifest.json',...extras].sort())) throw new Error('Invalid Skill inventory/version');
   for (const [name,hash] of Object.entries(skill.files)) if (sha(readFileSync(join(folder,name))) !== hash) throw new Error(`Invalid packaged resource: ${name}`);
   return names.length;
 }
@@ -27,7 +28,7 @@ function crc32(data) {
 for (const [name, hash] of Object.entries(manifest.artifact_checksums)) if(createHash('sha256').update(readFileSync(join(artifacts,name))).digest('hex') !== hash) throw new Error(`Artifact changed: ${name}`);
 const root = mkdtempSync(join(tmpdir(),'omp 产物 space-'));
 try {
-  const tarName = Object.keys(manifest.artifact_checksums).find(n=>n.endsWith('.tgz'));
+  const tarName = manifest.npm_packages.plugin.tarball;
   // Windows tar can misencode Unicode argv paths. Keep the Unicode/space relocation
   // check: Node sets cwd, while tar reads the gzip bytes from stdin using ASCII args.
   execFileSync('tar',['-xzf','-'],{cwd:root,input:readFileSync(join(artifacts,tarName))});
@@ -75,5 +76,20 @@ try {
   if(!JSON.parse(execFileSync(process.execPath,[zippedScript,'--doctor'],{cwd:root,encoding:'utf8'})).ok) throw new Error('ZIP runtime failed');
   const zipCreate=spawnSync(process.execPath,[zippedScript],{cwd:root,input:JSON.stringify({...request,project:join(root,'zip-project')}),encoding:'utf8'});
   if(zipCreate.status!==0||!JSON.parse(zipCreate.stdout).ok) throw new Error('ZIP project creation failed');
-  console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,zip:zipName,node:process.versions.node}));
+  const standaloneRoot = join(root, 'standalone'); mkdirSync(standaloneRoot);
+  const standalone = manifest.npm_packages.skill;
+  execFileSync('tar', ['-xzf', '-'], { cwd: standaloneRoot, input: readFileSync(join(artifacts, standalone.tarball)) });
+  const standaloneFolder = join(standaloneRoot, 'package');
+  const standaloneCount = verifyFolder(standaloneFolder, ['package.json', 'README.md']);
+  const metadata = JSON.parse(readFileSync(join(standaloneFolder, 'package.json'), 'utf8'));
+  if (metadata.name !== standalone.name || metadata.version !== manifest.version || metadata.name === plugin.name || metadata.engines.node !== '>=22' || Object.keys(metadata.dependencies ?? {}).length || Object.keys(metadata.scripts ?? {}).length) throw new Error('Invalid standalone npm metadata');
+  const originalSkill = join(root, 'package/skills/oh-my-patent');
+  for (const name of walk(originalSkill)) if (!readFileSync(join(originalSkill, name)).equals(readFileSync(join(standaloneFolder, name)))) throw new Error(`Standalone/plugin Skill mismatch: ${name}`);
+  const standaloneScript = join(standaloneFolder, 'scripts/runtime.mjs');
+  if (!JSON.parse(execFileSync(process.execPath, [standaloneScript, '--doctor'], { cwd: standaloneRoot, encoding: 'utf8' })).ok) throw new Error('Standalone runtime doctor failed');
+  const standaloneCreate = spawnSync(process.execPath, [standaloneScript], { cwd: standaloneRoot, input: JSON.stringify({ ...request, project: join(root, 'standalone-project') }), encoding: 'utf8' });
+  if (standaloneCreate.status !== 0 || !JSON.parse(standaloneCreate.stdout).ok) throw new Error('Standalone runtime project creation failed');
+  // Verify alpha publishing selects the Skill tarball and next, never the plugin/latest.
+  if (manifest.version.includes('-')) standalonePublishPlan(resolve('.'), artifacts, process.env.GITHUB_SHA);
+  console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,skill_tarball:standalone.tarball,skill_npm_files:standaloneCount,zip:zipName,node:process.versions.node}));
 } finally { rmSync(root,{recursive:true,force:true}); }

@@ -185,3 +185,38 @@ bytes, ZIP 258,843 bytes. A repeated Skill build retained manifest SHA-256
 Version remains `0.4.0-alpha.0`; host-verification flags remain false. Revised PR
 CI is required for this correction. Filesystem coexistence does not certify combined
 host activation or mixed runtimes in one project. No merging or publication was run.
+
+## Independent npm Skill workflow — 2026-10-05 (Asia/Shanghai)
+
+The user requested a workflow to publish the portable Skill separately on npm.
+The proposed package is `oh-my-patent-skill`; the original `oh-my-patent` package,
+plugin default, entry points and existing publication workflow remain available.
+
+- Packaging now emits three artifacts: plugin tarball, Skill ZIP and standalone
+  Skill tarball. The latter contains the same 44 Skill resources plus npm metadata
+  and README (46 files), without runtime npm dependencies or install scripts.
+- The independent manual workflow builds/tests/verifies the selected commit, then
+  transfers immutable artifacts to its publish job. Publication selects only the
+  standalone tarball and checks package/version/commit identity, SHA-256 and dist-tag.
+  It uses `--ignore-scripts`, the existing PRE environment and NPM_TOKEN secret.
+- `dry_run` defaults to true. Alpha uses `next`; stable remains blocked until all
+  first-wave host installation and workflow verification flags pass. The helper
+  also rejects modified bytes, other commits, plugin selection, path traversal,
+  version changes and a tampered alpha dist-tag.
+- CI verifies both npm archives and ZIP, executes each copied runtime without its
+  source repository/dependencies, and dry-runs standalone npm publication.
+- npm dependency installation is separate from host Skill registration. A local
+  directory example based on the skills CLI documentation is included, but that
+  third-party installer and host activation remain unverified for this candidate.
+
+Linux / Node 22.23.3: lint/build passed, 453/453 tests passed in 63 files; archive
+verification and npm publish dry-run passed. The final targeted publication-helper
+rerun passed all seven checks. Standalone tarball: 76,895 bytes, 46 files. Rebuilt
+Skill manifest SHA-256: `02fca8990e1442c97738cda242416f73281f6a4066c564d34d8ffe59b520effe`.
+Workflow YAML parsed, and git diff whitespace checks passed.
+
+Actual workflow dispatch/publication, registry package ownership and token permission
+for the new package were not tested. npm dry-run succeeded without registry login;
+that does not prove publication access. Version is still `0.4.0-alpha.0`, host flags
+remain false, and no npm upload or marketplace submission occurred. Revised PR CI
+must pass independently of these local checks.

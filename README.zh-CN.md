@@ -56,7 +56,9 @@ node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <worksp
 Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
 请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
 安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
-候选版本仍为 `0.4.0-alpha.0`，本轮未执行发布。
+候选版本仍为 `0.4.0-alpha.0`。新增独立的 **Publish standalone Skill** 工作流，
+将便携 Skill 打包为 `oh-my-patent-skill` 发布到 npm，详见[发布说明](docs/skill.md#independent-npm-skill-publication)。
+本轮仅验证发布流程，未上传到 npm。
 
 ## 能做什么
 

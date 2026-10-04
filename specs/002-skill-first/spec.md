@@ -114,6 +114,12 @@ pruning must preserve portable Skill resources even when they contain agent mark
 Generate outputs are separate: `plugins/<host>` and `skill-installations/<host>`.
 Combined host activation is unverified; select an entry and runtime explicitly.
 
+Independent npm Skill package: `oh-my-patent-skill`, version inherited from the
+repository. Pack the generated Skill plus npm metadata/README; no plugin source or
+runtime npm dependencies. Keep the original plugin npm package and release workflow.
+A separate manual workflow publishes only the Skill archive, selecting `next` for
+prereleases and enforcing first-wave host verification before `latest`.
+
 Build/test/package once; publish the same verified tarball with --ignore-scripts.
 Track artifact_ready, install_verified, workflow_verified, catalog_status independently.
 No stable release until real host evaluations, zero-tolerance safety checks and manual

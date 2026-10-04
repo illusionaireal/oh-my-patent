@@ -4,6 +4,7 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { packStandaloneSkill } from './standalone-skill-package.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'release-artifacts'); mkdirSync(out, { recursive: true });
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -36,7 +37,8 @@ const zipName = `oh-my-patent-skill-${pkg.version}.zip`; writeFileSync(join(out,
 if (!process.env.npm_execpath) throw new Error('Run through npm run package:skill');
 const packed = JSON.parse(execFileSync(process.execPath,[process.env.npm_execpath,'pack','--ignore-scripts','--json','--pack-destination',out],{cwd:root,encoding:'utf8'}));
 const tarName = packed[0].filename;
-const release = { version:pkg.version, source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(), source_dirty: Boolean(execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim()), source_tag: process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : null, skill_manifest_digest: sha(readFileSync(join(skill,'scripts/manifest.json'))), artifact_checksums:{[zipName]:sha(zip),[tarName]:sha(readFileSync(join(out,tarName)))}, host_verification:'pending', catalog_status:'not_submitted' };
+const standalone = packStandaloneSkill(root, skill, out, names);
+const release = { version:pkg.version, source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(), source_dirty: Boolean(execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim()), source_tag: process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : null, skill_manifest_digest: sha(readFileSync(join(skill,'scripts/manifest.json'))), npm_packages: { plugin: { name: pkg.name, version: pkg.version, tarball: tarName }, skill: standalone }, artifact_checksums:{[zipName]:sha(zip),[tarName]:sha(readFileSync(join(out,tarName))),[standalone.tarball]:sha(readFileSync(join(out,standalone.tarball)))}, host_verification:'pending', catalog_status:'not_submitted' };
 writeFileSync(join(out,'release-manifest.json'),JSON.stringify(release,null,2)+'\n');
 writeFileSync(join(out,'SHA256SUMS'),Object.entries(release.artifact_checksums).map(([n,h])=>`${h}  ${n}`).join('\n')+'\n');
 console.log(JSON.stringify({ ...release, zip_bytes:zip.length }));

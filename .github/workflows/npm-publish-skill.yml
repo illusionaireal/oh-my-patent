@@ -1,0 +1,83 @@
+# Independent publication of the portable Skill; the plugin release workflow is unchanged.
+name: Publish standalone Skill
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate publication without uploading to npm
+        type: boolean
+        default: true
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-standalone-skill
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and verify standalone Skill
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Type-check
+        run: npm run lint
+      - name: Test and build
+        run: npm test
+      - name: Verify generated Skill is current
+        run: git diff --exit-code -- skills/oh-my-patent
+      - name: Build immutable release candidates
+        run: npm run package:skill
+      - name: Verify actual archives and standalone runtime
+        run: npm run verify:artifacts
+      - name: Upload verified artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-standalone-skill
+          path: release-artifacts/
+          retention-days: 1
+          if-no-files-found: error
+
+  publish-skill:
+    name: Publish only the standalone Skill
+    needs: build
+    runs-on: ubuntu-latest
+    environment: PRE
+    steps:
+      - name: Checkout verified commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+      - name: Download verified artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: verified-standalone-skill
+          path: release-artifacts
+      - name: Setup Node.js for npm
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      - name: Publish verified Skill tarball
+        run: |
+          if [[ "$SKILL_DRY_RUN" == "true" ]]; then
+            npm run publish:skill -- --dry-run
+          else
+            npm run publish:skill
+          fi
+        env:
+          SKILL_DRY_RUN: ${{ inputs.dry_run }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

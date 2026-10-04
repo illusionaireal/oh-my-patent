@@ -20,7 +20,8 @@
     "prepublishOnly": "npm run lint && npm run build && npm test",
     "build:skill": "node scripts/build-skill.mjs",
     "package:skill": "node scripts/package-skill.mjs",
-    "verify:artifacts": "node scripts/verify-artifacts.mjs"
+    "verify:artifacts": "node scripts/verify-artifacts.mjs",
+    "publish:skill": "node scripts/publish-standalone-skill.mjs"
   },
   "keywords": [
     "patent",

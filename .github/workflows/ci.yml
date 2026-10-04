@@ -52,5 +52,7 @@ jobs:
         run: git diff --exit-code -- skills/oh-my-patent
       - name: Build release artifacts
         run: npm run package:skill
-      - name: Test the actual tarball and ZIP
+      - name: Test plugin and standalone Skill tarballs and ZIP
         run: npm run verify:artifacts
+      - name: Dry-run standalone Skill publication
+        run: npm run publish:skill -- --dry-run
