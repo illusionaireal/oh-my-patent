@@ -23,54 +23,39 @@ review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Requires Node.js >=22. Build from a source checkout:
+Requires Node.js >=22. Open a terminal in your patent workspace and choose one
+installation mode. These examples use Codex; run only the command for your chosen mode.
+
+**Plugin mode (default)** provides Archimedes, 14 agents, 6 skills and 9 commands:
 
 ```bash
-npm ci
-npm run build
+npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
 ```
 
-**Plugin mode (default)** provides Archimedes, **14 agents, 6 skills, and 9 commands**:
+**Skill mode** provides one portable entry with bundled role resources and runtime:
 
 ```bash
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
+npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-Use `--mode plugin` to select this mode explicitly. Open the workspace in your AI
-coding tool and use Archimedes or the host's plugin commands; see the [usage guide](docs/usage-en.md).
+| Host | `--tool` value |
+| --- | --- |
+| Claude Code | `claude-code` |
+| Codex | `codex` |
+| OpenCode | `opencode` |
 
-**Skill mode** provides one portable entry with bundled role resources and runtime.
-Select one host and inspect the installation plan:
-
-```bash
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
-```
-
-Then select the `oh-my-patent` Skill and start with:
+Open the same workspace in your selected host. For plugin mode, select Archimedes;
+for Skill mode, select `oh-my-patent`. Describe your topic, for example:
 
 ```text
-Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
+Create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
 
-| Installation mode | Installed entry points | Selection |
-| --- | --- | --- |
-| Plugin (default) | Archimedes + 14 agents, 6 skills, 9 commands | `adapt install [--mode plugin] --tool <host>` |
-| Skill | One portable entry with bundled role resources and runtime | `adapt install --mode skill --tool <host>` |
-
-Choose the entry you want to use for your project. See the [installation guide](docs/skill.md)
-for updates, removal and project migration, and [compatibility](docs/compatibility.md)
-for host-specific requirements.
-
-The **`oh-my-patent-skill`** npm package provides the standalone Skill:
-
-```bash
-npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0
-node node_modules/oh-my-patent-skill/scripts/runtime.mjs --doctor
-```
-
-Copy the complete package directory into your selected host's Skill directory, then
-select `oh-my-patent`. See the [installation guide](docs/skill.md) for directory paths.
+Archimedes guides you through collecting material, developing ideas, drafting the
+disclosure and reviewing it. See the [usage guide](docs/usage-en.md) for enabling
+plugin entry points. Source builds, standalone Skill package installation, updates
+and removal are covered in the [installation guide](docs/skill.md).
+See [compatibility](docs/compatibility.md) for host-specific requirements.
 
 ## What you can do
 

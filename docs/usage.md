@@ -1,7 +1,7 @@
 # 使用指南与 CLI 参考
 
-> 本页介绍原有 Archimedes 插件模式，仍为默认，完整保留 14 个智能体、6 项技能、9 个命令。
-> 可显式指定 `--mode plugin`；新增的便携模式使用 `--mode skill`，参见[安装模式](skill.md)。
+> 本页介绍插件模式的使用方法：Archimedes、14 个智能体、6 项技能、9 个命令。
+> 插件使用 `--mode plugin`；便携 Skill 使用 `--mode skill`，参见[安装指南](skill.md)。
 
 [文档中心](./README.md) · [English](./usage-en.md)
 
@@ -12,11 +12,10 @@
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+oh-my-patent adapt setup --tool codex --workspace-dir .
 ```
 
-Setup 默认安装三个适配器的配置。只选择一个平台时：
+以上命令为当前目录安装 Codex 插件。其他宿主使用对应命令：
 
 ```bash
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
@@ -24,7 +23,7 @@ oh-my-patent adapt setup --tool codex --workspace-dir .
 oh-my-patent adapt setup --tool opencode --workspace-dir .
 ```
 
-只运行你需要的那一条。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
+只运行所选宿主的命令。省略 `--tool` 会安装三个适配器的配置。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
 npm 安装完成后，需要显式执行这一步。
 
 | 适配器 | 写入工作区的文件 |

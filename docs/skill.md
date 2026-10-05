@@ -1,15 +1,15 @@
 # Installation modes (0.4.0)
 
-The original Archimedes plugin remains the default, with all **14 agents, 6 skills,
-and 9 commands**. The portable Agent Skill is an additional installation option.
-Neither mode replaces the other. Node.js >=22 is required.
+oh-my-patent provides plugin and portable Skill installation modes. Plugin mode
+is the default, with **14 agents, 6 skills and 9 commands**. Node.js >=22 is required.
 
-The release version is `0.4.0`. First-wave host installation and workflow acceptance
-was confirmed by the maintainer on 2026-10-05. Wave-two hosts, paid image providers,
-combined plugin/Skill host activation and marketplace submission remain unverified. See
-[compatibility](compatibility.md) and the [verification ledger](../specs/002-skill-first/verification.md).
+For installation into a host workspace, use the [quick start](../README.md#quick-start).
+The sections below cover source builds, standalone packages and lifecycle operations.
 
-## Original Archimedes plugin
+See [compatibility](compatibility.md) for host support and operating constraints.
+Acceptance provenance is recorded in the [verification ledger](../specs/002-skill-first/verification.md).
+
+## Plugin mode from source
 
 From a source checkout:
 
@@ -19,11 +19,11 @@ npm run build
 node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-The command retains the original multi-entry plugin workflow. `--mode plugin` is an
+The command installs the multi-entry plugin workflow. `--mode plugin` is an
 explicit equivalent; `--legacy` remains a compatibility alias. Plugin adapters support
-Claude Code, Codex and OpenCode. Omitting `--tool` retains the original all-adapters
-behavior. Use the host-specific Archimedes entry and commands described in the
-[usage guide](usage-en.md). The original plugin prompts remain in `src/agents` and
+Claude Code, Codex and OpenCode. Omitting `--tool` selects all adapters.
+Use the host-specific Archimedes entry and commands described in the
+[usage guide](usage-en.md). Plugin prompts are in `src/agents` and
 `src/skills`; portable runtime instructions have separate source overrides.
 
 ```sh
@@ -33,7 +33,7 @@ node dist/cli.js adapt uninstall --mode plugin --tool codex --workspace-dir <wor
 Plugin uninstall and `--prune` preserve the optional portable Skill. `--dry-run` is a
 Skill-mode option; plugin mode rejects it before writing rather than implying a preview.
 
-## Additional portable Skill
+## Skill mode from source
 
 Build the checkout as above, then select one host and inspect the dry-run:
 
@@ -43,7 +43,7 @@ node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <worksp
 ```
 
 Skill mode requires an explicit `--tool`. It adds one complete portable package,
-with bundled role resources and runtime. It leaves original plugin agents, skills,
+with bundled role resources and runtime. It leaves plugin agents, skills,
 commands, customizations, AGENTS.md, CLAUDE.md, MCP and marketplace settings intact.
 It does not migrate existing project state or require uninstalling the plugin.
 
@@ -51,11 +51,11 @@ Claude Code uses `.claude/skills/oh-my-patent`. Codex and OpenCode use one share
 `.agents/skills/oh-my-patent` copy with reference-counted ownership. The six candidate
 host locations are in [distribution/targets.json](../distribution/targets.json).
 Do not duplicate the portable Skill across shared and host-specific discovery roots.
-These duplicate checks concern copies of the portable Skill, not the original plugin.
+These duplicate checks concern copies of the portable Skill, not the plugin.
 
 Choose the plugin or Skill entry when starting work. Filesystem coexistence is covered
 by automated tests; host discovery and activation of both entry types together are
-unverified. The original Codex plugin includes an overview Skill named `oh-my-patent`,
+unverified. The Codex plugin includes an overview Skill named `oh-my-patent`,
 so resolution of that name alongside the portable entry needs host acceptance.
 Use a separate workspace when evaluating the Skill independently.
 
@@ -69,6 +69,39 @@ the local runtime, not host discovery. The format follows the
 Fixed-version third-party installer and native marketplace commands remain unverified.
 Ancestor/user portable scopes are inspected, never rewritten. Filesystem checks are
 not proof of host deduplication.
+
+## Standalone Skill package installation
+
+This method is for users who want the portable package without installing the CLI.
+Downloading the npm package and registering it with a host are separate steps.
+Use a temporary directory outside your patent workspace to obtain the package:
+
+```sh
+npm pack oh-my-patent-skill --ignore-scripts
+```
+
+Extract the resulting `.tgz` archive with your archive tool. Copy its complete
+`package` directory to one destination in your patent workspace:
+
+| Host | Destination |
+| --- | --- |
+| Claude Code | `.claude/skills/oh-my-patent` |
+| Codex | `.agents/skills/oh-my-patent` |
+| OpenCode | `.agents/skills/oh-my-patent` |
+
+Open that workspace in the host and select `oh-my-patent`. Keep all references,
+assets and scripts together. Before replacing a manually installed copy, back up
+any customizations; remove that copy manually when uninstalling. CLI-managed backups,
+updates and rollback apply to installations made through `adapt install`.
+
+For troubleshooting only, check the copied runtime:
+
+```sh
+node <installed-skill>/scripts/runtime.mjs --doctor
+```
+
+The check diagnoses the local runtime; selecting the Skill in the host completes
+the activation step. For a reproducible download, use `oh-my-patent-skill@<version>` in the `npm pack` command.
 
 ## Skill updates, removal and rollback
 
@@ -98,7 +131,7 @@ one another.
 ## Optional project migration
 
 Installing either mode leaves project state unchanged. Existing plugin projects can
-continue using their original CLI path functions. To use the versioned Skill runtime
+continue using their CLI path functions. To use the versioned Skill runtime
 with an existing project, explicitly dry-run and review `project.migrate` before
 migration. Migrated projects use the bundled JSON runtime or CLI runtime bridge
 (`oh-my-patent runtime --input request.json`); old writers reject their schema.
@@ -116,7 +149,7 @@ them. Model-provider processing is a separate boundary, not fully local processi
 Direct SVG needs no remote renderer. Define a figure spec, validate self-contained SVG
 before preview, review technical and visual consistency, then register current input
 hashes. Changes invalidate prior review. Image generation remains optional and unverified.
-These portable instructions do not replace the original plugin's role prompts.
+These portable instructions do not replace the plugin's role prompts.
 
 ## Maintainer checks
 
@@ -127,7 +160,7 @@ npm run package:skill
 npm run verify:artifacts
 ```
 
-The builder emits a Skill ZIP, the original plugin npm tarball, an independent
+The builder emits a Skill ZIP, the plugin npm tarball, an independent
 `oh-my-patent-skill` npm tarball, a release manifest and SHA256SUMS. CI checks deterministic generated Skill files and
 actual packed artifacts. Publication uses the verified tarball with `--ignore-scripts`;
 stable versions use npm's `latest` tag; prereleases use `next`.
@@ -136,8 +169,8 @@ Verification scripts do not publish anything.
 
 ## Independent npm Skill publication
 
-The original `oh-my-patent` npm package and its release workflow remain available.
-The new **Publish standalone Skill** workflow (`.github/workflows/npm-publish-skill.yml`)
+The `oh-my-patent` npm package has its own release workflow.
+The **Publish standalone Skill** workflow (`.github/workflows/npm-publish-skill.yml`)
 publishes only `oh-my-patent-skill`, built from the generated portable package.
 The standalone archive has its own package.json/README and the exact same 44 Skill
 resources; it contains no plugin CLI/source tree or runtime npm dependencies.
@@ -158,7 +191,7 @@ publication are not established by a dry-run.
 The build job checks/tests/packages the selected commit and uploads immutable
 artifacts. The publish job verifies commit identity, selected package, dist-tag and
 SHA-256, then publishes only the standalone tarball with `--ignore-scripts`.
-It does not rebuild the package or trigger the original plugin publication workflow.
+It does not rebuild the package or trigger the plugin publication workflow.
 
 Local checks (the final command performs an npm dry-run):
 
@@ -168,20 +201,11 @@ npm run verify:artifacts
 npm run publish:skill -- --dry-run
 ```
 
-After publication, `npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0`
-downloads the standalone package. npm installation alone does not register the Skill
-with a host. Keep the complete directory together and use the selected host's Skill
-location or a third-party installer's local-directory input. See the generated package
-[README](../distribution/skill-package-README.md) for an example based on the
-[skills CLI's documented local-path support](https://github.com/vercel-labs/skills).
-That third-party installer path remains unverified; do not infer additional host
-certification from npm publication.
-
 ## Release 0.4.0
 
 Merge the release PR after CI passes, then publish a GitHub Release tagged `v0.4.0`
 at the resulting merge commit using the [bilingual release notes](releases/0.4.0.md).
-The original package workflow listens to `release.published`, including publication
+The plugin package workflow listens to `release.published`, including publication
 of a draft Release. The standalone Skill workflow remains independently dispatched;
 select the same tag, run with `dry_run` enabled, then disable it for publication.
 Both workflows retain their first-wave host acceptance checks.

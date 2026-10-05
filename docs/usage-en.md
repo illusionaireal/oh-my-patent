@@ -1,8 +1,7 @@
 # Usage and CLI reference
 
-> This page documents the original Archimedes plugin mode, which remains the default
-> with 14 agents, 6 skills and 9 commands. `--mode plugin` selects it explicitly.
-> The additional portable mode uses `--mode skill`; see [installation modes](skill.md).
+> This page covers plugin mode: Archimedes, 14 agents, 6 skills and 9 commands.
+> Use `--mode plugin` for the plugin or `--mode skill` for the portable Skill; see the [installation guide](skill.md).
 
 [Documentation](./README-en.md) · [中文](./usage.md)
 
@@ -13,11 +12,10 @@ patent workspace, or back up existing instruction and configuration files first.
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+oh-my-patent adapt setup --tool codex --workspace-dir .
 ```
 
-Setup installs generated configuration for all three adapters. To select one:
+The example installs the Codex plugin into the current directory. For other hosts:
 
 ```bash
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
@@ -25,7 +23,7 @@ oh-my-patent adapt setup --tool codex --workspace-dir .
 oh-my-patent adapt setup --tool opencode --workspace-dir .
 ```
 
-Run only the command for the host you want. `setup` is `install` with an additional
+Run only the command for your host. Omitting `--tool` installs all three adapters. `setup` is `install` with an additional
 completion hint; installation is an explicit step after npm installation.
 
 | Adapter | Files written in the workspace |

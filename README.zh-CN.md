@@ -22,52 +22,38 @@
 
 ## 快速开始
 
-需要 Node.js >=22。在源码目录构建：
+需要 Node.js >=22。在专利工作区目录打开终端，选择一种安装模式。
+以下以 Codex 为例，只运行所选模式的命令。
+
+**插件模式（默认）** 提供 Archimedes、14 个智能体、6 项技能、9 个命令：
 
 ```bash
-npm ci
-npm run build
+npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
 ```
 
-**插件模式（默认）** 提供 Archimedes、**14 个智能体、6 项技能、9 个命令**：
+**Skill 模式** 提供一个便携入口，包含角色资源与运行时：
 
 ```bash
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
+npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-也可显式指定 `--mode plugin`。在 AI 编程工具中打开工作区，使用 Archimedes
-或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
+| 宿主 | `--tool` 参数 |
+| --- | --- |
+| Claude Code | `claude-code` |
+| Codex | `codex` |
+| OpenCode | `opencode` |
 
-**Skill 模式** 提供一个便携入口，包含角色资源与运行时。选择一个宿主，先检查安装计划：
-
-```bash
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
-```
-
-随后选择 `oh-my-patent` Skill，输入：
+安装后，在所选宿主中打开同一工作区。插件模式选择 Archimedes；
+Skill 模式选择 `oh-my-patent`。然后描述你的选题，例如：
 
 ```text
-使用 oh-my-patent，基于同态加密在隐私计算中的应用新建一个专利项目。
+基于同态加密在隐私计算中的应用，新建一个专利项目。
 ```
 
-| 安装模式 | 安装入口 | 选择方式 |
-| --- | --- | --- |
-| 插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
-| Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
-
-为项目选择要使用的入口。[安装指南](docs/skill.md)介绍更新、卸载和项目迁移，
-[兼容说明](docs/compatibility.md)列出各宿主的使用条件。
-
-独立 npm 包 **`oh-my-patent-skill`** 提供便携 Skill：
-
-```bash
-npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0
-node node_modules/oh-my-patent-skill/scripts/runtime.mjs --doctor
-```
-
-将完整包目录复制到所选宿主的 Skill 目录，然后选择 `oh-my-patent`。
-各宿主的目录路径参见[安装指南](docs/skill.md)。
+Archimedes 会引导你收集材料、发展创新点、撰写交底书并完成审查。
+插件入口的启用方式见[使用指南](docs/usage.md)。
+源码构建、独立 Skill 包安装、更新与卸载见[安装指南](docs/skill.md)，
+各宿主的使用条件见[兼容说明](docs/compatibility.md)。
 
 ## 能做什么
 
