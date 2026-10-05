@@ -11,6 +11,8 @@
 
 import { execFile } from 'child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { disclosedFetch } from './disclosure.js';
+import { assertLegacyOutput } from './legacy-write-guard.js';
 import { join, resolve } from 'path';
 import { promisify } from 'util';
 import { deflateRawSync } from 'zlib';
@@ -269,6 +271,7 @@ export class DiagramRenderer {
    * 渲染单张 Mermaid 图
    */
   async renderMermaid(spec: FigureSpec, outputDir: string): Promise<RenderResult> {
+    assertLegacyOutput(outputDir);
     assertValidFigureId(spec.figureId);
     const baseName = spec.figureId;
     const sourcePath = join(outputDir, `${baseName}.mmd`);
@@ -281,6 +284,7 @@ export class DiagramRenderer {
     writeFileSync(sourcePath, spec.source, 'utf-8');
 
     try {
+      if (/(?:https?:|file:|data:|url\s*\(|@import|\bclick\b|%%\s*\{|&#)/i.test(spec.source)) throw new Error('External resources/directives are forbidden; use self-contained SVG');
       // PNG 与 SVG 由同一份源文件生成、写往不同路径，可并发生成（REQ-042）。
       // 旧实现串行等待两次 mmdc，单图耗时是两者之和。
       await Promise.all([
@@ -325,6 +329,7 @@ export class DiagramRenderer {
    * 渲染单张 PlantUML 图
    */
   async renderPlantUML(spec: FigureSpec, outputDir: string): Promise<RenderResult> {
+    assertLegacyOutput(outputDir);
     assertValidFigureId(spec.figureId);
     const baseName = spec.figureId;
     const sourcePath = join(outputDir, `${baseName}.puml`);
@@ -342,8 +347,8 @@ export class DiagramRenderer {
 
       // 并行获取 PNG 和 SVG
       const [pngResp, svgResp] = await Promise.all([
-        fetch(`${baseUrl}/png/${encoded}`, { signal: AbortSignal.timeout(this.config.timeout) }),
-        fetch(`${baseUrl}/svg/${encoded}`, { signal: AbortSignal.timeout(this.config.timeout) }),
+        disclosedFetch(`${baseUrl}/png/${encoded}`, spec.source, baseUrl, 'plantuml', 'diagram.render', this.config.disclosure),
+        disclosedFetch(`${baseUrl}/svg/${encoded}`, spec.source, baseUrl, 'plantuml', 'diagram.render', this.config.disclosure),
       ]);
 
       if (!pngResp.ok) {

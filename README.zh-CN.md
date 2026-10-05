@@ -1,3 +1,5 @@
+> **0.4.0 alpha 预览版：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。参见[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。宿主验收与发布尚未完成。
+
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -16,44 +18,47 @@
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-面向 **Claude Code、Codex、OpenCode** 的 AI 专利插件。
+面向 **Claude Code、Codex、OpenCode** 的专利工作流插件，另提供可选的便携 Agent Skill 安装模式。
 由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
 并保留可追溯、可分叉的决策路径。
 
 ## 快速开始
 
-在你的专利工作区运行以下命令。Setup 会写入编辑器配置；
-用于已有工作区之前，请先查看[安装行为](./docs/usage.md#安装)。
+在本分支源码目录构建预览版（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
+npm ci
+npm run build
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-在 AI 编程工具中打开这个工作区，加载生成的集成，然后输入：
+默认插件模式完整保留 **14 个智能体、6 项技能、9 个命令**；也可显式指定 `--mode plugin`。
+在 AI 编程工具中打开工作区，使用 Archimedes 或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
+
+如需新增的便携 Skill 模式，选择一个宿主，先检查安装计划：
+
+```bash
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+```
+
+随后选择 `oh-my-patent` Skill，输入：
 
 ```text
-/archimedes
-> 基于同态加密在隐私计算中的应用，新建一个专利项目。
+使用 oh-my-patent，基于同态加密在隐私计算中的应用新建一个专利项目。
 ```
 
-使用 `--tool claude-code`、`--tool codex` 或 `--tool opencode` 可以只配置一个平台。
-省略 `--tool` 时会配置全部三个平台。入口不可用时，请查看[平台说明](./docs/usage.md#平台说明)。
+| 安装模式 | 安装入口 | 选择方式 |
+| --- | --- | --- |
+| 原有插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
+| 新增 Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
 
-<details>
-<summary>给协助安装的 AI 助手</summary>
-
-确认用户的专利工作区，阅读上面的安装行为说明，然后运行：
-
-```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
-```
-
-接着帮助用户加载集成，并通过 `/archimedes` 开始专利项目。
-
-</details>
+Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
+请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
+安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
+候选版本仍为 `0.4.0-alpha.0`。新增独立的 **Publish standalone Skill** 工作流，
+将便携 Skill 打包为 `oh-my-patent-skill` 发布到 npm，详见[发布说明](docs/skill.md#independent-npm-skill-publication)。
+本轮仅验证发布流程，未上传到 npm。
 
 ## 能做什么
 
@@ -62,7 +67,7 @@ oh-my-patent check --workspace-dir .
 | 协调专业智能体 | 由主编排器组织检索、构思、可专利性评估、撰写、审查与技术答复 |
 | 追溯决策过程 | 在 `.brainstorm/` 中保存轮次、评分、创新点快照与理由；从已记录节点分叉或恢复创新点 |
 | 继续已有工作 | 从 `.patent/state.json` 读取阶段状态，结合 `references/` 中的智能体产出继续项目 |
-| 生成专利附图 | 将 Mermaid 或 PlantUML 源码渲染为 SVG、PNG，并向 `MAIN.md` 插入附图引用 |
+| 生成专利附图 | 先定义规格，再生成可编辑 SVG；可选本地渲染器及经批准的宿主生图，保留溯源和审阅记录 |
 | 查看进度 | 提供 CLI 查询、Markdown 报告、终端界面和环境检查 |
 
 交底书、支撑材料和决策历史保存在同一个项目目录中。

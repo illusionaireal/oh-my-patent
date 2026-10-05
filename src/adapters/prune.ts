@@ -132,6 +132,13 @@ export function pruneGeneratedFiles(
 
     for (const absFile of listFilesRecursive(absDir)) {
       const relFile = toPosix(relative(workspaceDir, absFile));
+      // The optional portable Skill has its own installer and ownership registry.
+      // Its role references contain historical agent markers, which are not
+      // evidence that plugin mode owns these files.
+      if (/^\.(?:agents|claude|opencode|codex|cursor|github|gemini)\/skills\/oh-my-patent\//.test(relFile)) {
+        preserved.push(relFile);
+        continue;
+      }
       if (expected.has(relFile)) {
         continue;
       }

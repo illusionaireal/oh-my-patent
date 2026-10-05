@@ -1,5 +1,8 @@
 # 使用指南与 CLI 参考
 
+> 本页介绍原有 Archimedes 插件模式，仍为默认，完整保留 14 个智能体、6 项技能、9 个命令。
+> 可显式指定 `--mode plugin`；新增的便携模式使用 `--mode skill`，参见[安装模式](skill.md)。
+
 [文档中心](./README.md) · [English](./usage-en.md)
 
 ## 安装

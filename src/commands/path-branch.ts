@@ -21,6 +21,7 @@ import {
 import { BrainstormPath } from '../core/brainstorm-path.js';
 import { ensureInside as ensureBranchPathInside } from '../core/path-safety.js';
 import { atomicWriteFile } from '../core/atomic-write.js';
+import { assertLegacyWriter } from '../core/legacy-write-guard.js';
 
 // ============================================================================
 // 类型定义
@@ -149,6 +150,7 @@ function getBranchFilePath(projectPath: string, branchId: string): string {
  * @param projectPath - 项目根目录路径
  */
 async function initBranchDirectory(projectPath: string): Promise<void> {
+  assertLegacyWriter(projectPath);
   const branchesDir = getBranchesDir(projectPath);
   await fs.mkdir(branchesDir, { recursive: true });
 }

@@ -11,6 +11,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { atomicWriteFile } from './atomic-write.js';
+import { assertLegacyWriter } from './legacy-write-guard.js';
 import {
   BRAINSTORM_DIR,
   PATH_FILE,
@@ -41,6 +42,7 @@ import {
  * @param projectPath - 项目根目录路径
  */
 export async function initBrainstormDirectory(projectPath: string): Promise<void> {
+  assertLegacyWriter(projectPath);
   const brainstormPath = path.join(projectPath, BRAINSTORM_DIR);
   const nodesPath = path.join(brainstormPath, NODES_DIR);
   const snapshotsPath = path.join(brainstormPath, SNAPSHOTS_DIR);
@@ -108,6 +110,7 @@ export async function saveNode(
   node: BrainstormNode,
   projectPath: string
 ): Promise<void> {
+  assertLegacyWriter(projectPath);
   if (!isValidBrainstormNode(node)) throw new Error('Invalid BrainstormNode data structure');
   const nodesDir = path.join(projectPath, BRAINSTORM_DIR, NODES_DIR);
   const filePath = path.join(nodesDir, `round-${node.round}.json`);
@@ -172,6 +175,7 @@ export async function saveInnovationSnapshot(
   projectPath: string,
   round: number
 ): Promise<void> {
+  assertLegacyWriter(projectPath);
   const snapshotsDir = path.join(projectPath, BRAINSTORM_DIR, SNAPSHOTS_DIR);
   const filePath = path.join(snapshotsDir, `round-${round}-innovations.json`);
 
@@ -299,6 +303,7 @@ export async function loadAllNodes(projectPath: string): Promise<BrainstormNode[
  * @param round - 轮次号
  */
 export async function deleteNode(projectPath: string, round: number): Promise<void> {
+  assertLegacyWriter(projectPath);
   const filePath = path.join(projectPath, BRAINSTORM_DIR, NODES_DIR, `round-${round}.json`);
 
   try {
@@ -321,6 +326,7 @@ export async function deleteInnovationSnapshot(
   projectPath: string,
   round: number
 ): Promise<void> {
+  assertLegacyWriter(projectPath);
   const filePath = path.join(
     projectPath,
     BRAINSTORM_DIR,

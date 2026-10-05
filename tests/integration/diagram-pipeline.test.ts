@@ -7,6 +7,10 @@ import { join } from 'path';
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 
+// This pipeline fixture isolates rendering from consent; the actual egress gate
+// is exercised with synthetic confidential payloads in skill-package/disclosure.test.ts.
+vi.mock('../../src/core/disclosure.js', () => ({ disclosedFetch: (url: string) => fetch(url) }));
+
 // ============================================================================
 // Mocks
 // ============================================================================

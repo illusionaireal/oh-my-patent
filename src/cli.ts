@@ -780,6 +780,11 @@ async function diagramRerender(projectPath: string, opts: Record<string, string>
 // ============================================================================
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'runtime') {
+    process.argv.splice(2, 1);
+    await import('./runtime/skill-entry.js');
+    return;
+  }
   const args = process.argv.slice(2);
 
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
@@ -818,10 +823,17 @@ Diagram subcommands:
     Re-render a single figure with new source, update manifest
 
 Adapt subcommands:
-  generate [--tool <name>] [--output <dir>]                 Generate config to plugins/<tool>/ (with --output: <dir>/<tool>/)
-  install [--tool <name>] [--workspace-dir <dir>] [--prune]  Install config into workspace
-  setup  [--tool <name>] [--workspace-dir <dir>] [--prune]  Alias for install
-  uninstall [--tool <name>] [--workspace-dir <dir>]         Uninstall (remove) config from workspace
+  generate [--mode plugin|skill] [--tool <name>] [--output <dir>]
+    Generate plugin config to plugins/<tool>/ (with --output: <dir>/<tool>/)
+    Skill mode generates into skill-installations/<tool>/ or the exact --output directory
+  install [--mode plugin|skill] [--tool <name>] [--workspace-dir <dir>] [--prune]
+    Install the Archimedes plugin (default) or an additional portable Skill
+  setup [--mode plugin|skill] [--tool <name>] [--workspace-dir <dir>]
+    Alias for install
+  uninstall [--mode plugin|skill] [--tool <name>] [--workspace-dir <dir>]
+    Remove only the selected installation mode
+  rollback --mode skill --backup <id> [--workspace-dir <dir>]
+  recover-lock --mode skill --owner-token <token> [--workspace-dir <dir>]
 
 Options:
   --round <N>           Round number
@@ -830,10 +842,13 @@ Options:
   --reason <text>       Reason for branch or action
   --node <id>           Node ID (e.g. round-1)
   --innovation <id>     Innovation ID (e.g. INN-001)
-  --mode <mode>         Visualization mode: overview|node|innovation|branch|dashboard
+  --mode <mode>         adapt: plugin (default)|skill; path: overview|node|innovation|branch|dashboard
   --target <id>         Target ID for visualization/detail
   --output <file>       Output file path (optional)
-  --tool <name>         Adapter name: claude-code|codex|opencode (default: all)
+  --tool <name>         Plugin: claude-code|codex|opencode (default: all)
+                        Skill: one explicit host, also cursor|github-copilot|gemini-cli
+  --dry-run             Skill mode: preview without writing
+  --legacy              Compatibility alias for --mode plugin
   --workspace-dir <dir> Workspace directory (default: current working directory)
   --specs <json|@file>  FigureSpec array (JSON or @file)
   --phase <phase>       Render phase: draft (default) or final
@@ -923,6 +938,28 @@ Options:
   } else if (domain === 'adapt') {
     const pluginDir = opts['plugin-dir'] ? resolve(opts['plugin-dir']) : getPluginDir();
     const workspaceDir = opts['workspace-dir'] ? resolve(opts['workspace-dir']) : getDefaultWorkspaceDir();
+    const mode = opts.mode || 'plugin';
+    if (!['plugin', 'skill'].includes(mode)) exitWithError('Unknown installation mode. Use --mode plugin|skill');
+    if (opts.legacy === 'true' && mode !== 'plugin') exitWithError('--legacy selects plugin mode and cannot be combined with --mode skill');
+    if (mode === 'plugin' && opts['dry-run'] === 'true') exitWithError('--dry-run is available only with --mode skill');
+    if (mode === 'skill') {
+      if (opts.prune === 'true') exitWithError('--prune is available only with --mode plugin');
+      const { managePortable, rollbackPortable, recoverPortableLock } = await import('./adapters/portable-install.js');
+      if (subcommand === 'rollback') {
+        rollbackPortable(workspaceDir, opts.backup || '');
+        console.log(JSON.stringify({ ok: true, rolled_back: opts.backup }));
+      } else if (subcommand === 'recover-lock') {
+        recoverPortableLock(workspaceDir, opts['owner-token'] || '');
+        console.log(JSON.stringify({ ok: true, lock_recovered: true }));
+      } else {
+        if (!['generate', 'install', 'setup', 'uninstall'].includes(subcommand)) exitWithError('Use adapt generate|install|uninstall|rollback|recover-lock');
+        const action = subcommand === 'setup' ? 'install' : subcommand as 'install' | 'generate' | 'uninstall';
+        const destination = action === 'generate' ? resolve(opts.output || join(pluginDir, 'skill-installations', opts.tool || '')) : workspaceDir;
+        const result = managePortable(pluginDir, destination, opts.tool || '', action, opts['dry-run'] === 'true');
+        console.log(JSON.stringify({ ok: true, ...result as object }));
+      }
+      return;
+    }
     switch (subcommand) {
       case 'generate': {
         await adaptGenerate(pluginDir, opts);

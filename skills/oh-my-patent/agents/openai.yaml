@@ -1,0 +1,4 @@
+interface:
+  display_name: "Archimedes · oh-my-patent"
+  short_description: "Traceable patent disclosures, reviews and technical figures"
+  default_prompt: "Use $oh-my-patent to turn my technical materials into a reviewable patent disclosure."

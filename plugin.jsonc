@@ -1,6 +1,6 @@
 {
   "name": "oh-my-patent",
-  "version": "0.3.3",
+  "version": "0.4.0-alpha.0",
   "agents": [
     {
       "id": "archimedes",

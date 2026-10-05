@@ -29,16 +29,16 @@ The skill is typically invoked by the `patent-landscape-analyst` agent during th
 ### Required
 - **query**: Search keywords and technical terms
   - Example: `"homomorphic encryption privacy-preserving computation"`
-  
+
 ### Optional
 - **searchScope**: Time range for results
   - Default: Last 5 years
   - Options: `1year`, `3years`, `5years`, `10years`, `all`
-  
+
 - **maxResultsPerSource**: Maximum results from each source
   - Default: 5
   - Range: 1-20
-  
+
 - **sources**: Which databases to query
   - Default: All enabled MCP servers
   - Options: `google_scholar`, `uspto_patent`, `semantic_scholar`, `cnipa_patent`, `patsnap_search`
