@@ -23,26 +23,63 @@ review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Requires Node.js >=22. Open a terminal in your patent workspace and choose one
-installation mode. These examples use Codex; run only the command for your chosen mode.
+Choose **Plugin** for Archimedes with 14 agents, 6 skills and 9 commands, or
+**Skill** for one portable entry with bundled role resources and runtime.
+Node.js >=22 is required. Run installation commands in your patent workspace;
+the examples below use Codex.
 
-**Plugin mode (default)** provides Archimedes, 14 agents, 6 skills and 9 commands:
+### Plugin installation
 
 ```bash
 npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
 ```
 
-**Skill mode** provides one portable entry with bundled role resources and runtime:
+Plugin mode is the CLI default. Open the workspace in your host and select Archimedes;
+see the [usage guide](docs/usage-en.md) for enabling its entry point.
+
+### Skill installation
+
+Choose one of these methods:
+
+**1. Skills CLI — recommended**
+
+Use the [Skills CLI](https://github.com/vercel-labs/skills) to install the portable
+Skill directly from its repository directory. This method requires Git and
+Node.js >=22.20:
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
+```
+
+The command targets the complete portable package and installs a project-local copy.
+
+**2. ZIP download — manual installation**
+
+Download the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)
+and extract it. Copy the complete `skills/oh-my-patent` directory inside the archive
+to the Skill location for your host in the table below. The runtime is included;
+no source build is needed.
+
+**3. oh-my-patent CLI — managed installation**
+
+Use this method for the project's installation backups and rollback commands:
 
 ```bash
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-| Host | `--tool` value |
-| --- | --- |
-| Claude Code | `claude-code` |
-| Codex | `codex` |
-| OpenCode | `opencode` |
+| Host | Skills CLI `--agent` / project CLI `--tool` | Manual Skill location in the workspace |
+| --- | --- | --- |
+| Claude Code | `claude-code` | `.claude/skills/oh-my-patent` |
+| Codex | `codex` | `.agents/skills/oh-my-patent` |
+| OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
+
+Keep `SKILL.md`, `references/`, `assets/` and `scripts/` together. Use the same
+installation method for updates and removal; see the [installation guide](docs/skill.md).
+The [standalone npm package](docs/skill.md#standalone-skill-package-installation)
+is also available for packaging and manual deployment.
+
+### Start a project
 
 Open the same workspace in your selected host. For plugin mode, select Archimedes;
 for Skill mode, select `oh-my-patent`. Describe your topic, for example:
@@ -52,10 +89,9 @@ Create a patent project about homomorphic encryption in privacy-preserving compu
 ```
 
 Archimedes guides you through collecting material, developing ideas, drafting the
-disclosure and reviewing it. See the [usage guide](docs/usage-en.md) for enabling
-plugin entry points. Source builds, standalone Skill package installation, updates
-and removal are covered in the [installation guide](docs/skill.md).
-See [compatibility](docs/compatibility.md) for host-specific requirements.
+disclosure and reviewing it. See [compatibility](docs/compatibility.md) for
+host-specific requirements, and the [installation guide](docs/skill.md) for source
+builds, version selection, updates and removal.
 
 ## What you can do
 

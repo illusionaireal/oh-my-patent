@@ -263,3 +263,38 @@ Release-preparation validation on Linux / Node 22.23.3:
   were checked as `0.4.0`; workflow YAML and `git diff --check` passed.
 
 GitHub Ubuntu/Windows CI must validate the submitted release commit separately.
+
+## Skills CLI and repository ZIP installation
+
+2026-10-06 (Asia/Shanghai), Linux / Node 24.19.0, Skills CLI 1.7.0 from npm.
+The README offers Skills CLI, manual ZIP and project CLI installation choices.
+The direct repository directory selects the complete generated Skill rather than
+plugin capabilities or source templates elsewhere in the repository.
+
+The Skills CLI entry point was run in three separate temporary workspaces with
+the following arguments (replace `<host>` with `claude-code`, `codex` or `opencode`):
+
+```sh
+npx --yes skills@1.7.0 add https://github.com/illusionaireal/oh-my-patent/tree/7bc685c7179d8af6d143a9bd5821732758917e54/skills/oh-my-patent --skill oh-my-patent --agent <host> --copy --yes
+```
+
+- All three installations succeeded. Claude Code used `.claude/skills/oh-my-patent`;
+  Codex and OpenCode used `.agents/skills/oh-my-patent` in their respective workspaces.
+- Each installed directory contained exactly 44 files, all byte-identical to the
+  candidate's `skills/oh-my-patent` directory. The installer lock recorded the exact
+  source commit and `skills/oh-my-patent/SKILL.md` path.
+- All three copied runtimes passed `--doctor` and a synthetic `project.create`
+  request in separate fixture projects, without repository runtime dependencies.
+- `skills list --agent codex` and `skills remove oh-my-patent --agent codex --yes`
+  succeeded; removal deleted the installed Skill directory.
+- Downloading `https://github.com/illusionaireal/oh-my-patent/archive/7bc685c7179d8af6d143a9bd5821732758917e54.zip`
+  succeeded. Its `skills/oh-my-patent` subtree matched all 44 candidate files;
+  copying that subtree to a manual installation and running `--doctor` passed.
+
+The user-facing commands follow `master`; these checks pin the candidate commit
+for reproduction. Skills CLI 1.7.0 requires Node.js >=22.20 and Git for this source;
+the portable runtime itself retains Node.js >=22 support. Telemetry was disabled
+during checks. No global installation or actual host model session was run here.
+This result supersedes the earlier unverified third-party installer status for
+this specific project-local copy workflow. Other installers and scopes remain
+outside the tested scope.

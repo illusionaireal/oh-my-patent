@@ -10,14 +10,25 @@ scripts. The `oh-my-patent` package provides the CLI and plugin mode with 14 age
 
 ## Install into your host
 
-Requires Node.js >=22. Download the package in a temporary directory:
+The portable runtime requires Node.js >=22. Choose one installation method:
+
+### Skills CLI (recommended)
+
+With Git and Node.js >=22.20, run this in your patent workspace (Codex example):
 
 ```sh
-npm pack oh-my-patent-skill --ignore-scripts
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
 ```
 
-Extract the resulting `.tgz` archive. Copy its complete `package` directory into
-one Skill location in your patent workspace:
+Use `--agent claude-code` for Claude Code or `--agent opencode` for OpenCode.
+This installs the complete portable directory from the repository.
+
+### ZIP or npm archive
+
+Download and extract the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip),
+then copy its complete `skills/oh-my-patent` directory to one destination below.
+To obtain this npm package instead, run `npm pack oh-my-patent-skill --ignore-scripts`
+in a temporary directory, extract the archive and copy its complete `package` directory.
 
 | Host | Skill location in your workspace |
 | --- | --- |
@@ -25,24 +36,24 @@ one Skill location in your patent workspace:
 | Codex | `.agents/skills/oh-my-patent` |
 | OpenCode | `.agents/skills/oh-my-patent` |
 
-Open that workspace in your host, select `oh-my-patent`, then describe your topic:
+### Project CLI
 
-```text
-Create a patent project about homomorphic encryption in privacy-preserving computing.
-```
-
-For automatic installation through the `oh-my-patent` CLI, run this in your patent
-workspace (Codex example):
+For the project's installation backups and rollback support:
 
 ```sh
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-Use `--tool claude-code` for Claude Code or `--tool opencode` for OpenCode.
-See the [installation guide](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/skill.md#standalone-skill-package-installation)
-for manual installation, updates and removal, and
-[compatibility](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md)
-for host-specific requirements.
+Use `--tool claude-code` or `--tool opencode` for the other hosts.
+Use the same installation method for updates and removal; see the
+[installation guide](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/skill.md)
+and [compatibility](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md).
+
+Open the workspace in your host, select `oh-my-patent`, then describe your topic:
+
+```text
+Create a patent project about homomorphic encryption in privacy-preserving computing.
+```
 
 ## Runtime
 

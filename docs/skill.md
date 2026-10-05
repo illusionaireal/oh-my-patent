@@ -4,10 +4,55 @@ oh-my-patent provides plugin and portable Skill installation modes. Plugin mode
 is the default, with **14 agents, 6 skills and 9 commands**. Node.js >=22 is required.
 
 For installation into a host workspace, use the [quick start](../README.md#quick-start).
-The sections below cover source builds, standalone packages and lifecycle operations.
+The sections below cover Skills CLI, ZIP and npm packages, source builds and lifecycle operations.
 
 See [compatibility](compatibility.md) for host support and operating constraints.
 Acceptance provenance is recorded in the [verification ledger](../specs/002-skill-first/verification.md).
+
+## Skills CLI installation
+
+The [Skills CLI](https://github.com/vercel-labs/skills) installs the portable package
+without installing the oh-my-patent CLI. It requires Git and Node.js >=22.20.
+Run this in your patent workspace (Codex example):
+
+```sh
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
+```
+
+Use `--agent claude-code` or `--agent opencode` for the other first-wave hosts.
+The explicit `skills/oh-my-patent` source selects the built portable package;
+the repository also contains plugin capabilities and Skill source templates.
+`--copy` installs real files. Installation is project-local by default; `--global`
+selects the host's user-level scope. The source URL follows `master`; replace
+`master` with an existing tag or commit for a fixed revision.
+
+For this installation method, use the Skills CLI for updates and removal:
+
+```sh
+npx skills@latest update oh-my-patent
+npx skills@latest remove oh-my-patent --agent codex
+```
+
+The oh-my-patent CLI's ownership records, backups and rollback apply to its own
+installations. Choose one manager for each installed copy.
+
+## ZIP installation
+
+Download the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip),
+extract it and copy its complete `skills/oh-my-patent` directory into one host
+location below. This checked-in package already contains the runtime.
+
+| Host | Destination in the workspace |
+| --- | --- |
+| Claude Code | `.claude/skills/oh-my-patent` |
+| Codex | `.agents/skills/oh-my-patent` |
+| OpenCode | `.agents/skills/oh-my-patent` |
+
+Keep all files together, open the workspace in the host and select `oh-my-patent`.
+Back up customizations before replacing a manually installed directory; delete that
+directory to remove it. A standalone ZIP produced by `npm run package:skill` contains
+an `oh-my-patent` folder with the same resources. Repository ZIP downloads and
+standalone build ZIPs have different outer directory layouts.
 
 ## Plugin mode from source
 
@@ -66,7 +111,8 @@ remote renderer. `node <installed-skill>/scripts/runtime.mjs --doctor` checks on
 the local runtime, not host discovery. The format follows the
 [Agent Skills specification](https://agentskills.io/specification).
 
-Fixed-version third-party installer and native marketplace commands remain unverified.
+Skills CLI installation checks are recorded in [compatibility](compatibility.md#skills-cli-installation-checks).
+Native marketplace submission and activation are outside those checks.
 Ancestor/user portable scopes are inspected, never rewritten. Filesystem checks are
 not proof of host deduplication.
 
@@ -103,7 +149,7 @@ node <installed-skill>/scripts/runtime.mjs --doctor
 The check diagnoses the local runtime; selecting the Skill in the host completes
 the activation step. For a reproducible download, use `oh-my-patent-skill@<version>` in the `npm pack` command.
 
-## Skill updates, removal and rollback
+## Skill updates, removal and rollback with the project CLI
 
 Re-run install with `--mode skill` to update only that Skill. Modified Skill files
 cause a conflict before mutation; modified plugin files do not block installation.

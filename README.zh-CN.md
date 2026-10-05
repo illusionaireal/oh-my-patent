@@ -22,28 +22,61 @@
 
 ## 快速开始
 
-需要 Node.js >=22。在专利工作区目录打开终端，选择一种安装模式。
-以下以 Codex 为例，只运行所选模式的命令。
+选择**插件模式**，使用 Archimedes、14 个智能体、6 项技能和 9 个命令；
+或选择 **Skill 模式**，使用包含角色资源与运行时的便携入口。
+需要 Node.js >=22。请在专利工作区目录执行安装命令，以下以 Codex 为例。
 
-**插件模式（默认）** 提供 Archimedes、14 个智能体、6 项技能、9 个命令：
+### 安装插件
 
 ```bash
 npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
 ```
 
-**Skill 模式** 提供一个便携入口，包含角色资源与运行时：
+插件模式是 CLI 的默认模式。安装后在宿主中打开工作区并选择 Archimedes，
+入口的启用方式见[使用指南](docs/usage.md)。
+
+### 安装 Skill
+
+选择以下任意一种方式：
+
+**方式一：Skills CLI，推荐**
+
+使用 [Skills CLI](https://github.com/vercel-labs/skills)，直接从仓库中的便携 Skill
+目录安装。此方式需要 Git 和 Node.js >=22.20：
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
+```
+
+该命令选择完整的便携包，并将其复制到当前项目的 Skill 目录。
+
+**方式二：下载 ZIP，手动安装**
+
+下载并解压[仓库 ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)，
+将其中完整的 `skills/oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
+目录已包含运行时，无需构建源码。
+
+**方式三：oh-my-patent CLI，管理安装与备份**
+
+需要使用项目提供的安装备份和回滚命令时，可选择此方式：
 
 ```bash
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-| 宿主 | `--tool` 参数 |
-| --- | --- |
-| Claude Code | `claude-code` |
-| Codex | `codex` |
-| OpenCode | `opencode` |
+| 宿主 | Skills CLI 的 `--agent` / 项目 CLI 的 `--tool` | 工作区内手动安装 Skill 的位置 |
+| --- | --- | --- |
+| Claude Code | `claude-code` | `.claude/skills/oh-my-patent` |
+| Codex | `codex` | `.agents/skills/oh-my-patent` |
+| OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
 
-安装后，在所选宿主中打开同一工作区。插件模式选择 Archimedes；
+请将 `SKILL.md`、`references/`、`assets/` 和 `scripts/` 一起复制，
+并使用同一种安装方式进行更新和卸载，详见[安装指南](docs/skill.md)。
+需要打包或手动部署时，也可以使用[独立 npm 包](docs/skill.md#standalone-skill-package-installation)。
+
+### 开始使用
+
+在所选宿主中打开同一工作区。插件模式选择 Archimedes；
 Skill 模式选择 `oh-my-patent`。然后描述你的选题，例如：
 
 ```text
@@ -51,9 +84,8 @@ Skill 模式选择 `oh-my-patent`。然后描述你的选题，例如：
 ```
 
 Archimedes 会引导你收集材料、发展创新点、撰写交底书并完成审查。
-插件入口的启用方式见[使用指南](docs/usage.md)。
-源码构建、独立 Skill 包安装、更新与卸载见[安装指南](docs/skill.md)，
-各宿主的使用条件见[兼容说明](docs/compatibility.md)。
+各宿主的使用条件见[兼容说明](docs/compatibility.md)，
+源码构建、版本选择、更新与卸载见[安装指南](docs/skill.md)。
 
 ## 能做什么
 

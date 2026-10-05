@@ -41,3 +41,19 @@ Costs and token usage are not inferred. The execution plan's US$50 pilot/US$300 
 are suggestions, not authorization; paid evaluations require an agreed budget and
 available host accounts. Synthetic transport tests do not certify live retrieval or
 image services. Keep failed runs when rerunning a corrected candidate.
+
+## Skills CLI installation checks
+
+On 2026-10-06, Skills CLI 1.7.0 was tested on Linux / Node 24.19.0 against the
+portable directory at commit `7bc685c7179d8af6d143a9bd5821732758917e54`.
+Project-local `--copy` installations for `claude-code`, `codex` and `opencode`
+each contained the exact 44 source files. Each copied runtime passed `--doctor`
+and synthetic `project.create`; Codex listing and removal also passed.
+The repository ZIP downloaded from GitHub contained the same 44 files, and the
+manually copied runtime passed its local check.
+
+These checks cover package selection, placement, resource integrity and local
+runtime execution. They do not add host model evaluations, global-install checks,
+or Windows/macOS Skills CLI certification. The maintainer's host acceptance record
+above remains separate. Reproduction commands are in the
+[verification ledger](../specs/002-skill-first/verification.md#skills-cli-and-repository-zip-installation).
