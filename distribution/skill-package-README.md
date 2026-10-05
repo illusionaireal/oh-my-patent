@@ -10,7 +10,7 @@ scripts. The original `oh-my-patent` plugin remains a separate package with 14 a
 
 ## Obtain the package
 
-After publication, install the preview in a dedicated evaluation workspace:
+After publication, install this version in your selected workspace:
 
 ```sh
 npm install --save-dev --ignore-scripts oh-my-patent-skill@__VERSION__
@@ -26,9 +26,9 @@ paths, `--skill`, `--agent` and `--copy`:
 npx skills add ./node_modules/oh-my-patent-skill --skill oh-my-patent --agent codex --copy
 ```
 
-This third-party command and actual host activation remain unverified for this
-candidate. See the [skills CLI source](https://github.com/vercel-labs/skills) and the
-project's [compatibility ledger](https://github.com/illusionaireal/oh-my-patent/blob/feat/skill-first/docs/compatibility.md).
+This third-party command remains unverified. First-wave host installation and workflow
+acceptance was confirmed by the maintainer. See the [skills CLI source](https://github.com/vercel-labs/skills) and the
+project's [compatibility ledger](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md).
 Choose one Skill discovery location; preserve the original plugin and user files.
 Select the plugin or portable Skill entry explicitly. Existing project state is not
 migrated by installing this package.
@@ -39,8 +39,9 @@ Read SKILL.md and references/runtime.md before persisted operations. Call
 `node <skill-directory>/scripts/runtime.mjs --input <request.json>` with an explicit
 project root. Keep all references, assets and scripts together when moving the Skill.
 
-This is an alpha preview. Host acceptance and full workflow certification remain
-pending. Technical drafting assistance, not legal advice; obtain qualified patent
+Version __VERSION__ inherits the original package's release version. Wave-two hosts,
+combined plugin/Skill host activation and optional image providers remain unverified.
+Technical drafting assistance, not legal advice; obtain qualified patent
 professional review before reliance or filing.
 
 MIT license; bundled third-party licenses are under scripts/licenses/.

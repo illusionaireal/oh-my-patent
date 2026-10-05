@@ -1,11 +1,12 @@
-# Installation modes (0.4.0 alpha)
+# Installation modes (0.4.0)
 
 The original Archimedes plugin remains the default, with all **14 agents, 6 skills,
 and 9 commands**. The portable Agent Skill is an additional installation option.
 Neither mode replaces the other. Node.js >=22 is required.
 
-The candidate remains `0.4.0-alpha.0`. Real-host Skill discovery/workflow acceptance,
-paid image-provider validation and marketplace submission remain pending. See
+The release version is `0.4.0`. First-wave host installation and workflow acceptance
+was confirmed by the maintainer on 2026-10-05. Wave-two hosts, paid image providers,
+combined plugin/Skill host activation and marketplace submission remain unverified. See
 [compatibility](compatibility.md) and the [verification ledger](../specs/002-skill-first/verification.md).
 
 ## Original Archimedes plugin
@@ -129,7 +130,8 @@ npm run verify:artifacts
 The builder emits a Skill ZIP, the original plugin npm tarball, an independent
 `oh-my-patent-skill` npm tarball, a release manifest and SHA256SUMS. CI checks deterministic generated Skill files and
 actual packed artifacts. Publication uses the verified tarball with `--ignore-scripts`;
-alpha versions use npm's `next` tag. Verification scripts do not publish anything.
+stable versions use npm's `latest` tag; prereleases use `next`.
+Verification scripts do not publish anything.
 
 
 ## Independent npm Skill publication
@@ -140,17 +142,18 @@ publishes only `oh-my-patent-skill`, built from the generated portable package.
 The standalone archive has its own package.json/README and the exact same 44 Skill
 resources; it contains no plugin CLI/source tree or runtime npm dependencies.
 
-The independent package inherits the repository version, currently `0.4.0-alpha.0`.
-Its metadata is in `distribution/skill-package.json`. Alpha releases use `next`;
-stable publication remains blocked until first-wave host installation and workflow
-verification pass. Publication does not mark a host verified or submit a marketplace entry.
+The independent package inherits the repository version, currently `0.4.0`.
+Its metadata is in `distribution/skill-package.json`. Stable releases use `latest`;
+prereleases use `next`. Stable publication checks first-wave host installation and
+workflow verification in `distribution/targets.json`; the 0.4.0 acceptance source is
+the maintainer's confirmation. Publication does not mark a host verified or submit a marketplace entry.
 
-After this workflow reaches the default branch, open GitHub Actions → **Publish
+Open GitHub Actions → **Publish
 standalone Skill** → **Run workflow**, select the intended branch/tag, and leave
 `dry_run` enabled for a trial. Disable it to publish the verified tarball. The workflow
 reuses the existing `PRE` environment and `NPM_TOKEN` secret; that token must be
-allowed to create/publish `oh-my-patent-skill`. The package name is proposed by this
-change; registry ownership and actual publication have not been established.
+allowed to create/publish `oh-my-patent-skill`. Registry ownership and actual
+publication are not established by a dry-run.
 
 The build job checks/tests/packages the selected commit and uploads immutable
 artifacts. The publish job verifies commit identity, selected package, dist-tag and
@@ -165,11 +168,20 @@ npm run verify:artifacts
 npm run publish:skill -- --dry-run
 ```
 
-After publication, `npm install --save-dev --ignore-scripts oh-my-patent-skill@next`
+After publication, `npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0`
 downloads the standalone package. npm installation alone does not register the Skill
 with a host. Keep the complete directory together and use the selected host's Skill
 location or a third-party installer's local-directory input. See the generated package
 [README](../distribution/skill-package-README.md) for an example based on the
 [skills CLI's documented local-path support](https://github.com/vercel-labs/skills).
-That installer path and real host activation still need acceptance; do not infer
+That third-party installer path remains unverified; do not infer additional host
 certification from npm publication.
+
+## Release 0.4.0
+
+Merge the release PR after CI passes, then publish a GitHub Release tagged `v0.4.0`
+at the resulting merge commit using the [bilingual release notes](releases/0.4.0.md).
+The original package workflow listens to `release.published`, including publication
+of a draft Release. The standalone Skill workflow remains independently dispatched;
+select the same tag, run with `dry_run` enabled, then disable it for publication.
+Both workflows retain their first-wave host acceptance checks.

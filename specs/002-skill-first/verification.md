@@ -220,3 +220,46 @@ for the new package were not tested. npm dry-run succeeded without registry logi
 that does not prove publication access. Version is still `0.4.0-alpha.0`, host flags
 remain false, and no npm upload or marketplace submission occurred. Revised PR CI
 must pass independently of these local checks.
+
+## Release 0.4.0 acceptance confirmation
+
+Confirmation received on 2026-10-05 (Asia/Shanghai): the repository maintainer stated
+“验收已经完成了。” (“Acceptance has already completed.”) while requesting the
+`chore/release-0.4.0` release PR. This supersedes the earlier requirement to retain
+`0.4.0-alpha.0` until release host acceptance completes.
+
+The release PR starts from merged PR #9, master commit
+`0cc939396894593852f61aafef03c877f933dc60`. First-wave Skill installation and workflow
+acceptance for Claude Code, Codex and OpenCode is recorded as passed, with
+`verification_source: user_confirmation` and `acceptance_confirmed_at: 2026-10-05`
+in `distribution/targets.json`. The confirmation date is not an asserted execution
+date; actual host versions and test dates remain null. No new host evaluation
+traces were provided or executed in this release-preparation session, and no
+420-run pass total is inferred. Earlier failed/pending records remain historical.
+
+Wave-two hosts, mixed plugin/Skill host activation, optional image providers,
+third-party installers and catalogs retain their prior unverified/not-submitted
+status. Both stable publication workflows retain their first-wave acceptance gates.
+Generated host references and the release manifest derive their current status
+from the registry and preserve the confirmation source.
+
+Release preparation updates all package/plugin versions to `0.4.0`, rebuilds the
+portable Skill, updates bilingual documentation/release notes and changes the
+original npm workflow trigger to `release.published`. This PR does not merge itself,
+create a tag/Release or upload either npm package.
+
+Release-preparation validation on Linux / Node 22.23.3:
+
+- `npm run lint` and `npm test` (including the pretest build) passed: 453/453 tests in 63 files.
+- `npm run package:skill` and `npm run verify:artifacts` passed for the plugin tarball,
+  standalone Skill tarball and ZIP. Original plugin inventory remains 14/6/9;
+  Skill resources remain 44 files and standalone npm inventory remains 46 files.
+- `npm run publish:skill -- --dry-run` passed for `oh-my-patent-skill@0.4.0`
+  with `latest`, using the existing first-wave host gate. No npm upload occurred.
+- A repeated `npm run build:skill` preserved manifest SHA-256
+  `c6194bc194754504fcaf3d985e59d0c9e3f2d934ded69cd89c57103d1a50b34d`.
+  Runtime remains 130,601 bytes; ZIP is 259,099 bytes.
+- Package, root lockfile metadata, plugin, generated Skill and both archive versions
+  were checked as `0.4.0`; workflow YAML and `git diff --check` passed.
+
+GitHub Ubuntu/Windows CI must validate the submitted release commit separately.

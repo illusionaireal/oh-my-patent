@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.0] - 2026-10-05
+
+### Added
+
+- Add an opt-in portable Agent Skill installation mode alongside the original Archimedes plugin.
+- Bundle role/capability resources, templates and a self-contained Node.js >=22 runtime in one portable Skill.
+- Add the independent `oh-my-patent-skill` npm package and manual publication workflow; its version inherits `oh-my-patent`.
+- Verify plugin/Skill npm tarballs and Skill ZIPs, their inventories, checksums and relocated runtimes in CI.
+
+### Changed
+
+- Set package, lockfile, plugin and generated Skill versions to `0.4.0`.
+- Trigger the original npm workflow on `release.published`, including a Release published from a draft.
+- Record first-wave host acceptance as maintainer-confirmed and retain the stable publication gate.
+
+### Fixed
+
+- Preserve original plugin files and user customizations during Skill installation, removal, rollback and plugin pruning.
+- Recover interrupted Skill installation transactions without leaving partial writes or discarding later user edits.
+- Coordinate portable project writes, enforce confidentiality consent and audit boundaries, and invalidate stale figure reviews.
+
+### Compatibility and release scope
+
+- The original plugin remains the default with all 14 agents, 6 skills and 9 commands.
+- First-wave acceptance is based on the maintainer's 2026-10-05 confirmation; no host versions or scenario traces are invented.
+- Wave-two hosts, combined plugin/Skill activation, optional image providers and third-party Skill installers remain unverified.
+- See [bilingual release notes](docs/releases/0.4.0.md) and [compatibility](docs/compatibility.md). Release preparation does not publish npm packages.
+
 ## [0.3.3] - 2026-09-27
 
 ### Fixed

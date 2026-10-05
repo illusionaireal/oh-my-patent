@@ -33,6 +33,17 @@ it('contains exactly one entry, complete resources and a consistent checksum man
   const entry = readFileSync(join(root, 'SKILL.md'), 'utf8'); expect(entry.split('\n').length).toBeLessThan(500);
   for (const match of entry.matchAll(/\]\(([^)]+)\)/g)) expect(existsSync(join(root, match[1]))).toBe(true);
   const manifest = JSON.parse(readFileSync(join(root, 'scripts/manifest.json'), 'utf8'));
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  expect(manifest.package_version).toBe(pkg.version);
+  const targets = JSON.parse(readFileSync('distribution/targets.json', 'utf8')).targets;
+  for (const host of targets) {
+    const reference = readFileSync(join(root, `references/host-${host.id}.md`), 'utf8');
+    if (host.install_verified && host.workflow_verified) {
+      expect(reference).toContain(`passed (source: ${host.verification_source}; confirmation: ${host.acceptance_confirmed_at})`);
+    } else {
+      expect(reference).toContain('Installation and workflow status: unverified.');
+    }
+  }
   for (const [name, hash] of Object.entries(manifest.files)) expect(digest(readFileSync(join(root, name)))).toBe(hash);
   expect(manifest.runtime_bytes).toBeLessThanOrEqual(2 * 1024 * 1024);
   expect(manifest.inputs.some((name: string) => /src\/(cli|tui|adapters)|node_modules\/(ink|react)/.test(name))).toBe(false);

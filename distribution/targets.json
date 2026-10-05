@@ -8,11 +8,14 @@
       "project_path": ".claude/skills/oh-my-patent",
       "note": "Use an isolated project; shared Claude plugin discovery is not verified.",
       "artifact_ready": true,
-      "install_verified": false,
-      "workflow_verified": false,
+      "install_verified": true,
+      "workflow_verified": true,
       "catalog_status": "not_submitted",
       "tested_version": null,
-      "test_date": null
+      "test_date": null,
+      "verification_source": "user_confirmation",
+      "acceptance_confirmed_at": "2026-10-05",
+      "acceptance_record": "specs/002-skill-first/verification.md#release-040-acceptance-confirmation"
     },
     {
       "id": "codex",
@@ -21,11 +24,14 @@
       "project_path": ".agents/skills/oh-my-patent",
       "note": "One canonical portable Skill copy. Original plugin files are preserved; combined host activation is unverified.",
       "artifact_ready": true,
-      "install_verified": false,
-      "workflow_verified": false,
+      "install_verified": true,
+      "workflow_verified": true,
       "catalog_status": "not_submitted",
       "tested_version": null,
-      "test_date": null
+      "test_date": null,
+      "verification_source": "user_confirmation",
+      "acceptance_confirmed_at": "2026-10-05",
+      "acceptance_record": "specs/002-skill-first/verification.md#release-040-acceptance-confirmation"
     },
     {
       "id": "opencode",
@@ -34,11 +40,14 @@
       "project_path": ".agents/skills/oh-my-patent",
       "note": "Alternative isolated .opencode/skills path must not coexist with a shared copy.",
       "artifact_ready": true,
-      "install_verified": false,
-      "workflow_verified": false,
+      "install_verified": true,
+      "workflow_verified": true,
       "catalog_status": "not_submitted",
       "tested_version": null,
-      "test_date": null
+      "test_date": null,
+      "verification_source": "user_confirmation",
+      "acceptance_confirmed_at": "2026-10-05",
+      "acceptance_record": "specs/002-skill-first/verification.md#release-040-acceptance-confirmation"
     },
     {
       "id": "cursor",

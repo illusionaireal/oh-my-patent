@@ -89,7 +89,7 @@ try {
   if (!JSON.parse(execFileSync(process.execPath, [standaloneScript, '--doctor'], { cwd: standaloneRoot, encoding: 'utf8' })).ok) throw new Error('Standalone runtime doctor failed');
   const standaloneCreate = spawnSync(process.execPath, [standaloneScript], { cwd: standaloneRoot, input: JSON.stringify({ ...request, project: join(root, 'standalone-project') }), encoding: 'utf8' });
   if (standaloneCreate.status !== 0 || !JSON.parse(standaloneCreate.stdout).ok) throw new Error('Standalone runtime project creation failed');
-  // Verify alpha publishing selects the Skill tarball and next, never the plugin/latest.
-  if (manifest.version.includes('-')) standalonePublishPlan(resolve('.'), artifacts, process.env.GITHUB_SHA);
+  // Verify the Skill tarball/dist-tag selection and stable host gate for every version.
+  standalonePublishPlan(resolve('.'), artifacts, process.env.GITHUB_SHA);
   console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,skill_tarball:standalone.tarball,skill_npm_files:standaloneCount,zip:zipName,node:process.versions.node}));
 } finally { rmSync(root,{recursive:true,force:true}); }

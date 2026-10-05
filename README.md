@@ -1,4 +1,4 @@
-> **0.4.0 alpha preview:** Adds an optional portable Skill installation mode. The original Archimedes plugin remains the default with 14 agents, 6 skills, and 9 commands. See [installation modes](docs/skill.md) and [compatibility status](docs/compatibility.md). Host acceptance and publication are pending.
+> **0.4.0:** Adds an optional portable Skill installation mode. The original Archimedes plugin remains the default with 14 agents, 6 skills, and 9 commands. First-wave host acceptance is confirmed by the maintainer. See [release notes](docs/releases/0.4.0.md), [installation modes](docs/skill.md) and [compatibility status](docs/compatibility.md).
 
 # oh-my-patent
 
@@ -24,7 +24,7 @@ review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Build this preview from the checkout (Node.js >=22), then install the original
+Build from the checkout (Node.js >=22), then install the original
 Archimedes plugin into your patent workspace:
 
 ```bash
@@ -60,9 +60,11 @@ and MCP configuration. Each mode has its own uninstall command. Choose which ent
 you invoke; simultaneous host discovery and mixed use of both modes in one project
 remain unverified. Installing the Skill does not migrate existing project state.
 See [installation modes and optional migration](docs/skill.md).
-The candidate remains `0.4.0-alpha.0`. An independent **Publish standalone Skill**
-workflow packages `oh-my-patent-skill` for npm; see [publication instructions](docs/skill.md#independent-npm-skill-publication).
-No npm publication has run in this work.
+The independent **Publish standalone Skill** workflow packages `oh-my-patent-skill`
+for npm and inherits the repository version, **0.4.0**. After publication, obtain it
+with `npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0` and register
+the complete directory with your selected host. See [publication instructions](docs/skill.md#independent-npm-skill-publication).
+Preparing this release does not itself publish either npm package.
 
 ## What you can do
 

@@ -1,4 +1,4 @@
-> **0.4.0 alpha 预览版：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。参见[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。宿主验收与发布尚未完成。
+> **0.4.0：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。第一批宿主验收已由维护者确认完成。参见[发布说明](docs/releases/0.4.0.md)、[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。
 
 # oh-my-patent
 
@@ -24,7 +24,7 @@
 
 ## 快速开始
 
-在本分支源码目录构建预览版（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
+在源码目录构建（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
 
 ```bash
 npm ci
@@ -56,9 +56,10 @@ node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <worksp
 Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
 请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
 安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
-候选版本仍为 `0.4.0-alpha.0`。新增独立的 **Publish standalone Skill** 工作流，
-将便携 Skill 打包为 `oh-my-patent-skill` 发布到 npm，详见[发布说明](docs/skill.md#independent-npm-skill-publication)。
-本轮仅验证发布流程，未上传到 npm。
+独立的 **Publish standalone Skill** 工作流将便携 Skill 打包为 `oh-my-patent-skill`，
+自动继承仓库版本号 **0.4.0**。发布后可运行
+`npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0`，再将完整目录注册到所选宿主。
+详见[发布流程](docs/skill.md#independent-npm-skill-publication)。准备发版本身不会上传两个 npm 包。
 
 ## 能做什么
 
