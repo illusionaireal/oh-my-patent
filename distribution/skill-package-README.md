@@ -10,18 +10,33 @@ scripts. The `oh-my-patent` package provides the CLI and plugin mode with 14 age
 
 ## Install into your host
 
-The portable runtime requires Node.js >=22. Choose one installation method:
+The portable runtime requires Node.js >=22 and supports Claude Code, Codex and
+OpenCode. Choose one installation method and the command or location for your host:
 
 ### Skills CLI (recommended)
 
-With Git and Node.js >=22.20, run this in your patent workspace (Codex example):
+With Git and Node.js >=22.20, run only the command for your host in your patent workspace:
+
+**Claude Code**
+
+```sh
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+```
+
+**Codex**
 
 ```sh
 npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
 ```
 
-Use `--agent claude-code` for Claude Code or `--agent opencode` for OpenCode.
-This installs the complete portable directory from the repository.
+**OpenCode**
+
+```sh
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
+```
+
+Each command installs a project-local copy of the complete portable directory
+from the repository for the selected host.
 
 ### ZIP or npm archive
 
@@ -38,13 +53,26 @@ in a temporary directory, extract the archive and copy its complete `package` di
 
 ### Project CLI
 
-For the project's installation backups and rollback support:
+For the project's installation backups and rollback support, run only the command for your host:
+
+**Claude Code**
+
+```sh
+npx oh-my-patent@latest adapt install --mode skill --tool claude-code --workspace-dir .
+```
+
+**Codex**
 
 ```sh
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
 ```
 
-Use `--tool claude-code` or `--tool opencode` for the other hosts.
+**OpenCode**
+
+```sh
+npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-dir .
+```
+
 Use the same installation method for updates and removal; see the
 [installation guide](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/skill.md)
 and [compatibility](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md).

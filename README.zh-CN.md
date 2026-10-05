@@ -24,12 +24,29 @@
 
 选择**插件模式**，使用 Archimedes、14 个智能体、6 项技能和 9 个命令；
 或选择 **Skill 模式**，使用包含角色资源与运行时的便携入口。
-需要 Node.js >=22。请在专利工作区目录执行安装命令，以下以 Codex 为例。
+需要 Node.js >=22。两种模式均支持 Claude Code、Codex 和 OpenCode。
+请在专利工作区目录执行安装命令，并按实际使用的宿主选择对应命令。
 
 ### 安装插件
 
+只运行所选宿主对应的一条命令：
+
+**Claude Code**
+
+```bash
+npx oh-my-patent@latest adapt install --tool claude-code --workspace-dir .
+```
+
+**Codex**
+
 ```bash
 npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
+npx oh-my-patent@latest adapt install --tool opencode --workspace-dir .
 ```
 
 插件模式是 CLI 的默认模式。安装后在宿主中打开工作区并选择 Archimedes，
@@ -42,13 +59,27 @@ npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
 **方式一：Skills CLI，推荐**
 
 使用 [Skills CLI](https://github.com/vercel-labs/skills)，直接从仓库中的便携 Skill
-目录安装。此方式需要 Git 和 Node.js >=22.20：
+目录安装。此方式需要 Git 和 Node.js >=22.20。只运行所选宿主对应的一条命令：
+
+**Claude Code**
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+```
+
+**Codex**
 
 ```bash
 npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
 ```
 
-该命令选择完整的便携包，并将其复制到当前项目的 Skill 目录。
+**OpenCode**
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
+```
+
+每条命令均选择完整的便携包，并将其复制到当前项目中所选宿主的 Skill 目录。
 
 **方式二：下载 ZIP，手动安装**
 
@@ -58,10 +89,24 @@ npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master
 
 **方式三：oh-my-patent CLI，管理安装与备份**
 
-需要使用项目提供的安装备份和回滚命令时，可选择此方式：
+需要使用项目提供的安装备份和回滚命令时，可选择此方式。只运行所选宿主对应的一条命令：
+
+**Claude Code**
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool claude-code --workspace-dir .
+```
+
+**Codex**
 
 ```bash
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-dir .
 ```
 
 | 宿主 | Skills CLI 的 `--agent` / 项目 CLI 的 `--tool` | 工作区内手动安装 Skill 的位置 |

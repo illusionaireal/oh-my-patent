@@ -9,28 +9,52 @@ The sections below cover Skills CLI, ZIP and npm packages, source builds and lif
 See [compatibility](compatibility.md) for host support and operating constraints.
 Acceptance provenance is recorded in the [verification ledger](../specs/002-skill-first/verification.md).
 
+Both modes support Claude Code, Codex and OpenCode. In the generic commands below,
+replace `<host>` with the value for your selected host and `<workspace>` with its
+workspace path before running them.
+
+| Host | Skills CLI `--agent` / project CLI `--tool` |
+| --- | --- |
+| Claude Code | `claude-code` |
+| Codex | `codex` |
+| OpenCode | `opencode` |
+
 ## Skills CLI installation
 
 The [Skills CLI](https://github.com/vercel-labs/skills) installs the portable package
 without installing the oh-my-patent CLI. It requires Git and Node.js >=22.20.
-Run this in your patent workspace (Codex example):
+In your patent workspace, run only the command for your host:
+
+**Claude Code**
+
+```sh
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+```
+
+**Codex**
 
 ```sh
 npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
 ```
 
-Use `--agent claude-code` or `--agent opencode` for the other first-wave hosts.
+**OpenCode**
+
+```sh
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
+```
+
 The explicit `skills/oh-my-patent` source selects the built portable package;
 the repository also contains plugin capabilities and Skill source templates.
 `--copy` installs real files. Installation is project-local by default; `--global`
 selects the host's user-level scope. The source URL follows `master`; replace
 `master` with an existing tag or commit for a fixed revision.
 
-For this installation method, use the Skills CLI for updates and removal:
+For this installation method, use the Skills CLI for updates and removal.
+For removal, replace `<host>` with the same host value used at installation:
 
 ```sh
 npx skills@latest update oh-my-patent
-npx skills@latest remove oh-my-patent --agent codex
+npx skills@latest remove oh-my-patent --agent <host>
 ```
 
 The oh-my-patent CLI's ownership records, backups and rollback apply to its own
@@ -61,7 +85,7 @@ From a source checkout:
 ```sh
 npm ci
 npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
+node dist/cli.js adapt install --tool <host> --workspace-dir <workspace>
 ```
 
 The command installs the multi-entry plugin workflow. `--mode plugin` is an
@@ -72,7 +96,7 @@ Use the host-specific Archimedes entry and commands described in the
 `src/skills`; portable runtime instructions have separate source overrides.
 
 ```sh
-node dist/cli.js adapt uninstall --mode plugin --tool codex --workspace-dir <workspace>
+node dist/cli.js adapt uninstall --mode plugin --tool <host> --workspace-dir <workspace>
 ```
 
 Plugin uninstall and `--prune` preserve the optional portable Skill. `--dry-run` is a
@@ -83,8 +107,8 @@ Skill-mode option; plugin mode rejects it before writing rather than implying a 
 Build the checkout as above, then select one host and inspect the dry-run:
 
 ```sh
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+node dist/cli.js adapt install --mode skill --tool <host> --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool <host> --workspace-dir <workspace>
 ```
 
 Skill mode requires an explicit `--tool`. It adds one complete portable package,
@@ -156,8 +180,8 @@ cause a conflict before mutation; modified plugin files do not block installatio
 Shared removal retains the copy while another selected host owns it.
 
 ```sh
-node dist/cli.js adapt uninstall --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt uninstall --mode skill --tool codex --workspace-dir <workspace>
+node dist/cli.js adapt uninstall --mode skill --tool <host> --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt uninstall --mode skill --tool <host> --workspace-dir <workspace>
 node dist/cli.js adapt rollback --mode skill --backup <id> --workspace-dir <workspace>
 ```
 

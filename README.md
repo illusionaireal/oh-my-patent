@@ -25,13 +25,29 @@ review, and diagrams—with traceable, forkable decision paths.
 
 Choose **Plugin** for Archimedes with 14 agents, 6 skills and 9 commands, or
 **Skill** for one portable entry with bundled role resources and runtime.
-Node.js >=22 is required. Run installation commands in your patent workspace;
-the examples below use Codex.
+Node.js >=22 is required. Both modes support Claude Code, Codex and OpenCode.
+Run installation commands in your patent workspace and choose the command for your host.
 
 ### Plugin installation
 
+Run only the command for your host:
+
+**Claude Code**
+
+```bash
+npx oh-my-patent@latest adapt install --tool claude-code --workspace-dir .
+```
+
+**Codex**
+
 ```bash
 npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
+npx oh-my-patent@latest adapt install --tool opencode --workspace-dir .
 ```
 
 Plugin mode is the CLI default. Open the workspace in your host and select Archimedes;
@@ -45,13 +61,28 @@ Choose one of these methods:
 
 Use the [Skills CLI](https://github.com/vercel-labs/skills) to install the portable
 Skill directly from its repository directory. This method requires Git and
-Node.js >=22.20:
+Node.js >=22.20. Run only the command for your host:
+
+**Claude Code**
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+```
+
+**Codex**
 
 ```bash
 npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
 ```
 
-The command targets the complete portable package and installs a project-local copy.
+**OpenCode**
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
+```
+
+Each command targets the complete portable package and installs a project-local copy
+for the selected host.
 
 **2. ZIP download — manual installation**
 
@@ -62,10 +93,25 @@ no source build is needed.
 
 **3. oh-my-patent CLI — managed installation**
 
-Use this method for the project's installation backups and rollback commands:
+Use this method for the project's installation backups and rollback commands.
+Run only the command for your host:
+
+**Claude Code**
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool claude-code --workspace-dir .
+```
+
+**Codex**
 
 ```bash
 npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-dir .
 ```
 
 | Host | Skills CLI `--agent` / project CLI `--tool` | Manual Skill location in the workspace |

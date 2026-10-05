@@ -12,18 +12,29 @@
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --tool codex --workspace-dir .
 ```
 
-以上命令为当前目录安装 Codex 插件。其他宿主使用对应命令：
+安装 CLI 后，在专利工作区目录只运行所选宿主对应的一条命令：
+
+**Claude Code**
 
 ```bash
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
+```
+
+**Codex**
+
+```bash
 oh-my-patent adapt setup --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
 oh-my-patent adapt setup --tool opencode --workspace-dir .
 ```
 
-只运行所选宿主的命令。省略 `--tool` 会安装三个适配器的配置。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
+省略 `--tool` 会安装三个适配器的配置。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
 npm 安装完成后，需要显式执行这一步。
 
 | 适配器 | 写入工作区的文件 |
@@ -104,8 +115,10 @@ Mermaid 渲染需要 `mmdc` 可执行程序。PlantUML 渲染器会把附图源�
 Setup、install、uninstall 默认使用当前工作目录。
 Generate 默认写入安装包内的 `plugins/<tool>/`；可指定输出目录，先检查生成内容：
 
+`<host>` 替换为 `claude-code`、`codex` 或 `opencode`。
+
 ```bash
-oh-my-patent adapt generate --tool codex --workspace-dir . --output ./adapter-preview
+oh-my-patent adapt generate --tool <host> --workspace-dir . --output ./adapter-preview
 ```
 
 高级用法可通过 `--plugin-dir <dir>` 指定另一份插件定义包。

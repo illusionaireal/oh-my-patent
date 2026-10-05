@@ -12,18 +12,29 @@ patent workspace, or back up existing instruction and configuration files first.
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --tool codex --workspace-dir .
 ```
 
-The example installs the Codex plugin into the current directory. For other hosts:
+After installing the CLI, run only the command for your host in your patent workspace:
+
+**Claude Code**
 
 ```bash
 oh-my-patent adapt setup --tool claude-code --workspace-dir .
+```
+
+**Codex**
+
+```bash
 oh-my-patent adapt setup --tool codex --workspace-dir .
+```
+
+**OpenCode**
+
+```bash
 oh-my-patent adapt setup --tool opencode --workspace-dir .
 ```
 
-Run only the command for your host. Omitting `--tool` installs all three adapters. `setup` is `install` with an additional
+Omitting `--tool` installs all three adapters. `setup` is `install` with an additional
 completion hint; installation is an explicit step after npm installation.
 
 | Adapter | Files written in the workspace |
@@ -115,8 +126,10 @@ Setup, install, and uninstall default to the current working directory.
 Generate defaults to `plugins/<tool>/` inside the installed package; use an explicit
 output directory to inspect files before installation:
 
+Replace `<host>` with `claude-code`, `codex` or `opencode`.
+
 ```bash
-oh-my-patent adapt generate --tool codex --workspace-dir . --output ./adapter-preview
+oh-my-patent adapt generate --tool <host> --workspace-dir . --output ./adapter-preview
 ```
 
 Advanced usage can select a different definition package with `--plugin-dir <dir>`.
