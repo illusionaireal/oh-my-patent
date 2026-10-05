@@ -1,5 +1,3 @@
-> **0.4.0：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。第一批宿主验收已由维护者确认完成。参见[发布说明](docs/releases/0.4.0.md)、[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。
-
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -18,24 +16,29 @@
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-面向 **Claude Code、Codex、OpenCode** 的专利工作流插件，另提供可选的便携 Agent Skill 安装模式。
+面向 **Claude Code、Codex、OpenCode** 的专利工作流工具，提供插件和便携 Agent Skill 两种安装方式。
 由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
-并保留可追溯、可分叉的决策路径。
+并记录可追溯、可分叉的决策路径。
 
 ## 快速开始
 
-在源码目录构建（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
+需要 Node.js >=22。在源码目录构建：
 
 ```bash
 npm ci
 npm run build
+```
+
+**插件模式（默认）** 提供 Archimedes、**14 个智能体、6 项技能、9 个命令**：
+
+```bash
 node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-默认插件模式完整保留 **14 个智能体、6 项技能、9 个命令**；也可显式指定 `--mode plugin`。
-在 AI 编程工具中打开工作区，使用 Archimedes 或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
+也可显式指定 `--mode plugin`。在 AI 编程工具中打开工作区，使用 Archimedes
+或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
 
-如需新增的便携 Skill 模式，选择一个宿主，先检查安装计划：
+**Skill 模式** 提供一个便携入口，包含角色资源与运行时。选择一个宿主，先检查安装计划：
 
 ```bash
 node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
@@ -50,16 +53,21 @@ node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <worksp
 
 | 安装模式 | 安装入口 | 选择方式 |
 | --- | --- | --- |
-| 原有插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
-| 新增 Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
+| 插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
+| Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
 
-Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
-请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
-安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
-独立的 **Publish standalone Skill** 工作流将便携 Skill 打包为 `oh-my-patent-skill`，
-自动继承仓库版本号 **0.4.0**。发布后可运行
-`npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0`，再将完整目录注册到所选宿主。
-详见[发布流程](docs/skill.md#independent-npm-skill-publication)。准备发版本身不会上传两个 npm 包。
+为项目选择要使用的入口。[安装指南](docs/skill.md)介绍更新、卸载和项目迁移，
+[兼容说明](docs/compatibility.md)列出各宿主的使用条件。
+
+独立 npm 包 **`oh-my-patent-skill`** 提供便携 Skill：
+
+```bash
+npm install --save-dev --ignore-scripts oh-my-patent-skill@0.4.0
+node node_modules/oh-my-patent-skill/scripts/runtime.mjs --doctor
+```
+
+将完整包目录复制到所选宿主的 Skill 目录，然后选择 `oh-my-patent`。
+各宿主的目录路径参见[安装指南](docs/skill.md)。
 
 ## 能做什么
 
@@ -108,6 +116,8 @@ Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配
 
 | 接下来阅读 | 内容 |
 |---|---|
+| [安装模式](./docs/skill.md) | 插件与 Skill 的安装、更新、卸载和迁移 |
+| [发布说明](./docs/releases/0.4.0.md) | 0.4.0 版本变更 |
 | [使用指南与 CLI](./docs/usage.md) | 安装、平台差异、全部 CLI 命令域与卸载行为 |
 | [工作流](./docs/workflow-diagram.md) | 十个阶段、审查回路与阈值行为 |
 | [智能体与协作](./docs/agents.md) | 注册 ID、技能、命令和协作模式 |

@@ -5,33 +5,38 @@ Archimedes, your Eureka-to-patent guide. The standalone portable Agent Skill fro
 
 This npm package contains one SKILL.md, role/capability references, templates and a
 self-contained Node.js >=22 runtime. It has no runtime npm dependencies or install
-scripts. The original `oh-my-patent` plugin remains a separate package with 14 agents,
-6 skills and 9 commands.
+scripts. The `oh-my-patent` package provides the CLI and plugin mode with 14 agents,
+6 skills and 9 commands. Both packages belong to the same patent workflow toolkit.
 
 ## Obtain the package
 
-After publication, install this version in your selected workspace:
+Install in your patent workspace:
 
 ```sh
 npm install --save-dev --ignore-scripts oh-my-patent-skill@__VERSION__
 node node_modules/oh-my-patent-skill/scripts/runtime.mjs --doctor
 ```
 
-Installing an npm dependency does not register it with an agent host. Copy the
-complete package directory into that host's selected Skill location, or use a Skill
-installer's local-directory input. For example, the `skills` CLI documents local
-paths, `--skill`, `--agent` and `--copy`:
+Copy the complete `node_modules/oh-my-patent-skill` directory to the selected host's
+Skill location, then select the `oh-my-patent` entry:
 
-```sh
-npx skills add ./node_modules/oh-my-patent-skill --skill oh-my-patent --agent codex --copy
+| Host | Skill location in your workspace |
+| --- | --- |
+| Claude Code | `.claude/skills/oh-my-patent` |
+| Codex | `.agents/skills/oh-my-patent` |
+| OpenCode | `.agents/skills/oh-my-patent` |
+
+Use one Skill discovery location and choose the entry for your project. See the
+[installation guide](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/skill.md)
+for updates, removal and project migration, and
+[compatibility](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md)
+for host-specific requirements.
+
+Start with:
+
+```text
+Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
-
-This third-party command remains unverified. First-wave host installation and workflow
-acceptance was confirmed by the maintainer. See the [skills CLI source](https://github.com/vercel-labs/skills) and the
-project's [compatibility ledger](https://github.com/illusionaireal/oh-my-patent/blob/master/docs/compatibility.md).
-Choose one Skill discovery location; preserve the original plugin and user files.
-Select the plugin or portable Skill entry explicitly. Existing project state is not
-migrated by installing this package.
 
 ## Runtime
 
@@ -39,8 +44,7 @@ Read SKILL.md and references/runtime.md before persisted operations. Call
 `node <skill-directory>/scripts/runtime.mjs --input <request.json>` with an explicit
 project root. Keep all references, assets and scripts together when moving the Skill.
 
-Version __VERSION__ inherits the original package's release version. Wave-two hosts,
-combined plugin/Skill host activation and optional image providers remain unverified.
+Version __VERSION__ uses the same release version as `oh-my-patent`.
 Technical drafting assistance, not legal advice; obtain qualified patent
 professional review before reliance or filing.
 
