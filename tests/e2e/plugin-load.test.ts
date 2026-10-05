@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -80,7 +80,7 @@ describe('E2E: Plugin Load', () => {
   });
 
   test('source TypeScript compiles without errors', { timeout: 30000 }, () => {
-    const result = execSync('npx tsc --noEmit', {
+    const result = execFileSync(process.execPath, [join(__dirname, '../../node_modules/typescript/bin/tsc'), '--noEmit'], {
       cwd: join(__dirname, '../..'),
       stdio: 'pipe',
       encoding: 'utf-8'

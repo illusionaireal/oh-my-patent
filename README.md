@@ -1,3 +1,5 @@
+> **0.4.0 alpha preview:** Adds an optional portable Skill installation mode. The original Archimedes plugin remains the default with 14 agents, 6 skills, and 9 commands. See [installation modes](docs/skill.md) and [compatibility status](docs/compatibility.md). Host acceptance and publication are pending.
+
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -16,45 +18,51 @@
 
 **Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
 
-An AI patent plugin for **Claude Code, Codex, and OpenCode**.
+A patent workflow plugin for **Claude Code, Codex, and OpenCode**, with an additional portable Agent Skill mode.
 Archimedes orchestrates specialist agents across research, ideation, drafting,
 review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Run these commands in your patent workspace. Setup writes editor configuration;
-see [installation behavior](./docs/usage-en.md#installation) before using an existing workspace.
+Build this preview from the checkout (Node.js >=22), then install the original
+Archimedes plugin into your patent workspace:
 
 ```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
+npm ci
+npm run build
+node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
 ```
 
-Open that workspace in your AI coding tool, load the generated integration, and start with:
+The default plugin mode retains all **14 agents, 6 skills, and 9 commands**.
+Use `--mode plugin` to select it explicitly. Open the workspace in your AI coding
+tool and use Archimedes or the host's plugin commands; see the [usage guide](docs/usage-en.md).
+
+For the additional portable Skill mode, select one host and inspect its plan:
+
+```bash
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
+node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+```
+
+Then select the `oh-my-patent` Skill and start with:
 
 ```text
-/archimedes
-> Create a patent project about homomorphic encryption in privacy-preserving computing.
+Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
 
-Use `--tool claude-code`, `--tool codex`, or `--tool opencode` to configure one
-platform. Without `--tool`, setup targets all three. See the
-[platform notes](./docs/usage-en.md#platform-notes) if the entry point is unavailable.
+| Installation mode | Installed entry points | Selection |
+| --- | --- | --- |
+| Original plugin (default) | Archimedes + 14 agents, 6 skills, 9 commands | `adapt install [--mode plugin] --tool <host>` |
+| Additional Skill | One portable entry with bundled role resources and runtime | `adapt install --mode skill --tool <host>` |
 
-<details>
-<summary>For AI assistants helping users install this</summary>
-
-Choose the user's patent workspace, review the installation behavior above, and run:
-
-```bash
-npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
-```
-
-Then help the user load the integration and start a project with `/archimedes`.
-
-</details>
+Skill installation preserves existing plugin files, customizations, workspace rules
+and MCP configuration. Each mode has its own uninstall command. Choose which entry
+you invoke; simultaneous host discovery and mixed use of both modes in one project
+remain unverified. Installing the Skill does not migrate existing project state.
+See [installation modes and optional migration](docs/skill.md).
+The candidate remains `0.4.0-alpha.0`. An independent **Publish standalone Skill**
+workflow packages `oh-my-patent-skill` for npm; see [publication instructions](docs/skill.md#independent-npm-skill-publication).
+No npm publication has run in this work.
 
 ## What you can do
 
@@ -63,7 +71,7 @@ Then help the user load the integration and start a project with `/archimedes`.
 | Coordinate specialist agents | Research, ideation, patentability assessment, drafting, review, and technical responses under one orchestrator |
 | Keep decisions traceable | Saved rounds, scores, innovation snapshots, and reasons in `.brainstorm/`; branch from a recorded node or restore an idea |
 | Resume recorded work | Workflow state in `.patent/state.json` and agent outputs in `references/` provide context for continuing a project |
-| Generate patent figures | Mermaid or PlantUML sources rendered to SVG and PNG, with figure references inserted into `MAIN.md` |
+| Generate patent figures | Specifications and editable SVG, optional local rendering or approved host image tools, with provenance and current review |
 | Inspect progress | CLI queries, Markdown reports, a terminal UI, and environment checks |
 
 The project brings the disclosure, its supporting material, and its decision history

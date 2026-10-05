@@ -11,6 +11,10 @@ import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { inflateRawSync } from 'zlib';
 
+// Renderer mechanics use an approved-transport test double. Real denial, scope,
+// audit and retry behavior are tested separately in skill-package/disclosure.test.ts.
+vi.mock('../../src/core/disclosure.js', () => ({ disclosedFetch: (url: string) => fetch(url) }));
+
 // ============================================================================
 // Mocks
 // ============================================================================

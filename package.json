@@ -1,6 +1,6 @@
 {
   "name": "oh-my-patent",
-  "version": "0.3.3",
+  "version": "0.4.0-alpha.0",
   "description": "Archimedes, your Eureka-to-patent guide. An AI patent plugin for Claude Code, Codex, and OpenCode that turns technical ideas into patent disclosures with traceable, forkable decision paths.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,12 +12,16 @@
     "oh-my-patent": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:skill",
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "npx tsc --noEmit",
-    "prepublishOnly": "npm run lint && npm run build && npm test"
+    "prepublishOnly": "npm run lint && npm run build && npm test",
+    "build:skill": "node scripts/build-skill.mjs",
+    "package:skill": "node scripts/package-skill.mjs",
+    "verify:artifacts": "node scripts/verify-artifacts.mjs",
+    "publish:skill": "node scripts/publish-standalone-skill.mjs"
   },
   "keywords": [
     "patent",
@@ -50,7 +54,9 @@
     "assets/brand/README.md",
     "README.md",
     "README.zh-CN.md",
-    "LICENSE"
+    "LICENSE",
+    "skills/",
+    "distribution/"
   ],
   "publishConfig": {
     "access": "public"
@@ -58,11 +64,13 @@
   "devDependencies": {
     "@types/node": "^22.15.0",
     "@types/react": "^19.2.14",
+    "esbuild": "0.28.2",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
   },
   "dependencies": {
     "ink": "^7.0.2",
-    "react": "^19.2.6"
+    "react": "^19.2.6",
+    "saxes": "6.0.0"
   }
 }

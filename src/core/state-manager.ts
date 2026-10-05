@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join, sep } from 'path';
 import { atomicWriteFileSync } from './atomic-write.js';
 import { PatentState, validateState } from './state.js';
+import { assertLegacyWriter } from './legacy-write-guard.js';
 import { ensureInside as ensurePathInsideBase } from './path-safety.js';
 
 const PROJECT_SLUG_PATTERN = /^[a-zA-Z0-9._-]+$/;
@@ -32,6 +33,8 @@ export class StateManager {
     }
 
     const projectDir = join(this.baseDir, projectSlug);
+    assertLegacyWriter(projectDir);
+    if (state.schema_version !== undefined) throw new Error('Versioned state requires ProjectStore');
     const patentDir = join(projectDir, '.patent');
 
     ensurePathInsideBase(this.baseDir, projectDir);

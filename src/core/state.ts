@@ -17,6 +17,9 @@ import type { WorkflowStageName } from './workflow-stages.js';
 export type Jurisdiction = `${JurisdictionCode}`;
 
 export interface PatentState {
+  /** Absent only on explicitly unmigrated legacy projects. */
+  schema_version?: 1;
+  revision?: number;
   project: {
     path: string;
     topic: string;
@@ -73,6 +76,17 @@ export function validateState(state: unknown): { valid: boolean; errors: string[
   }
 
   const s = state as Record<string, unknown>;
+  if (s.schema_version !== undefined && s.schema_version !== 1) errors.push('Unsupported schema_version');
+  if (s.schema_version === 1 && (!Number.isSafeInteger(s.revision) || (s.revision as number) < 0)) errors.push('Invalid revision');
+  if (s.schema_version === 1 && (s.project as Record<string, unknown> | undefined)?.path !== '.') errors.push('Versioned project.path must be relative root');
+  if (s.schema_version === 1) {
+    if (!s.stages || typeof s.stages !== 'object' || Array.isArray(s.stages)) errors.push('Versioned stages must be a record');
+    else for (const stage of WORKFLOW_STAGE_ORDER) {
+      const value = (s.stages as Record<string, unknown>)[stage] as Record<string, unknown> | undefined;
+      if (!value || !['pending', 'completed'].includes(value.status as string)) errors.push(`Invalid stage record: ${stage}`);
+      if (value?.artifacts !== undefined && (!Array.isArray(value.artifacts) || !value.artifacts.every(v => typeof v === 'string' && !/^[\/\\]|:|\\|(^|\/)\.\.(\/|$)/.test(v)))) errors.push(`Invalid relative artifacts: ${stage}`);
+    }
+  }
 
   if (!s.project || typeof s.project !== 'object') {
     errors.push('Missing or invalid project field');

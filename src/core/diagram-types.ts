@@ -127,7 +127,8 @@ export interface ManifestEntry {
  * 渲染器配置
  */
 export interface RendererConfig {
-  /** PlantUML server URL，默认 `https://www.plantuml.com/plantuml`（可用环境变量覆盖，见 REQ-043） */
+  disclosure?: import('./disclosure.js').DisclosureContext;
+  /** Explicit PlantUML endpoint; empty by default. Endpoint configuration is not consent. */
   plantumlServerUrl: string;
   /** 默认引擎 */
   defaultEngine: Engine;
@@ -148,9 +149,9 @@ export interface RendererConfig {
 export const PLANTUML_SERVER_URL_ENV = 'PLANTUML_SERVER_URL';
 
 /**
- * 默认 PlantUML 服务地址（公共服务器）。
+ * No public fallback. A configured endpoint still requires content-bound consent.
  */
-export const DEFAULT_PLANTUML_SERVER_URL = 'https://www.plantuml.com/plantuml';
+export const DEFAULT_PLANTUML_SERVER_URL = '';
 
 /**
  * 解析默认 PlantUML 服务地址：环境变量优先，空值回落默认。

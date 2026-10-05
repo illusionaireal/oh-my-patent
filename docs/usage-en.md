@@ -1,5 +1,9 @@
 # Usage and CLI reference
 
+> This page documents the original Archimedes plugin mode, which remains the default
+> with 14 agents, 6 skills and 9 commands. `--mode plugin` selects it explicitly.
+> The additional portable mode uses `--mode skill`; see [installation modes](skill.md).
+
 [Documentation](./README-en.md) · [中文](./usage.md)
 
 ## Installation

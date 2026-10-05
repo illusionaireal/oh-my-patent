@@ -1,0 +1,9 @@
+{
+  "jurisdiction": "CN",
+  "projectDir": "projects",
+  "outputLanguage": "auto",
+  "figures": {
+    "preferredBackend": "auto"
+  },
+  "remoteTools": false
+}
