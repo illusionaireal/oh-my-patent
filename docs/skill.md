@@ -23,25 +23,16 @@ workspace path before running them.
 
 The [Skills CLI](https://github.com/vercel-labs/skills) installs the portable package
 without installing the oh-my-patent CLI. It requires Git and Node.js >=22.20.
-In your patent workspace, run only the command for your host:
-
-**Claude Code**
+Run this in your patent workspace:
 
 ```sh
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
 ```
 
-**Codex**
-
-```sh
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
-```
-
-**OpenCode**
-
-```sh
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
-```
+The installer detects hosts and offers selection when needed. Select Claude Code,
+Codex or OpenCode and choose Project to install in the current workspace. When
+launched from a coding agent, the installer can select that agent without prompting.
+To choose a host explicitly, append `--agent <host>` using the table above.
 
 The explicit `skills/oh-my-patent` source selects the built portable package;
 the repository also contains plugin capabilities and Skill source templates.
@@ -77,6 +68,29 @@ Back up customizations before replacing a manually installed directory; delete t
 directory to remove it. A standalone ZIP produced by `npm run package:skill` contains
 an `oh-my-patent` folder with the same resources. Repository ZIP downloads and
 standalone build ZIPs have different outer directory layouts.
+
+## Plugin installation with npm or npx
+
+For a persistent CLI on your PATH, use npm and then install into your workspace:
+
+```sh
+npm install -g oh-my-patent
+oh-my-patent adapt install
+```
+
+Plugin mode is the default, and omitting `--tool` installs all three adapters in
+the current workspace. Add `--tool <host>` to select one host. Global npm installation
+alone does not install workspace configuration; the explicit second step does that.
+
+For installation without a global CLI, use:
+
+```sh
+npx oh-my-patent@latest adapt install
+```
+
+The installer still writes persistent workspace files. npx supplies the CLI for
+that invocation; use `npx oh-my-patent@latest <command>` for later CLI operations,
+or install the CLI globally. See the [usage guide](usage-en.md) for available commands.
 
 ## Plugin mode from source
 

@@ -12,30 +12,15 @@
 
 ```bash
 npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-安装 CLI 后，在专利工作区目录只运行所选宿主对应的一条命令：
+第一条命令全局安装 CLI；第二条命令默认在当前工作区安装三个宿主的插件配置。
+如需选择单个宿主，在第二条命令后加上 `--tool claude-code`、`--tool codex`
+或 `--tool opencode`。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
+npm 安装完成后，需要显式执行工作区安装。
 
-**Claude Code**
-
-```bash
-oh-my-patent adapt setup --tool claude-code --workspace-dir .
-```
-
-**Codex**
-
-```bash
-oh-my-patent adapt setup --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-oh-my-patent adapt setup --tool opencode --workspace-dir .
-```
-
-省略 `--tool` 会安装三个适配器的配置。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
-npm 安装完成后，需要显式执行这一步。
+无需全局 CLI 的 npx 快捷方式见[安装指南](skill.md#plugin-installation-with-npm-or-npx)。
 
 | 适配器 | 写入工作区的文件 |
 |---|---|

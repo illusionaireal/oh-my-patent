@@ -30,70 +30,60 @@
 ### 安装插件（默认方式）
 
 ```bash
-npx oh-my-patent@latest adapt install
+npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-默认在当前工作区安装 Claude Code、Codex 和 OpenCode 三个宿主的插件配置。
-只需安装某一个宿主时，可选加上 `--tool claude-code`、`--tool codex` 或 `--tool opencode`。
+第一条命令全局安装 CLI，供后续管理项目使用；第二条命令在当前工作区安装
+Claude Code、Codex 和 OpenCode 三个宿主的插件配置。
+只需安装某一个宿主时，可在第二条命令后加上 `--tool claude-code`、`--tool codex` 或 `--tool opencode`。
 
 安装后在宿主中打开工作区并选择 Archimedes，
 入口的启用方式见[使用指南](docs/usage.md)。
 
+<details>
+<summary>通过 npx 快捷安装</summary>
+
+无需先全局安装 CLI，直接运行安装器：
+
+```bash
+npx oh-my-patent@latest adapt install
+```
+
+此方式向工作区写入相同的插件配置。后续使用 CLI 命令时，执行
+`npx oh-my-patent@latest <command>`，或按上方方式全局安装 CLI。
+
+</details>
+
 ### 安装 Skill
 
-选择以下任意一种方式：
-
-**方式一：Skills CLI，推荐**
-
-使用 [Skills CLI](https://github.com/vercel-labs/skills)，直接从仓库中的便携 Skill
-目录安装。此方式需要 Git 和 Node.js >=22.20。只运行所选宿主对应的一条命令：
-
-**Claude Code**
+使用 [Skills CLI](https://github.com/vercel-labs/skills)，需要 Git 和 Node.js >=22.20：
 
 ```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
 ```
 
-**Codex**
+安装器会检测宿主，并在需要时提示选择。选择 Claude Code、Codex 或 OpenCode，
+安装范围选择 **Project**，即可将完整 Skill 与运行时复制到当前工作区。
+在所选宿主中打开工作区并选择 `oh-my-patent`。
+需要跨项目使用时，可加上 `--global` 安装到用户目录。无需全局安装 oh-my-patent CLI。
 
-```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
-```
+<details>
+<summary>其他 Skill 安装方式：ZIP、项目 CLI 和 npm 归档</summary>
 
-**OpenCode**
-
-```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
-```
-
-每条命令均选择完整的便携包，并将其复制到当前项目中所选宿主的 Skill 目录。
-
-**方式二：下载 ZIP，手动安装**
+**下载 ZIP，手动安装**
 
 下载并解压[仓库 ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)，
 将其中完整的 `skills/oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
 目录已包含运行时，无需构建源码。
 
-**方式三：oh-my-patent CLI，管理安装与备份**
+**oh-my-patent CLI，管理安装与备份**
 
-需要使用项目提供的安装备份和回滚命令时，可选择此方式。只运行所选宿主对应的一条命令：
-
-**Claude Code**
-
-```bash
-npx oh-my-patent@latest adapt install --mode skill --tool claude-code --workspace-dir .
-```
-
-**Codex**
+需要使用项目提供的安装备份和回滚命令时，可选择此方式。
+请将 `<host>` 替换为下表中所选宿主的参数值：
 
 ```bash
-npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-dir .
+npx oh-my-patent@latest adapt install --mode skill --tool <host>
 ```
 
 | 宿主 | Skills CLI 的 `--agent` / 项目 CLI 的 `--tool` | 工作区内手动安装 Skill 的位置 |
@@ -102,9 +92,18 @@ npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-d
 | Codex | `codex` | `.agents/skills/oh-my-patent` |
 | OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
 
-请将 `SKILL.md`、`references/`、`assets/` 和 `scripts/` 一起复制，
+Skills CLI 也可加上 `--agent <host>` 显式选择宿主。
+项目 CLI 的 Skill 模式要求指定 `--tool <host>`，插件模式则将其作为可选参数。
+
+**独立 npm 归档**
+
+需要打包或手动部署时，可下载[独立 npm 包](docs/skill.md#standalone-skill-package-installation)，
+解压后将完整的 `package` 目录复制到所选宿主的 Skill 位置。
+
+请保留 `SKILL.md`、`references/`、`assets/` 和 `scripts/` 的完整目录结构，
 并使用同一种安装方式进行更新和卸载，详见[安装指南](docs/skill.md)。
-需要打包或手动部署时，也可以使用[独立 npm 包](docs/skill.md#standalone-skill-package-installation)。
+
+</details>
 
 ### 开始使用
 

@@ -298,3 +298,33 @@ during checks. No global installation or actual host model session was run here.
 This result supersedes the earlier unverified third-party installer status for
 this specific project-local copy workflow. Other installers and scopes remain
 outside the tested scope.
+
+
+## Skills CLI without an explicit host
+
+2026-10-06, Linux / Node 24.19.0, Skills CLI 1.7.0. The concise README entry
+was checked without `--agent` and without the installer's `--yes` option:
+
+```sh
+npx --yes skills@1.7.0 add https://github.com/illusionaireal/oh-my-patent/tree/300fced4eb064afa0693c30f7d4dee27efe264ac/skills/oh-my-patent --skill oh-my-patent --copy
+```
+
+The npm-level `--yes` only accepts fetching the installer. Skills CLI detected its
+Codex execution environment and installed non-interactively. The installed copy
+contained the exact 44 generated resources; its lock recorded the frozen commit
+and complete source directory. This host selection comes from the environment,
+not a Codex flag in the README command.
+
+A second check used the byte-identical local generated directory in an isolated
+workspace with coding-agent detection variables unset. It detected the installed
+Codex CLI, offered Project/Global scope and installation confirmation, then copied
+all 44 exact resources into `.agents/skills/oh-my-patent` after Project was selected.
+The installed runtime passed `--doctor`. The optional find-skills installation
+was declined. These checks add neither global installation nor host model acceptance.
+
+The first check's login shell changed its working directory to its startup
+location. That test copy caused the package's ancestor/user duplicate guard to
+reject 20 local test cases. The fixture copy and lock were retained outside
+user discovery locations, and subsequent installer checks used a shell that kept
+the specified workspace. The complete test suite and artifact checks were rerun
+after correcting the fixture placement.

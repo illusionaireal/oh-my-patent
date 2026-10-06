@@ -12,30 +12,16 @@ patent workspace, or back up existing instruction and configuration files first.
 
 ```bash
 npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-After installing the CLI, run only the command for your host in your patent workspace:
+The first command installs the CLI globally; the second installs all three host
+configurations in the current workspace. To select one host, append `--tool claude-code`,
+`--tool codex` or `--tool opencode` to the second command. `setup` is `install` with
+an additional completion hint; workspace installation is an explicit step after npm installation.
 
-**Claude Code**
-
-```bash
-oh-my-patent adapt setup --tool claude-code --workspace-dir .
-```
-
-**Codex**
-
-```bash
-oh-my-patent adapt setup --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-oh-my-patent adapt setup --tool opencode --workspace-dir .
-```
-
-Omitting `--tool` installs all three adapters. `setup` is `install` with an additional
-completion hint; installation is an explicit step after npm installation.
+For the npx shortcut without a global CLI, see the
+[installation guide](skill.md#plugin-installation-with-npm-or-npx).
 
 | Adapter | Files written in the workspace |
 |---|---|

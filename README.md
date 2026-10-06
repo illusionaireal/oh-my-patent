@@ -31,75 +31,62 @@ Run installation commands in your patent workspace.
 ### Plugin installation (default)
 
 ```bash
-npx oh-my-patent@latest adapt install
+npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-This installs the plugin configurations for Claude Code, Codex and OpenCode in
-the current workspace. To install only one host, optionally append
-`--tool claude-code`, `--tool codex` or `--tool opencode`.
+The first command installs the CLI globally for project management. The second
+installs the plugin configurations for Claude Code, Codex and OpenCode in the current
+workspace. To install only one host, optionally append `--tool claude-code`,
+`--tool codex` or `--tool opencode` to the second command.
 
 Open the workspace in your host and select Archimedes; see the
 [usage guide](docs/usage-en.md) for enabling its entry point.
 
+<details>
+<summary>Quick installation with npx</summary>
+
+Run the installer without first installing the CLI globally:
+
+```bash
+npx oh-my-patent@latest adapt install
+```
+
+This writes the same plugin configurations to the workspace. For later CLI commands,
+use `npx oh-my-patent@latest <command>` or install the CLI globally as above.
+
+</details>
+
 ### Skill installation
 
-Choose one of these methods:
-
-**1. Skills CLI — recommended**
-
-Use the [Skills CLI](https://github.com/vercel-labs/skills) to install the portable
-Skill directly from its repository directory. This method requires Git and
-Node.js >=22.20. Run only the command for your host:
-
-**Claude Code**
+Use the [Skills CLI](https://github.com/vercel-labs/skills) with Git and Node.js >=22.20:
 
 ```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent claude-code --copy
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
 ```
 
-**Codex**
+The installer detects hosts and offers selection when needed. Choose Claude Code,
+Codex or OpenCode, and choose **Project** to copy the complete Skill and runtime into
+the current workspace. Open it in the selected host and select `oh-my-patent`.
+For use across projects, append `--global` for user-level installation.
+No global oh-my-patent CLI is required.
 
-```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent codex --copy
-```
+<details>
+<summary>Other Skill installation methods: ZIP, project CLI and npm archive</summary>
 
-**OpenCode**
+**ZIP download — manual installation**
 
-```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --agent opencode --copy
-```
+Download and extract the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip).
+Copy the complete `skills/oh-my-patent` directory inside the archive to the Skill
+location for your host below. The runtime is included; no source build is needed.
 
-Each command targets the complete portable package and installs a project-local copy
-for the selected host.
-
-**2. ZIP download — manual installation**
-
-Download the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)
-and extract it. Copy the complete `skills/oh-my-patent` directory inside the archive
-to the Skill location for your host in the table below. The runtime is included;
-no source build is needed.
-
-**3. oh-my-patent CLI — managed installation**
+**oh-my-patent CLI — managed installation**
 
 Use this method for the project's installation backups and rollback commands.
-Run only the command for your host:
-
-**Claude Code**
+Replace `<host>` with the value for your selected host in the table:
 
 ```bash
-npx oh-my-patent@latest adapt install --mode skill --tool claude-code --workspace-dir .
-```
-
-**Codex**
-
-```bash
-npx oh-my-patent@latest adapt install --mode skill --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-dir .
+npx oh-my-patent@latest adapt install --mode skill --tool <host>
 ```
 
 | Host | Skills CLI `--agent` / project CLI `--tool` | Manual Skill location in the workspace |
@@ -108,10 +95,19 @@ npx oh-my-patent@latest adapt install --mode skill --tool opencode --workspace-d
 | Codex | `codex` | `.agents/skills/oh-my-patent` |
 | OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
 
+Skills CLI also accepts `--agent <host>` to select a host explicitly. The project
+CLI's Skill mode requires `--tool <host>`; plugin mode treats it as optional.
+
+**Standalone npm archive**
+
+Download the [standalone npm package](docs/skill.md#standalone-skill-package-installation)
+for packaging or manual deployment. Extract the archive and copy the complete
+`package` directory to your host's Skill location.
+
 Keep `SKILL.md`, `references/`, `assets/` and `scripts/` together. Use the same
 installation method for updates and removal; see the [installation guide](docs/skill.md).
-The [standalone npm package](docs/skill.md#standalone-skill-package-installation)
-is also available for packaging and manual deployment.
+
+</details>
 
 ### Start a project
 

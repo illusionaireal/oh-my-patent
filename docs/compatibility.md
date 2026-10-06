@@ -52,6 +52,13 @@ and synthetic `project.create`; Codex listing and removal also passed.
 The repository ZIP downloaded from GitHub contained the same 44 files, and the
 manually copied runtime passed its local check.
 
+The concise entry without `--agent` was also checked against commit
+`300fced4eb064afa0693c30f7d4dee27efe264ac`: the running-agent environment selected
+Codex automatically and copied all 44 resources. An ordinary-terminal check using
+the same local resources offered Project/Global scope and confirmation; the
+Project copy matched all 44 resources and passed its runtime check. Host detection
+can skip a host prompt when one host or the running agent is selected.
+
 These checks cover package selection, placement, resource integrity and local
 runtime execution. They do not add host model evaluations, global-install checks,
 or Windows/macOS Skills CLI certification. The maintainer's host acceptance record
