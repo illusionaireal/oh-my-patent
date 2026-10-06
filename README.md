@@ -26,32 +26,20 @@ review, and diagrams—with traceable, forkable decision paths.
 Choose **Plugin** for Archimedes with 14 agents, 6 skills and 9 commands, or
 **Skill** for one portable entry with bundled role resources and runtime.
 Node.js >=22 is required. Both modes support Claude Code, Codex and OpenCode.
-Run installation commands in your patent workspace and choose the command for your host.
+Run installation commands in your patent workspace.
 
-### Plugin installation
-
-Run only the command for your host:
-
-**Claude Code**
+### Plugin installation (default)
 
 ```bash
-npx oh-my-patent@latest adapt install --tool claude-code --workspace-dir .
+npx oh-my-patent@latest adapt install
 ```
 
-**Codex**
+This installs the plugin configurations for Claude Code, Codex and OpenCode in
+the current workspace. To install only one host, optionally append
+`--tool claude-code`, `--tool codex` or `--tool opencode`.
 
-```bash
-npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-npx oh-my-patent@latest adapt install --tool opencode --workspace-dir .
-```
-
-Plugin mode is the CLI default. Open the workspace in your host and select Archimedes;
-see the [usage guide](docs/usage-en.md) for enabling its entry point.
+Open the workspace in your host and select Archimedes; see the
+[usage guide](docs/usage-en.md) for enabling its entry point.
 
 ### Skill installation
 

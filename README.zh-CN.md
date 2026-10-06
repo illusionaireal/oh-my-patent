@@ -25,31 +25,18 @@
 选择**插件模式**，使用 Archimedes、14 个智能体、6 项技能和 9 个命令；
 或选择 **Skill 模式**，使用包含角色资源与运行时的便携入口。
 需要 Node.js >=22。两种模式均支持 Claude Code、Codex 和 OpenCode。
-请在专利工作区目录执行安装命令，并按实际使用的宿主选择对应命令。
+请在专利工作区目录执行安装命令。
 
-### 安装插件
-
-只运行所选宿主对应的一条命令：
-
-**Claude Code**
+### 安装插件（默认方式）
 
 ```bash
-npx oh-my-patent@latest adapt install --tool claude-code --workspace-dir .
+npx oh-my-patent@latest adapt install
 ```
 
-**Codex**
+默认在当前工作区安装 Claude Code、Codex 和 OpenCode 三个宿主的插件配置。
+只需安装某一个宿主时，可选加上 `--tool claude-code`、`--tool codex` 或 `--tool opencode`。
 
-```bash
-npx oh-my-patent@latest adapt install --tool codex --workspace-dir .
-```
-
-**OpenCode**
-
-```bash
-npx oh-my-patent@latest adapt install --tool opencode --workspace-dir .
-```
-
-插件模式是 CLI 的默认模式。安装后在宿主中打开工作区并选择 Archimedes，
+安装后在宿主中打开工作区并选择 Archimedes，
 入口的启用方式见[使用指南](docs/usage.md)。
 
 ### 安装 Skill
