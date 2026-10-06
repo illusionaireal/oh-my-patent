@@ -1,5 +1,3 @@
-> **0.4.0 alpha preview:** Adds an optional portable Skill installation mode. The original Archimedes plugin remains the default with 14 agents, 6 skills, and 9 commands. See [installation modes](docs/skill.md) and [compatibility status](docs/compatibility.md). Host acceptance and publication are pending.
-
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -18,51 +16,112 @@
 
 **Meet Archimedes. Turn your “Eureka!” into a patent disclosure.**
 
-A patent workflow plugin for **Claude Code, Codex, and OpenCode**, with an additional portable Agent Skill mode.
+A patent workflow toolkit for **Claude Code, Codex, and OpenCode**, available as a
+plugin or a portable Agent Skill.
 Archimedes orchestrates specialist agents across research, ideation, drafting,
 review, and diagrams—with traceable, forkable decision paths.
 
 ## Quick start
 
-Build this preview from the checkout (Node.js >=22), then install the original
-Archimedes plugin into your patent workspace:
+Choose **Plugin** for Archimedes with 14 agents, 6 skills and 9 commands, or
+**Skill** for one portable entry with bundled role resources and runtime.
+Node.js >=22 is required. Both modes support Claude Code, Codex and OpenCode.
+Run installation commands in your patent workspace.
+
+### Plugin installation (default)
 
 ```bash
-npm ci
-npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
+npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-The default plugin mode retains all **14 agents, 6 skills, and 9 commands**.
-Use `--mode plugin` to select it explicitly. Open the workspace in your AI coding
-tool and use Archimedes or the host's plugin commands; see the [usage guide](docs/usage-en.md).
+The first command installs the CLI globally for project management. The second
+installs the plugin configurations for Claude Code, Codex and OpenCode in the current
+workspace. To install only one host, optionally append `--tool claude-code`,
+`--tool codex` or `--tool opencode` to the second command.
 
-For the additional portable Skill mode, select one host and inspect its plan:
+Open the workspace in your host and select Archimedes; see the
+[usage guide](docs/usage-en.md) for enabling its entry point.
+
+<details>
+<summary>Quick installation with npx</summary>
+
+Run the installer without first installing the CLI globally:
 
 ```bash
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+npx oh-my-patent@latest adapt install
 ```
 
-Then select the `oh-my-patent` Skill and start with:
+This writes the same plugin configurations to the workspace. For later CLI commands,
+use `npx oh-my-patent@latest <command>` or install the CLI globally as above.
+
+</details>
+
+### Skill installation
+
+Use the [Skills CLI](https://github.com/vercel-labs/skills) with Git and Node.js >=22.20:
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+```
+
+The installer detects hosts and offers selection when needed. Choose Claude Code,
+Codex or OpenCode, and choose **Project** to copy the complete Skill and runtime into
+the current workspace. Open it in the selected host and select `oh-my-patent`.
+For use across projects, append `--global` for user-level installation.
+No global oh-my-patent CLI is required.
+
+<details>
+<summary>Other Skill installation methods: ZIP, project CLI and npm archive</summary>
+
+**ZIP download — manual installation**
+
+Download and extract the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip).
+Copy the complete `skills/oh-my-patent` directory inside the archive to the Skill
+location for your host below. The runtime is included; no source build is needed.
+
+**oh-my-patent CLI — managed installation**
+
+Use this method for the project's installation backups and rollback commands.
+Replace `<host>` with the value for your selected host in the table:
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool <host>
+```
+
+| Host | Skills CLI `--agent` / project CLI `--tool` | Manual Skill location in the workspace |
+| --- | --- | --- |
+| Claude Code | `claude-code` | `.claude/skills/oh-my-patent` |
+| Codex | `codex` | `.agents/skills/oh-my-patent` |
+| OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
+
+Skills CLI also accepts `--agent <host>` to select a host explicitly. The project
+CLI's Skill mode requires `--tool <host>`; plugin mode treats it as optional.
+
+**Standalone npm archive**
+
+Download the [standalone npm package](docs/skill.md#standalone-skill-package-installation)
+for packaging or manual deployment. Extract the archive and copy the complete
+`package` directory to your host's Skill location.
+
+Keep `SKILL.md`, `references/`, `assets/` and `scripts/` together. Use the same
+installation method for updates and removal; see the [installation guide](docs/skill.md).
+
+</details>
+
+### Start a project
+
+Open the same workspace in your selected host. For plugin mode, select Archimedes;
+for Skill mode, select `oh-my-patent`. Describe your topic, for example:
 
 ```text
-Use oh-my-patent to create a patent project about homomorphic encryption in privacy-preserving computing.
+Create a patent project about homomorphic encryption in privacy-preserving computing.
 ```
 
-| Installation mode | Installed entry points | Selection |
-| --- | --- | --- |
-| Original plugin (default) | Archimedes + 14 agents, 6 skills, 9 commands | `adapt install [--mode plugin] --tool <host>` |
-| Additional Skill | One portable entry with bundled role resources and runtime | `adapt install --mode skill --tool <host>` |
-
-Skill installation preserves existing plugin files, customizations, workspace rules
-and MCP configuration. Each mode has its own uninstall command. Choose which entry
-you invoke; simultaneous host discovery and mixed use of both modes in one project
-remain unverified. Installing the Skill does not migrate existing project state.
-See [installation modes and optional migration](docs/skill.md).
-The candidate remains `0.4.0-alpha.0`. An independent **Publish standalone Skill**
-workflow packages `oh-my-patent-skill` for npm; see [publication instructions](docs/skill.md#independent-npm-skill-publication).
-No npm publication has run in this work.
+Archimedes guides you through collecting material, developing ideas, drafting the
+disclosure and reviewing it. See [compatibility](docs/compatibility.md) for
+host-specific requirements, and the [installation guide](docs/skill.md) for source
+builds, version selection, updates and removal.
 
 ## What you can do
 
@@ -113,6 +172,8 @@ The [agent reference](./docs/agents-en.md) lists the 14 registered agents, 6 ski
 
 | Read next | Contents |
 |---|---|
+| [Installation modes](./docs/skill.md) | Plugin and Skill setup, updates, removal and migration |
+| [Release notes](./docs/releases/0.4.0.md) | Version 0.4.0 changes |
 | [Usage and CLI](./docs/usage-en.md) | Installation, platform differences, all CLI domains, and uninstall behavior |
 | [Workflow](./docs/workflow-diagram-en.md) | Ten stages, review loops, and threshold behavior |
 | [Agents and collaboration](./docs/agents-en.md) | Registered IDs, skills, commands, and collaboration patterns |

@@ -1,5 +1,3 @@
-> **0.4.0 alpha 预览版：** 新增可选的便携 Skill 安装模式；原有 Archimedes 插件模式仍为默认，保留 14 个智能体、6 项技能、9 个命令。参见[安装模式](docs/skill.md)与[兼容状态](docs/compatibility.md)。宿主验收与发布尚未完成。
-
 # oh-my-patent
 
 [![npm version](https://img.shields.io/npm/v/oh-my-patent.svg)](https://www.npmjs.com/package/oh-my-patent)
@@ -18,47 +16,107 @@
 
 **遇见 Archimedes（阿基米德），让灵光一现成为专利交底书。**
 
-面向 **Claude Code、Codex、OpenCode** 的专利工作流插件，另提供可选的便携 Agent Skill 安装模式。
+面向 **Claude Code、Codex、OpenCode** 的专利工作流工具，提供插件和便携 Agent Skill 两种安装方式。
 由 Archimedes 编排专业智能体，协同完成检索、构思、撰写、审查与附图生成，
-并保留可追溯、可分叉的决策路径。
+并记录可追溯、可分叉的决策路径。
 
 ## 快速开始
 
-在本分支源码目录构建预览版（Node.js >=22），安装原有 Archimedes 插件到专利工作区：
+选择**插件模式**，使用 Archimedes、14 个智能体、6 项技能和 9 个命令；
+或选择 **Skill 模式**，使用包含角色资源与运行时的便携入口。
+需要 Node.js >=22。两种模式均支持 Claude Code、Codex 和 OpenCode。
+请在专利工作区目录执行安装命令。
+
+### 安装插件（默认方式）
 
 ```bash
-npm ci
-npm run build
-node dist/cli.js adapt install --tool codex --workspace-dir <workspace>
+npm install -g oh-my-patent
+oh-my-patent adapt install
 ```
 
-默认插件模式完整保留 **14 个智能体、6 项技能、9 个命令**；也可显式指定 `--mode plugin`。
-在 AI 编程工具中打开工作区，使用 Archimedes 或对应宿主的插件命令，详见[使用指南](docs/usage.md)。
+第一条命令全局安装 CLI，供后续管理项目使用；第二条命令在当前工作区安装
+Claude Code、Codex 和 OpenCode 三个宿主的插件配置。
+只需安装某一个宿主时，可在第二条命令后加上 `--tool claude-code`、`--tool codex` 或 `--tool opencode`。
 
-如需新增的便携 Skill 模式，选择一个宿主，先检查安装计划：
+安装后在宿主中打开工作区并选择 Archimedes，
+入口的启用方式见[使用指南](docs/usage.md)。
+
+<details>
+<summary>通过 npx 快捷安装</summary>
+
+无需先全局安装 CLI，直接运行安装器：
 
 ```bash
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace> --dry-run
-node dist/cli.js adapt install --mode skill --tool codex --workspace-dir <workspace>
+npx oh-my-patent@latest adapt install
 ```
 
-随后选择 `oh-my-patent` Skill，输入：
+此方式向工作区写入相同的插件配置。后续使用 CLI 命令时，执行
+`npx oh-my-patent@latest <command>`，或按上方方式全局安装 CLI。
+
+</details>
+
+### 安装 Skill
+
+使用 [Skills CLI](https://github.com/vercel-labs/skills)，需要 Git 和 Node.js >=22.20：
+
+```bash
+npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+```
+
+安装器会检测宿主，并在需要时提示选择。选择 Claude Code、Codex 或 OpenCode，
+安装范围选择 **Project**，即可将完整 Skill 与运行时复制到当前工作区。
+在所选宿主中打开工作区并选择 `oh-my-patent`。
+需要跨项目使用时，可加上 `--global` 安装到用户目录。无需全局安装 oh-my-patent CLI。
+
+<details>
+<summary>其他 Skill 安装方式：ZIP、项目 CLI 和 npm 归档</summary>
+
+**下载 ZIP，手动安装**
+
+下载并解压[仓库 ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)，
+将其中完整的 `skills/oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
+目录已包含运行时，无需构建源码。
+
+**oh-my-patent CLI，管理安装与备份**
+
+需要使用项目提供的安装备份和回滚命令时，可选择此方式。
+请将 `<host>` 替换为下表中所选宿主的参数值：
+
+```bash
+npx oh-my-patent@latest adapt install --mode skill --tool <host>
+```
+
+| 宿主 | Skills CLI 的 `--agent` / 项目 CLI 的 `--tool` | 工作区内手动安装 Skill 的位置 |
+| --- | --- | --- |
+| Claude Code | `claude-code` | `.claude/skills/oh-my-patent` |
+| Codex | `codex` | `.agents/skills/oh-my-patent` |
+| OpenCode | `opencode` | `.agents/skills/oh-my-patent` |
+
+Skills CLI 也可加上 `--agent <host>` 显式选择宿主。
+项目 CLI 的 Skill 模式要求指定 `--tool <host>`，插件模式则将其作为可选参数。
+
+**独立 npm 归档**
+
+需要打包或手动部署时，可下载[独立 npm 包](docs/skill.md#standalone-skill-package-installation)，
+解压后将完整的 `package` 目录复制到所选宿主的 Skill 位置。
+
+请保留 `SKILL.md`、`references/`、`assets/` 和 `scripts/` 的完整目录结构，
+并使用同一种安装方式进行更新和卸载，详见[安装指南](docs/skill.md)。
+
+</details>
+
+### 开始使用
+
+在所选宿主中打开同一工作区。插件模式选择 Archimedes；
+Skill 模式选择 `oh-my-patent`。然后描述你的选题，例如：
 
 ```text
-使用 oh-my-patent，基于同态加密在隐私计算中的应用新建一个专利项目。
+基于同态加密在隐私计算中的应用，新建一个专利项目。
 ```
 
-| 安装模式 | 安装入口 | 选择方式 |
-| --- | --- | --- |
-| 原有插件（默认） | Archimedes + 14 个智能体、6 项技能、9 个命令 | `adapt install [--mode plugin] --tool <host>` |
-| 新增 Skill | 一个便携入口，包含角色资源与运行时 | `adapt install --mode skill --tool <host>` |
-
-Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配置；两种模式分别卸载。
-请明确选择要调用的入口；同一项目中同时发现或混用两种模式仍待宿主验收。
-安装 Skill 不会迁移已有项目状态，详见[安装模式与可选迁移](docs/skill.md)。
-候选版本仍为 `0.4.0-alpha.0`。新增独立的 **Publish standalone Skill** 工作流，
-将便携 Skill 打包为 `oh-my-patent-skill` 发布到 npm，详见[发布说明](docs/skill.md#independent-npm-skill-publication)。
-本轮仅验证发布流程，未上传到 npm。
+Archimedes 会引导你收集材料、发展创新点、撰写交底书并完成审查。
+各宿主的使用条件见[兼容说明](docs/compatibility.md)，
+源码构建、版本选择、更新与卸载见[安装指南](docs/skill.md)。
 
 ## 能做什么
 
@@ -107,6 +165,8 @@ Skill 安装保留现有插件文件、用户修改、工作区规则与 MCP 配
 
 | 接下来阅读 | 内容 |
 |---|---|
+| [安装模式](./docs/skill.md) | 插件与 Skill 的安装、更新、卸载和迁移 |
+| [发布说明](./docs/releases/0.4.0.md) | 0.4.0 版本变更 |
 | [使用指南与 CLI](./docs/usage.md) | 安装、平台差异、全部 CLI 命令域与卸载行为 |
 | [工作流](./docs/workflow-diagram.md) | 十个阶段、审查回路与阈值行为 |
 | [智能体与协作](./docs/agents.md) | 注册 ID、技能、命令和协作模式 |

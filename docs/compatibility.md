@@ -1,14 +1,17 @@
 # Compatibility and certification
 
 Do not equate a candidate path, a copied folder, host activation, workflow behavior and
-marketplace listing. Each has separate evidence. No real-host certification has run
-for the optional Skill candidate; no native image provider has been verified.
+marketplace listing. Each has separate evidence. The maintainer confirmed completion
+of release acceptance on 2026-10-05. First-wave installation/workflow status below
+uses that confirmation; this release-preparation session did not execute new host
+evaluations. Exact host versions, execution dates and scenario traces were not supplied.
+No native image provider has been verified.
 
 | Target surface | Wave | Artifact | Host install/discovery | Workflow | Catalog |
 | --- | --- | --- | --- | --- | --- |
-| Claude Code | 1 | Portable folder | Unverified | Unverified | Not submitted |
-| Codex CLI / IDE | 1 | Portable folder | Unverified | Unverified | Not submitted |
-| OpenCode | 1 | Portable folder | Unverified | Unverified | Not submitted |
+| Claude Code | 1 | Portable folder | Passed (user confirmation) | Passed (user confirmation) | Not submitted |
+| Codex CLI / IDE | 1 | Portable folder | Passed (user confirmation) | Passed (user confirmation) | Not submitted |
+| OpenCode | 1 | Portable folder | Passed (user confirmation) | Passed (user confirmation) | Not submitted |
 | Cursor local | 2 | Portable folder | Unverified | Unverified | Not submitted |
 | GitHub Copilot VS Code | 2 | Portable folder | Unverified | Unverified | Not submitted |
 | Gemini CLI | 2 | Portable folder | Unverified | Unverified | Not submitted |
@@ -19,16 +22,45 @@ combined host activation or mixed runtimes in one project.
 
 Automated local tests cover relocation, packaging, coordinated persistence, default
 egress denial, SVG safety, installer ownership and shared-copy removal. Those tests do
-not certify actual host model/tool behavior. Both Ubuntu and Windows passed PR CI on commit `f22583b`; subsequent changes
-require their own run. macOS and network filesystems are unverified.
+not certify actual host model/tool behavior. Both Ubuntu and Windows passed
+[PR #9 CI](https://github.com/illusionaireal/oh-my-patent/actions/runs/37303509468)
+on commit `b95e35f`; the release PR requires its own run. macOS and network filesystems are unverified.
 
-Remaining host acceptance uses `evals/skill/scenarios.json`: 216 activation cases,
+The host evaluation protocol in `evals/skill/scenarios.json` defines 216 activation cases,
 108 safety/failure cases, 18 full workflows, 6 cross-host resumes and 72 figure tasks
 (420 runs before retries). Each scenario/host/language cell requires 3/3 passes.
 Zero-tolerance failures: data corruption, fabricated evidence/agents, unconsented egress.
-Manual review of at least three complete artifacts remains required.
+The protocol also requires manual review of at least three complete artifacts.
+The maintainer's completion statement is recorded in the
+[acceptance ledger](../specs/002-skill-first/verification.md#release-040-acceptance-confirmation).
+It does not supply a per-scenario execution ledger, so no new 420-run pass total is claimed.
+`distribution/targets.json` records `verification_source: user_confirmation` and
+the confirmation date; `tested_version` and actual `test_date` remain null.
 
 Costs and token usage are not inferred. The execution plan's US$50 pilot/US$300 total
 are suggestions, not authorization; paid evaluations require an agreed budget and
 available host accounts. Synthetic transport tests do not certify live retrieval or
 image services. Keep failed runs when rerunning a corrected candidate.
+
+## Skills CLI installation checks
+
+On 2026-10-06, Skills CLI 1.7.0 was tested on Linux / Node 24.19.0 against the
+portable directory at commit `7bc685c7179d8af6d143a9bd5821732758917e54`.
+Project-local `--copy` installations for `claude-code`, `codex` and `opencode`
+each contained the exact 44 source files. Each copied runtime passed `--doctor`
+and synthetic `project.create`; Codex listing and removal also passed.
+The repository ZIP downloaded from GitHub contained the same 44 files, and the
+manually copied runtime passed its local check.
+
+The concise entry without `--agent` was also checked against commit
+`300fced4eb064afa0693c30f7d4dee27efe264ac`: the running-agent environment selected
+Codex automatically and copied all 44 resources. An ordinary-terminal check using
+the same local resources offered Project/Global scope and confirmation; the
+Project copy matched all 44 resources and passed its runtime check. Host detection
+can skip a host prompt when one host or the running agent is selected.
+
+These checks cover package selection, placement, resource integrity and local
+runtime execution. They do not add host model evaluations, global-install checks,
+or Windows/macOS Skills CLI certification. The maintainer's host acceptance record
+above remains separate. Reproduction commands are in the
+[verification ledger](../specs/002-skill-first/verification.md#skills-cli-and-repository-zip-installation).

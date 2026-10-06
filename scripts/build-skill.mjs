@@ -47,7 +47,10 @@ for (const name of walk(join(root, 'src/skills')).filter(n => n.endsWith('/SKILL
 const targets = JSON.parse(source('distribution/targets.json'));
 for (const host of targets.targets) {
   const name = `references/host-${host.id}.md`;
-  files.set(name, Buffer.from(`# ${host.name}\n\nCandidate project path: \`${host.project_path}\`. ${host.note}\n\nInstallation and workflow status: unverified. Inspect actual tools/permissions;\nno native subagent or remote-tool capability is implied by the host name.\nUse the shared runtime interface and one canonical package copy.\n`));
+  const status = host.install_verified && host.workflow_verified
+    ? `passed (source: ${host.verification_source}; confirmation: ${host.acceptance_confirmed_at}). Exact host versions and execution dates are not recorded`
+    : 'unverified';
+  files.set(name, Buffer.from(`# ${host.name}\n\nProject path: \`${host.project_path}\`. ${host.note}\n\nInstallation and workflow status: ${status}. Inspect actual tools/permissions;\nno native subagent or remote-tool capability is implied by the host name.\nUse the shared runtime interface and one canonical package copy.\n`));
   resources.push(`- [${host.name}](${name}) — read only on this host.`);
 }
 files.set('SKILL.md', Buffer.from(files.get('SKILL.md').toString('utf8').replace('<!-- RESOURCE_INDEX -->', resources.join('\n')).replace(/\r\n/g, '\n')));

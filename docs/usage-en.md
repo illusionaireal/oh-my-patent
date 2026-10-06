@@ -1,8 +1,7 @@
 # Usage and CLI reference
 
-> This page documents the original Archimedes plugin mode, which remains the default
-> with 14 agents, 6 skills and 9 commands. `--mode plugin` selects it explicitly.
-> The additional portable mode uses `--mode skill`; see [installation modes](skill.md).
+> This page covers plugin mode: Archimedes, 14 agents, 6 skills and 9 commands.
+> Use `--mode plugin` for the plugin or `--mode skill` for the portable Skill; see the [installation guide](skill.md).
 
 [Documentation](./README-en.md) · [中文](./usage.md)
 
@@ -13,20 +12,16 @@ patent workspace, or back up existing instruction and configuration files first.
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+oh-my-patent adapt install
 ```
 
-Setup installs generated configuration for all three adapters. To select one:
+The first command installs the CLI globally; the second installs all three host
+configurations in the current workspace. To select one host, append `--tool claude-code`,
+`--tool codex` or `--tool opencode` to the second command. `setup` is `install` with
+an additional completion hint; workspace installation is an explicit step after npm installation.
 
-```bash
-oh-my-patent adapt setup --tool claude-code --workspace-dir .
-oh-my-patent adapt setup --tool codex --workspace-dir .
-oh-my-patent adapt setup --tool opencode --workspace-dir .
-```
-
-Run only the command for the host you want. `setup` is `install` with an additional
-completion hint; installation is an explicit step after npm installation.
+For the npx shortcut without a global CLI, see the
+[installation guide](skill.md#plugin-installation-with-npm-or-npx).
 
 | Adapter | Files written in the workspace |
 |---|---|
@@ -117,8 +112,10 @@ Setup, install, and uninstall default to the current working directory.
 Generate defaults to `plugins/<tool>/` inside the installed package; use an explicit
 output directory to inspect files before installation:
 
+Replace `<host>` with `claude-code`, `codex` or `opencode`.
+
 ```bash
-oh-my-patent adapt generate --tool codex --workspace-dir . --output ./adapter-preview
+oh-my-patent adapt generate --tool <host> --workspace-dir . --output ./adapter-preview
 ```
 
 Advanced usage can select a different definition package with `--plugin-dir <dir>`.

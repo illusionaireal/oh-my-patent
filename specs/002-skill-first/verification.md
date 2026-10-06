@@ -220,3 +220,111 @@ for the new package were not tested. npm dry-run succeeded without registry logi
 that does not prove publication access. Version is still `0.4.0-alpha.0`, host flags
 remain false, and no npm upload or marketplace submission occurred. Revised PR CI
 must pass independently of these local checks.
+
+## Release 0.4.0 acceptance confirmation
+
+Confirmation received on 2026-10-05 (Asia/Shanghai): the repository maintainer stated
+“验收已经完成了。” (“Acceptance has already completed.”) while requesting the
+`chore/release-0.4.0` release PR. This supersedes the earlier requirement to retain
+`0.4.0-alpha.0` until release host acceptance completes.
+
+The release PR starts from merged PR #9, master commit
+`0cc939396894593852f61aafef03c877f933dc60`. First-wave Skill installation and workflow
+acceptance for Claude Code, Codex and OpenCode is recorded as passed, with
+`verification_source: user_confirmation` and `acceptance_confirmed_at: 2026-10-05`
+in `distribution/targets.json`. The confirmation date is not an asserted execution
+date; actual host versions and test dates remain null. No new host evaluation
+traces were provided or executed in this release-preparation session, and no
+420-run pass total is inferred. Earlier failed/pending records remain historical.
+
+Wave-two hosts, mixed plugin/Skill host activation, optional image providers,
+third-party installers and catalogs retain their prior unverified/not-submitted
+status. Both stable publication workflows retain their first-wave acceptance gates.
+Generated host references and the release manifest derive their current status
+from the registry and preserve the confirmation source.
+
+Release preparation updates all package/plugin versions to `0.4.0`, rebuilds the
+portable Skill, updates bilingual documentation/release notes and changes the
+original npm workflow trigger to `release.published`. This PR does not merge itself,
+create a tag/Release or upload either npm package.
+
+Release-preparation validation on Linux / Node 22.23.3:
+
+- `npm run lint` and `npm test` (including the pretest build) passed: 453/453 tests in 63 files.
+- `npm run package:skill` and `npm run verify:artifacts` passed for the plugin tarball,
+  standalone Skill tarball and ZIP. Original plugin inventory remains 14/6/9;
+  Skill resources remain 44 files and standalone npm inventory remains 46 files.
+- `npm run publish:skill -- --dry-run` passed for `oh-my-patent-skill@0.4.0`
+  with `latest`, using the existing first-wave host gate. No npm upload occurred.
+- A repeated `npm run build:skill` preserved manifest SHA-256
+  `c6194bc194754504fcaf3d985e59d0c9e3f2d934ded69cd89c57103d1a50b34d`.
+  Runtime remains 130,601 bytes; ZIP is 259,099 bytes.
+- Package, root lockfile metadata, plugin, generated Skill and both archive versions
+  were checked as `0.4.0`; workflow YAML and `git diff --check` passed.
+
+GitHub Ubuntu/Windows CI must validate the submitted release commit separately.
+
+## Skills CLI and repository ZIP installation
+
+2026-10-06 (Asia/Shanghai), Linux / Node 24.19.0, Skills CLI 1.7.0 from npm.
+The README offers Skills CLI, manual ZIP and project CLI installation choices.
+The direct repository directory selects the complete generated Skill rather than
+plugin capabilities or source templates elsewhere in the repository.
+
+The Skills CLI entry point was run in three separate temporary workspaces with
+the following arguments (replace `<host>` with `claude-code`, `codex` or `opencode`):
+
+```sh
+npx --yes skills@1.7.0 add https://github.com/illusionaireal/oh-my-patent/tree/7bc685c7179d8af6d143a9bd5821732758917e54/skills/oh-my-patent --skill oh-my-patent --agent <host> --copy --yes
+```
+
+- All three installations succeeded. Claude Code used `.claude/skills/oh-my-patent`;
+  Codex and OpenCode used `.agents/skills/oh-my-patent` in their respective workspaces.
+- Each installed directory contained exactly 44 files, all byte-identical to the
+  candidate's `skills/oh-my-patent` directory. The installer lock recorded the exact
+  source commit and `skills/oh-my-patent/SKILL.md` path.
+- All three copied runtimes passed `--doctor` and a synthetic `project.create`
+  request in separate fixture projects, without repository runtime dependencies.
+- `skills list --agent codex` and `skills remove oh-my-patent --agent codex --yes`
+  succeeded; removal deleted the installed Skill directory.
+- Downloading `https://github.com/illusionaireal/oh-my-patent/archive/7bc685c7179d8af6d143a9bd5821732758917e54.zip`
+  succeeded. Its `skills/oh-my-patent` subtree matched all 44 candidate files;
+  copying that subtree to a manual installation and running `--doctor` passed.
+
+The user-facing commands follow `master`; these checks pin the candidate commit
+for reproduction. Skills CLI 1.7.0 requires Node.js >=22.20 and Git for this source;
+the portable runtime itself retains Node.js >=22 support. Telemetry was disabled
+during checks. No global installation or actual host model session was run here.
+This result supersedes the earlier unverified third-party installer status for
+this specific project-local copy workflow. Other installers and scopes remain
+outside the tested scope.
+
+
+## Skills CLI without an explicit host
+
+2026-10-06, Linux / Node 24.19.0, Skills CLI 1.7.0. The concise README entry
+was checked without `--agent` and without the installer's `--yes` option:
+
+```sh
+npx --yes skills@1.7.0 add https://github.com/illusionaireal/oh-my-patent/tree/300fced4eb064afa0693c30f7d4dee27efe264ac/skills/oh-my-patent --skill oh-my-patent --copy
+```
+
+The npm-level `--yes` only accepts fetching the installer. Skills CLI detected its
+Codex execution environment and installed non-interactively. The installed copy
+contained the exact 44 generated resources; its lock recorded the frozen commit
+and complete source directory. This host selection comes from the environment,
+not a Codex flag in the README command.
+
+A second check used the byte-identical local generated directory in an isolated
+workspace with coding-agent detection variables unset. It detected the installed
+Codex CLI, offered Project/Global scope and installation confirmation, then copied
+all 44 exact resources into `.agents/skills/oh-my-patent` after Project was selected.
+The installed runtime passed `--doctor`. The optional find-skills installation
+was declined. These checks add neither global installation nor host model acceptance.
+
+The first check's login shell changed its working directory to its startup
+location. That test copy caused the package's ancestor/user duplicate guard to
+reject 20 local test cases. The fixture copy and lock were retained outside
+user discovery locations, and subsequent installer checks used a shell that kept
+the specified workspace. The complete test suite and artifact checks were rerun
+after correcting the fixture placement.

@@ -1,4 +1,4 @@
-# 发布链路：建 Release 或手动触发时构建并发布到 npm（REQ-045 / DEC-4）
+# 发布链路：发布 Release 或手动触发时构建并发布到 npm（REQ-045 / DEC-4）
 #
 # 加固要点：
 #   1. 新增 `permissions` 块 —— 显式最小权限，不依赖仓库默认 token 权限；
@@ -17,7 +17,7 @@ name: Node.js Package
 
 on:
   release:
-    types: [created]
+    types: [published]
   workflow_dispatch:
 
 # 默认最小权限；发布作业另需 `id-token: write`（OIDC，见上方 NOTE）。

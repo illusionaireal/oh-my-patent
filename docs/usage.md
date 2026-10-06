@@ -1,7 +1,7 @@
 # 使用指南与 CLI 参考
 
-> 本页介绍原有 Archimedes 插件模式，仍为默认，完整保留 14 个智能体、6 项技能、9 个命令。
-> 可显式指定 `--mode plugin`；新增的便携模式使用 `--mode skill`，参见[安装模式](skill.md)。
+> 本页介绍插件模式的使用方法：Archimedes、14 个智能体、6 项技能、9 个命令。
+> 插件使用 `--mode plugin`；便携 Skill 使用 `--mode skill`，参见[安装指南](skill.md)。
 
 [文档中心](./README.md) · [English](./usage-en.md)
 
@@ -12,20 +12,15 @@
 
 ```bash
 npm install -g oh-my-patent
-oh-my-patent adapt setup --workspace-dir .
-oh-my-patent check --workspace-dir .
+oh-my-patent adapt install
 ```
 
-Setup 默认安装三个适配器的配置。只选择一个平台时：
+第一条命令全局安装 CLI；第二条命令默认在当前工作区安装三个宿主的插件配置。
+如需选择单个宿主，在第二条命令后加上 `--tool claude-code`、`--tool codex`
+或 `--tool opencode`。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
+npm 安装完成后，需要显式执行工作区安装。
 
-```bash
-oh-my-patent adapt setup --tool claude-code --workspace-dir .
-oh-my-patent adapt setup --tool codex --workspace-dir .
-oh-my-patent adapt setup --tool opencode --workspace-dir .
-```
-
-只运行你需要的那一条。`setup` 与 `install` 执行相同安装逻辑，并额外输出完成提示；
-npm 安装完成后，需要显式执行这一步。
+无需全局 CLI 的 npx 快捷方式见[安装指南](skill.md#plugin-installation-with-npm-or-npx)。
 
 | 适配器 | 写入工作区的文件 |
 |---|---|
@@ -105,8 +100,10 @@ Mermaid 渲染需要 `mmdc` 可执行程序。PlantUML 渲染器会把附图源�
 Setup、install、uninstall 默认使用当前工作目录。
 Generate 默认写入安装包内的 `plugins/<tool>/`；可指定输出目录，先检查生成内容：
 
+`<host>` 替换为 `claude-code`、`codex` 或 `opencode`。
+
 ```bash
-oh-my-patent adapt generate --tool codex --workspace-dir . --output ./adapter-preview
+oh-my-patent adapt generate --tool <host> --workspace-dir . --output ./adapter-preview
 ```
 
 高级用法可通过 `--plugin-dir <dir>` 指定另一份插件定义包。
