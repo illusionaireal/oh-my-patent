@@ -1,94 +1,189 @@
-# 发布链路：发布 Release 或手动触发时构建并发布到 npm（REQ-045 / DEC-4）
-#
-# 加固要点：
-#   1. 新增 `permissions` 块 —— 显式最小权限，不依赖仓库默认 token 权限；
-#   2. 所有 Action 固定到 commit SHA（附版本注释），避免 tag 被移动导致供应链漂移；
-#   3. 用 artifact 传递 `dist/`，消除「build 作业装一次、publish 作业再装一次并
-#      重新 build」的重复构建；
-#   4. 把 `npm audit` 的 dev-only 结论落成文档（见下方 NOTE 与 README「Security」）。
-#
-# NOTE（尚待人工执行）：`publish-npm` 目前仍用长期凭据 `secrets.NPM_TOKEN`，
-# 未启用 OIDC / provenance。迁移到 npm Trusted Publishing 需要在 npmjs.com 侧
-# 为包配置 trusted publisher（**仓库外的动作**），在此之前贸然加
-# `id-token: write` + `--provenance` 会让发布直接失败。本文件保留
-# `id-token: write` 的注释占位，待配置完成后再打开。
-
-name: Node.js Package
+# One verified tagged build feeds independent npm and Release-asset jobs.
+# npm still uses NPM_TOKEN; Trusted Publishing requires separate registry setup.
+name: Publish Release
 
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate npm publication without publishing packages or uploading Release assets
+        type: boolean
+        default: true
+        required: true
 
-# 默认最小权限；发布作业另需 `id-token: write`（OIDC，见上方 NOTE）。
 permissions:
   contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
 
 jobs:
   build:
     name: Build and verify
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Checkout selected commit
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
+      - name: Validate release tag and version
+        id: release-context
+        run: |
+          if [[ "$DRY_RUN" == "true" ]]; then
+            npm run publish:release -- validate --dry-run
+          else
+            npm run publish:release -- validate
+          fi
+      - name: Check destination Release exists
+        id: release-destination
+        if: env.DRY_RUN != 'true'
+        run: gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --json tagName > /dev/null
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Install dependencies
+        id: dependencies
         run: npm ci
       - name: Type-check
+        id: lint
         run: npm run lint
       # `npm test` 会先触发 `pretest` → `npm run build`（REQ-044）。
       - name: Test
+        id: tests
         run: npm test
       - name: Verify generated Skill
+        id: generated-skill
         run: git diff --exit-code -- skills/oh-my-patent
       - name: Build the immutable release candidates
+        id: package
         run: npm run package:skill
       - name: Test tarball and ZIP
+        id: archives
         run: npm run verify:artifacts
       - name: Upload verified artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        id: artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verified-release
           path: release-artifacts/
-          retention-days: 1
+          retention-days: 7
           if-no-files-found: error
 
   publish-npm:
-    name: Publish to npm
+    name: Publish plugin to npm
     needs: build
     runs-on: ubuntu-latest
     environment: PRE
+    concurrency:
+      group: npm-publish-oh-my-patent
+      cancel-in-progress: false
     steps:
-      - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Checkout verified commit
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
       - name: Download verified release artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        id: artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: verified-release
           path: release-artifacts
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+          package-manager-cache: false
           registry-url: https://registry.npmjs.org/
-      - name: Publish
-        # `--ignore-scripts`：包内容已由上游 `build` 作业验证并通过 artifact 传递。
-        # 若不跳过，`npm publish` 会触发 `prepublishOnly`（REQ-036），把
-        # lint + build + test 再跑一遍 —— 这正是 REQ-045 要消除的重复构建。
-        # ⚠️ 若将来新增 `prepare` / `prepack` 步骤，必须重新评估本参数。
+      - name: Publish verified plugin tarball
+        id: publish
         run: |
-          cd release-artifacts
-          sha256sum --check SHA256SUMS
-          VERSION=$(node -p "require('./release-manifest.json').version")
-          if [[ "$VERSION" == *-* ]]; then
-            npm publish "./oh-my-patent-$VERSION.tgz" --tag next --access public --ignore-scripts
+          if [[ "$DRY_RUN" == "true" ]]; then
+            npm run publish:release -- plugin --dry-run
           else
-            node -e "const r=require('../distribution/targets.json');if(r.targets.filter(t=>t.wave===1).some(t=>!t.install_verified||!t.workflow_verified))throw Error('Stable release requires real host verification')"
-            npm publish "./oh-my-patent-$VERSION.tgz" --access public --ignore-scripts
+            npm run publish:release -- plugin
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-skill:
+    name: Publish standalone Skill to npm
+    needs: build
+    runs-on: ubuntu-latest
+    environment: PRE
+    concurrency:
+      group: npm-publish-oh-my-patent-skill
+      cancel-in-progress: false
+    steps:
+      - name: Checkout verified commit
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Download verified release artifacts
+        id: artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: verified-release
+          path: release-artifacts
+      - name: Setup Node.js for npm
+        id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org/
+      - name: Publish verified Skill tarball
+        id: publish
+        run: |
+          if [[ "$DRY_RUN" == "true" ]]; then
+            npm run publish:skill -- --dry-run
+          else
+            npm run publish:skill
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-assets:
+    name: Attach verified archives to Release
+    needs: build
+    if: github.event_name == 'release' || !inputs.dry_run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout verified commit
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Download verified release artifacts
+        id: artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: verified-release
+          path: release-artifacts
+      - name: Setup Node.js
+        id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Upload missing Release assets
+        id: upload
+        run: npm run publish:release -- assets
+        env:
+          GH_TOKEN: ${{ github.token }}

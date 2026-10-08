@@ -253,9 +253,11 @@ Verification scripts do not publish anything.
 
 ## Independent npm Skill publication
 
-The `oh-my-patent` npm package has its own release workflow.
-The **Publish standalone Skill** workflow (`.github/workflows/npm-publish-skill.yml`)
-publishes only `oh-my-patent-skill`, built from the generated portable package.
+The **Publish Release** workflow (`.github/workflows/npm-publish.yml`) automatically
+publishes both npm packages and attaches the verified archives when a GitHub Release
+is published. The **Publish standalone Skill** workflow
+(`.github/workflows/npm-publish-skill.yml`) is a manual Skill-only supplement.
+It publishes only `oh-my-patent-skill`, built from the generated portable package.
 The standalone archive has its own package.json/README and the exact same 44 Skill
 resources; it contains no plugin CLI/source tree or runtime npm dependencies.
 
@@ -266,8 +268,9 @@ workflow verification in `distribution/targets.json`; the 0.4.0 acceptance sourc
 the maintainer's confirmation. Publication does not mark a host verified or submit a marketplace entry.
 
 Open GitHub Actions → **Publish
-standalone Skill** → **Run workflow**, select the intended branch/tag, and leave
-`dry_run` enabled for a trial. Disable it to publish the verified tarball. The workflow
+standalone Skill** → **Run workflow**, select the intended version tag, and leave
+`dry_run` enabled for a trial. Branches are permitted only for dry-runs. Disable it
+to publish the verified tarball. The workflow
 reuses the existing `PRE` environment and `NPM_TOKEN` secret; that token must be
 allowed to create/publish `oh-my-patent-skill`. Registry ownership and actual
 publication are not established by a dry-run.
@@ -285,11 +288,53 @@ npm run verify:artifacts
 npm run publish:skill -- --dry-run
 ```
 
-## Release 0.4.0
+## Automatic Release publication
 
-Merge the release PR after CI passes, then publish a GitHub Release tagged `v0.4.0`
-at the resulting merge commit using the [bilingual release notes](releases/0.4.0.md).
-The plugin package workflow listens to `release.published`, including publication
-of a draft Release. The standalone Skill workflow remains independently dispatched;
-select the same tag, run with `dry_run` enabled, then disable it for publication.
-Both workflows retain their first-wave host acceptance checks.
+For new versions, merge the release changes after CI passes, create a tag matching
+`package.json` (`VERSION` or `vVERSION`), then publish the GitHub Release. The
+`release.published` event also covers publication of a draft Release.
+
+**Publish Release** builds/tests/packages once. Three independent jobs consume that
+same verified artifact: plugin npm publication, standalone Skill npm publication,
+and Release attachment upload. Each job depends only on the successful build, so
+one failed destination does not block the other two. Use **Re-run failed jobs** to
+retry a failed destination with the original artifacts; retention is seven days.
+
+Formal runs require a matching version tag, clean artifacts, and matching commit/tag
+provenance in `release-manifest.json`. Both npm jobs use the existing `PRE`
+environment and `NPM_TOKEN`; the token must publish both package names. Only the
+attachment job receives `contents: write` and uses GitHub's built-in token, so
+manual PAT configuration is not needed for automatic attachment upload.
+
+The Release receives:
+
+- `oh-my-patent-skill-VERSION.zip`
+- `oh-my-patent-VERSION.tgz`
+- `oh-my-patent-skill-VERSION.tgz`
+- `SHA256SUMS`
+- `release-manifest.json`
+
+An existing npm version is skipped only if its published archive integrity matches
+the selected verified tarball. Skips do not move `latest`/`next`. Existing Release
+files are downloaded and compared before uploading any missing files; different
+bytes fail without replacement. Registry authentication/network failures also fail
+instead of being treated as unpublished versions.
+
+Manual **Publish Release** runs default to `dry_run: true`: npm uses `--dry-run` and
+an isolated offline cache, and the attachment job is skipped. This checks local
+archives even when the version already exists in npm; it does not test registry
+authentication. Disable dry-run only on a version tag with an
+existing GitHub Release. The Skill-only workflow uses the same retry checks and
+per-package concurrency group as the automatic Skill publication job.
+
+Local smoke checks after packaging (no real publication):
+
+```sh
+npm run publish:release -- plugin --dry-run
+npm run publish:skill -- --dry-run
+npm run publish:release -- assets --dry-run
+```
+
+The already published [0.4.0 Release](releases/0.4.0.md) uses the tag `0.4.0`.
+Its original tag is not moved; this automation applies to new release tags that
+contain the updated workflows and scripts.

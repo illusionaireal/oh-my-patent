@@ -31,9 +31,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # 22 = `package.json` `engines.node` 的下限，与发布链路一致（REQ-037）。
           # 不跑 18/20 矩阵：`ink@^7` 自身要求 >=22，且这两个版本从未被实测过 ——
@@ -41,18 +43,31 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
+        id: dependencies
         run: npm ci
       - name: Type-check
+        id: lint
         run: npm run lint
       # `npm test` 会先触发 `pretest` → `npm run build`（REQ-044），
       # 因此这里不需要再单独跑一次 build。
       - name: Test
+        id: tests
         run: npm test
       - name: Verify generated Skill is current
+        id: generated-skill
         run: git diff --exit-code -- skills/oh-my-patent
       - name: Build release artifacts
+        id: package
         run: npm run package:skill
       - name: Test plugin and standalone Skill tarballs and ZIP
+        id: archives
         run: npm run verify:artifacts
       - name: Dry-run standalone Skill publication
+        id: skill-publication
         run: npm run publish:skill -- --dry-run
+      - name: Dry-run plugin publication
+        id: plugin-publication
+        run: npm run publish:release -- plugin --dry-run
+      - name: Dry-run Release attachment validation
+        id: release-attachments
+        run: npm run publish:release -- assets --dry-run

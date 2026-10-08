@@ -541,14 +541,24 @@ Releases follow [Semantic Versioning](https://semver.org/):
 
 Publishing is **automated by CI** — do not run `npm publish` by hand.
 
-1. Update `version` in `package.json`
+1. Update the version in `package.json`, `package-lock.json` and `plugin.jsonc`
 2. Update `CHANGELOG.md`
 3. Run the full suite locally: `npm test`, `npm run build`, `npm run lint`
-4. Commit on the default branch (`master` — this repository has no `main` branch)
-5. Tag the release: `git tag -a v0.4.0 -m "Release 0.4.0"` and push it: `git push origin master --tags`
-6. Create a GitHub Release from the tag
+4. Commit the changes and regenerated Skill manifest, then merge after CI passes
+5. Create and push a tag matching the package version (`VERSION` or `vVERSION`)
+6. Publish a GitHub Release from the tag
 
-Step 6 is the trigger: `.github/workflows/npm-publish.yml` runs on `release: [created]`. The `build` job runs `npm ci` → `npm run lint` → `npm test` (which builds via `pretest`) and uploads `dist/` as an artifact; the `publish-npm` job then downloads that artifact and runs `npm publish --access public --ignore-scripts` using `secrets.NPM_TOKEN` and the `PRE` environment. `--ignore-scripts` is deliberate: the package contents were already verified by the gating `build` job, so letting `prepublishOnly` re-run lint/build/test would be duplicated work. `package.json` sets `publishConfig.access: public`, so the `--access public` flag is redundant but harmless.
+Step 6 triggers **Publish Release** (`.github/workflows/npm-publish.yml`) on
+`release.published`, including publication of a draft Release. One build verifies
+both npm archives and the Skill ZIP. Three independent jobs publish the plugin,
+publish `oh-my-patent-skill`, and attach the two TGZs, ZIP, `SHA256SUMS`, and release
+manifest. The npm jobs retain the `PRE` environment and `NPM_TOKEN`; only the
+attachment job has `contents: write` and uses GitHub's built-in token.
+
+Publication uses verified tarballs with `--ignore-scripts`. Retries skip only
+byte-identical published packages/assets; different existing bytes fail without
+replacement. See [automatic Release publication](docs/skill.md#automatic-release-publication)
+for dry-runs, retained artifacts, and recovery steps.
 
 > **OIDC / provenance is not enabled yet.** Publishing still uses a long-lived
 > `secrets.NPM_TOKEN`. Migrating to [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers)
@@ -560,7 +570,9 @@ Step 6 is the trigger: `.github/workflows/npm-publish.yml` runs on `release: [cr
 > repointed), and each workflow declares an explicit least-privilege `permissions` block.
 > See the README's *Dependency audit* section for the current `npm audit` numbers.
 
-To re-publish without creating a Release, use the workflow's manual `workflow_dispatch` trigger.
+For a trial, use manual `workflow_dispatch` with the default `dry_run: true`.
+Formal manual runs require a version tag and an existing Release. The standalone
+Skill workflow remains available for Skill-only publication or retry.
 
 > **Version drift check.** Generated manifests under `plugins/` used to carry their own version string, and they did drift — the Codex plugin manifest shipped `0.1.0` while `package.json` was at `0.3.0`. They are no longer committed, so it cannot drift in the repository any more; before tagging, just confirm `plugin.jsonc` and `package.json` agree.
 

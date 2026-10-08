@@ -21,7 +21,8 @@
     "build:skill": "node scripts/build-skill.mjs",
     "package:skill": "node scripts/package-skill.mjs",
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
-    "publish:skill": "node scripts/publish-standalone-skill.mjs"
+    "publish:skill": "node scripts/publish-standalone-skill.mjs",
+    "publish:release": "node scripts/release-publication.mjs"
   },
   "keywords": [
     "patent",
