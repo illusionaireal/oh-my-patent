@@ -1,4 +1,4 @@
-# Independent publication of the portable Skill; the plugin release workflow is unchanged.
+# Manual Skill-only supplement to automatic publication in npm-publish.yml.
 name: Publish standalone Skill
 
 on:
@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-standalone-skill
+  group: standalone-skill-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -23,32 +23,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout selected commit
+        id: checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
       - name: Setup Node.js
+        id: node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
+      - name: Validate release tag and version
+        id: release-context
+        run: |
+          if [[ "$SKILL_DRY_RUN" == "true" ]]; then
+            npm run publish:release -- validate --dry-run
+          else
+            npm run publish:release -- validate
+          fi
+        env:
+          SKILL_DRY_RUN: ${{ inputs.dry_run }}
       - name: Install dependencies
+        id: dependencies
         run: npm ci
       - name: Type-check
+        id: lint
         run: npm run lint
       - name: Test and build
+        id: tests
         run: npm test
       - name: Verify generated Skill is current
+        id: generated-skill
         run: git diff --exit-code -- skills/oh-my-patent
       - name: Build immutable release candidates
+        id: package
         run: npm run package:skill
       - name: Verify actual archives and standalone runtime
+        id: archives
         run: npm run verify:artifacts
       - name: Upload verified artifacts
+        id: artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verified-standalone-skill
           path: release-artifacts/
-          retention-days: 1
+          retention-days: 7
           if-no-files-found: error
 
   publish-skill:
@@ -56,22 +75,29 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: PRE
+    concurrency:
+      group: npm-publish-oh-my-patent-skill
+      cancel-in-progress: false
     steps:
       - name: Checkout verified commit
+        id: checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
       - name: Download verified artifacts
+        id: artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: verified-standalone-skill
           path: release-artifacts
       - name: Setup Node.js for npm
+        id: node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
       - name: Publish verified Skill tarball
+        id: publish
         run: |
           if [[ "$SKILL_DRY_RUN" == "true" ]]; then
             npm run publish:skill -- --dry-run

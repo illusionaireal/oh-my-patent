@@ -73,9 +73,10 @@ npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master
 
 **下载 ZIP，手动安装**
 
-下载并解压[仓库 ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip)，
-将其中完整的 `skills/oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
+下载并解压[0.4.0 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.0/oh-my-patent-skill-0.4.0.zip)，
+将其中完整的 `oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
 目录已包含运行时，无需构建源码。
+Release 同时提供 `SHA256SUMS`，用于校验下载的归档。
 
 **oh-my-patent CLI，管理安装与备份**
 

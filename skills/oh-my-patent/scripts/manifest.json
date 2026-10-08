@@ -92,7 +92,7 @@
     "src/runtime/operations.ts": "0ab366317f9ec97b96819165b8a0e44272ec91d74c08c34ab82a81c676df145d",
     "src/runtime/skill-entry.ts": "969c562b176a42df668382339a76056859340c4abcb732eca9afa08619280d57",
     "src/skills/jurisdiction.ts": "3d28cc6fb61a959bef087c4b39fefad93a41aad5ca00c0815f778cb44c3c0e08",
-    "package.json": "2bec23006eb162d9dedd6ebe19a9706a1ea4d1a1980ec5cae9788560fb77b82c",
+    "package.json": "fa3f1e28751eeb31ea5585558ab91803abbced0f17aee0bcdb834f95e934c8ae",
     "package-lock.json": "f492e0335877480da7bf7a5d9b294205ad2edbd555e885e4f155c5c7a2988525",
     "scripts/build-skill.mjs": "48a2caf6069439b59ea59e4ef5facee85b65f9681c33b5fee851778ec7c7867e",
     "LICENSE": "dcdb53c9959f2628a2e3172fbd5020abfead1a85fd47099a9a1c27d2b42f8bad",

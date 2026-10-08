@@ -76,9 +76,10 @@ No global oh-my-patent CLI is required.
 
 **ZIP download — manual installation**
 
-Download and extract the [repository ZIP](https://github.com/illusionaireal/oh-my-patent/archive/refs/heads/master.zip).
-Copy the complete `skills/oh-my-patent` directory inside the archive to the Skill
+Download and extract the [0.4.0 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.0/oh-my-patent-skill-0.4.0.zip).
+Copy the complete `oh-my-patent` directory inside the archive to the Skill
 location for your host below. The runtime is included; no source build is needed.
+The Release also includes `SHA256SUMS` for checking downloaded archives.
 
 **oh-my-patent CLI — managed installation**
 
