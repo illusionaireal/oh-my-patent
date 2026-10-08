@@ -32,10 +32,10 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Node.js
         id: node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # 22 = `package.json` `engines.node` 的下限，与发布链路一致（REQ-037）。
           # 不跑 18/20 矩阵：`ink@^7` 自身要求 >=22，且这两个版本从未被实测过 ——
@@ -62,6 +62,31 @@ jobs:
       - name: Test plugin and standalone Skill tarballs and ZIP
         id: archives
         run: npm run verify:artifacts
+      - name: Upload CI archives
+        id: upload-archives
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verified-ci-${{ matrix.os }}
+          path: release-artifacts/
+          retention-days: 1
+          if-no-files-found: error
+      - name: Download CI archives
+        id: download-archives
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: verified-ci-${{ matrix.os }}
+          path: ${{ runner.temp }}/verified-ci-artifacts
+      - name: Verify downloaded archive identity and checksums
+        id: artifact-transfer
+        run: |
+          node --input-type=module -e "
+            import { join } from 'node:path';
+            import { publicationContext, verifiedRelease } from './scripts/release-publication.mjs';
+            const root = process.cwd();
+            const artifacts = join(process.env.RUNNER_TEMP, 'verified-ci-artifacts');
+            const verified = verifiedRelease(root, artifacts, publicationContext(root, true));
+            console.log(JSON.stringify({ status: 'verified', files: verified.files.length }));
+          "
       - name: Dry-run standalone Skill publication
         id: skill-publication
         run: npm run publish:skill -- --dry-run

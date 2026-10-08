@@ -45,3 +45,30 @@ Ubuntu and Windows; remote CI outcomes are recorded by the pull request checks.
 No new version, real npm publication, Release asset upload, tag update or merge was
 performed to validate this change. Registry credentials and production upload
 authorization require an actual release; the dry-runs do not establish them.
+
+## Node 24 Action runtime follow-up
+
+The original PR CI passed, but warned that checkout/setup-node's pinned v4
+commits declare Node 20 and are forced to execute on Node 24 by GitHub runners.
+
+| Requirement | Verdict | Evidence |
+| --- | --- | --- |
+| Official stable Action commits declare Node 24 | PASS (source inspection) | Official GitHub release tags resolve to the commits below; action.yml at each commit declares `runs.using: node24`. All 22 workflow Action references and their input names were checked against this metadata. |
+| Project Node 22 and publication behavior retained | PASS (configuration) | Parsed workflow comparison retains Node 22, permissions, triggers, environment gates and publication steps; only pins, explicit cache disabling and CI artifact verification are added. |
+| Updated workflows execute successfully | PASS (local checks); remote results in PR checks | actionlint 1.7.7, lint, build via pretest and 485 tests pass. The CI download-verification command returns `{"status":"verified","files":5}` against a copied set of real archives. PR CI exercises actual upload/download and all archive dry-runs on Ubuntu/Windows. |
+
+Official stable release pins checked on 2026-10-08:
+
+| Action | Release | Commit |
+| --- | --- | --- |
+| checkout | [v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1) | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
+| setup-node | [v7.1.0](https://github.com/actions/setup-node/releases/tag/v7.1.0) | `949feb2413d6458794dcd2491c4babbbce0c15c1` |
+| upload-artifact | [v7.0.2](https://github.com/actions/upload-artifact/releases/tag/v7.0.2) | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
+| download-artifact | [v8.0.2](https://github.com/actions/download-artifact/releases/tag/v8.0.2) | `9000827ccba6bdab643e8b6fd33ac0654aef8333` |
+
+Build steps still request `cache: npm`; publication steps explicitly set
+`package-manager-cache: false`. No removed `always-auth` inputs or implicit
+NODE_AUTH_TOKEN fallbacks are used. CI artifact names include the matrix OS,
+have one-day retention, and are downloaded outside the checkout before verifying
+their provenance and checksums with the existing release script. This follow-up
+does not publish npm packages or upload production Release assets.

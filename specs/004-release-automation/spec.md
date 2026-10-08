@@ -21,6 +21,11 @@ temporary Actions artifacts rather than Release downloads.
    `contents: write`; npm jobs use the existing `NPM_TOKEN`.
 6. The standalone workflow remains a manual Skill-only entry. Manual workflows
    default to dry-run; dry-runs make no Release mutations or npm publications.
+7. All Actions used by CI and publication are pinned to official stable release
+   commits that declare `runs.using: node24`. Project build/test/publication commands
+   still use Node 22. Build caches remain explicit; publication jobs disable the
+   newer setup-node automatic package-manager cache. CI verifies a five-file
+   artifact upload/download round trip on Ubuntu and Windows.
 
 ## Scope and compatibility
 
