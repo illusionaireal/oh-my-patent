@@ -24,8 +24,10 @@ temporary Actions artifacts rather than Release downloads.
 7. All Actions used by CI and publication are pinned to official stable release
    commits that declare `runs.using: node24`. Project build/test/publication commands
    still use Node 22. Build caches remain explicit; publication jobs disable the
-   newer setup-node automatic package-manager cache. CI verifies a five-file
-   artifact upload/download round trip on Ubuntu and Windows.
+   newer setup-node automatic package-manager cache. A separate
+   `test-action-artifacts.yml` workflow verifies a five-file artifact upload/download
+   round trip on Ubuntu and Windows when its own file changes in a PR or it is
+   manually dispatched. The main CI does not contain these transfer-test steps.
 
 ## Scope and compatibility
 

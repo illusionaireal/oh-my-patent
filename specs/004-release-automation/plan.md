@@ -12,9 +12,12 @@
 - Update maintainer instructions and fixed-version ZIP download links.
 - Resolve official stable tags for checkout, setup-node, upload-artifact and
   download-artifact to commits and inspect their action.yml runtime and inputs.
-  Update all three workflows together, retaining full SHA pins, Node 22 project
+  Update release and CI workflows together, retaining full SHA pins, Node 22 project
   commands, existing permissions and artifact paths. Disable automatic npm caching
   where publication jobs did not previously request a cache. Validate workflow
-  syntax and run CI with artifact upload/download verification on both platforms.
+  syntax and run CI plus an independent artifact upload/download test on both
+  platforms. Copy the build/package setup into `test-action-artifacts.yml`; keep
+  transfer-test steps out of the main CI. The test workflow runs manually or on
+  PR changes to its own file and uses no publication commands or environment secrets.
 
 No runtime dependencies, governance changes, or marketplace submissions are needed.

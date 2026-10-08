@@ -53,9 +53,9 @@ commits declare Node 20 and are forced to execute on Node 24 by GitHub runners.
 
 | Requirement | Verdict | Evidence |
 | --- | --- | --- |
-| Official stable Action commits declare Node 24 | PASS (source inspection) | Official GitHub release tags resolve to the commits below; action.yml at each commit declares `runs.using: node24`. All 22 workflow Action references and their input names were checked against this metadata. |
+| Official stable Action commits declare Node 24 | PASS (source inspection) | Official GitHub release tags resolve to the commits below; action.yml at each commit declares `runs.using: node24`. The isolated-test follow-up checks all 24 workflow Action references and their input names against this metadata. |
 | Project Node 22 and publication behavior retained | PASS (configuration) | Parsed workflow comparison retains Node 22, permissions, triggers, environment gates and publication steps; only pins, explicit cache disabling and CI artifact verification are added. |
-| Updated workflows execute successfully | PASS (local checks); remote results in PR checks | actionlint 1.7.7, lint, build via pretest and 485 tests pass. The CI download-verification command returns `{"status":"verified","files":5}` against a copied set of real archives. PR CI exercises actual upload/download and all archive dry-runs on Ubuntu/Windows. |
+| Updated workflows execute successfully | PASS (local checks); remote results in PR checks | actionlint 1.7.7, lint, build via pretest and 485 tests pass. The download-verification command returns `{"status":"verified","files":5}` against a copied set of real archives. [Initial upgrade CI](https://github.com/illusionaireal/oh-my-patent/actions/runs/37720838382) passed actual upload/download and all archive dry-runs on Ubuntu/Windows; the transfer test is now isolated as described below. |
 
 Official stable release pins checked on 2026-10-08:
 
@@ -68,7 +68,21 @@ Official stable release pins checked on 2026-10-08:
 
 Build steps still request `cache: npm`; publication steps explicitly set
 `package-manager-cache: false`. No removed `always-auth` inputs or implicit
-NODE_AUTH_TOKEN fallbacks are used. CI artifact names include the matrix OS,
+NODE_AUTH_TOKEN fallbacks are used. Test artifact names include the matrix OS,
 have one-day retention, and are downloaded outside the checkout before verifying
 their provenance and checksums with the existing release script. This follow-up
 does not publish npm packages or upload production Release assets.
+
+## Isolated artifact test workflow follow-up
+
+Move the three artifact transfer-test steps out of the main CI into
+`.github/workflows/test-action-artifacts.yml`. The separate workflow copies the
+Node 22 build/package setup, uses the same pinned Actions, and runs on Ubuntu and
+Windows. It supports manual dispatch and PRs changing its own file, so ordinary
+PRs do not perform this extra transfer test.
+
+| Requirement | Verdict | Evidence |
+| --- | --- | --- |
+| Main CI transfer-test steps removed | PASS (configuration) | Parsed main CI matches commit `7f554991c12a3ec6144753488193ca843a9cd4f3` after normalizing the two updated Action SHA pins. None of the three transfer-test step IDs remains in main CI. |
+| Isolated test uses verified archives without publishing | PASS (configuration/local archives) | All 24 Action references/inputs match the inspected official metadata. The test workflow has explicit step IDs, only contents-read permission, no PRE/secrets/publication commands, and only manual/own-file PR triggers. Its download check returns `{"status":"verified","files":5}` on copied verified archives. |
+| Updated workflows pass | PASS (local checks); remote results in PR checks | actionlint 1.7.7, lint, build via pretest, 485 tests, package:skill and verify:artifacts pass. Both workflows run on the updated PR head; their remote results are recorded in PR checks. |
