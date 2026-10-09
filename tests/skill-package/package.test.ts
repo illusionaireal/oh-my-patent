@@ -51,7 +51,9 @@ it('contains exactly one entry, complete resources and a consistent checksum man
 it('keeps portable runtime instructions separate from original plugin prompts', () => {
   const original = readFileSync('src/agents/patent-init-sentinel.md', 'utf8');
   const portable = readFileSync('skills/oh-my-patent/references/role-patent-init-sentinel.md', 'utf8');
-  expect(original).toContain('node dist/cli.js check --json');
+  expect(original).not.toContain('node dist/cli.js');
+  expect(original).toContain('{{PATENT_CHECK_SCRIPT}}');
+  expect(original).toContain('Role: subagent');
   expect(portable).toContain('scripts/runtime.mjs --doctor');
   expect(portable).not.toBe(original);
   const manifest = JSON.parse(readFileSync('skills/oh-my-patent/scripts/manifest.json', 'utf8'));
