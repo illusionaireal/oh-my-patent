@@ -173,14 +173,20 @@
   - `references/qa_round{r}_patent-disclosure-reviewer.md`
 
 反模拟规则：
-- 严禁"代写/脑补"任何子代理输出。
-- 若缺少子代理材料，必须再次 @ 调用获取，而不是自行补全。
+- 只使用宿主实际暴露的原生委派工具调用子代理，不嵌套启动另一个 Agent CLI。
+- 无原生委派工具时加载对应角色，明确记录 execution_mode=sequential；
+  不将顺序角色检查称为独立代理审阅，不虚构子代理输出。
 
-建议调用顺序（最小闭环）：
-0) 进入 RESEARCH 前，用 `task` 调用 `patent-init-sentinel` 检测环境
-   - 如果检测到 MCP 未配置，引导用户完成配置后再继续
-   - 用户可选择跳过配置直接开始检索（缺失 MCP 只影响部分检索能力）
-   - 环境就绪后进入下一步
+必经检查与调用顺序（最小闭环）：
+0) 首次进入 RESEARCH 前、以及恢复项目时，必须执行 `patent-init-sentinel` 环境检查。
+   - 有实际原生委派工具时调用哨兵；否则顺序执行哨兵角色并记录模式。
+   - 使用随安装分发的检查入口 `node "{{PATENT_CHECK_SCRIPT}}" --json`；
+     从其他目录执行时先解析该脚本的完整路径，不假定仓库 dist/cli.js 存在。
+   - 将真实检查 JSON、时间、宿主/版本、execution_mode、工具观测、缺失项、
+     unknown 项及用户选择的降级措施保存到选定项目的 `references/init-report.json`。
+   - 执行失败或 ready=false 不能宣称环境就绪。只检测配置不证明 MCP 已连接。
+   - MCP 缺失可由用户选择配置/降级；无获准检索工具时保存检索计划或分析用户材料，
+     明确证据不足。阻塞项需解决后继续正式工作流。
 1) 用 `task` 调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```

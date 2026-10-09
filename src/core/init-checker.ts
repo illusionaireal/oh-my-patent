@@ -5,6 +5,10 @@ import { execSync } from 'child_process';
 import { stripJsonComments } from './jsonc.js';
 import { randomBytes } from 'crypto';
 
+export const INIT_CHECK_HOSTS = ['claude-code', 'codex', 'opencode'] as const;
+export type InitCheckHost = typeof INIT_CHECK_HOSTS[number];
+export interface InitCheckOptions { workspaceDir?: string; host?: InitCheckHost }
+
 export type CheckStatus = 'ready' | 'missing' | 'warning';
 
 export interface CheckResult {
@@ -155,7 +159,8 @@ function tryExec(command: string): string | null {
   }
 }
 
-function detectAdapter(workspaceDir: string): string {
+function detectAdapter(workspaceDir: string, host?: InitCheckHost): string {
+  if (host) return { 'claude-code': 'Claude Code', codex: 'Codex', opencode: 'OpenCode' }[host];
   if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) return 'Claude Code';
   if (existsSync(join(workspaceDir, '.codex')) || existsSync(join(workspaceDir, 'codex.json'))) return 'Codex';
   if (existsSync(join(workspaceDir, 'opencode.jsonc'))) return 'OpenCode';
@@ -224,7 +229,15 @@ function ensureGitignored(
   return { updated: true, gitignorePath, pattern: rel };
 }
 
-function getMcpConfigTarget(workspaceDir: string): McpConfigTarget {
+function getMcpConfigTarget(workspaceDir: string, host?: InitCheckHost): McpConfigTarget {
+  if (host) {
+    const targets: Record<InitCheckHost, McpConfigTarget> = {
+      'claude-code': { path: join(workspaceDir, '.mcp.json'), key: 'mcpServers', adapter: 'claude' },
+      codex: { path: join(workspaceDir, 'codex.json'), key: 'mcpServers', adapter: 'codex' },
+      opencode: { path: join(workspaceDir, 'opencode.jsonc'), key: 'mcp', adapter: 'opencode' },
+    };
+    return targets[host];
+  }
   if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) {
     return {
       path: join(workspaceDir, '.mcp.json'),
@@ -259,8 +272,8 @@ function parseConfig(content: string, configPath: string): Record<string, unknow
   }
 }
 
-function readMcpConfig(workspaceDir: string): Record<string, unknown> | null {
-  const target = getMcpConfigTarget(workspaceDir);
+function readMcpConfig(workspaceDir: string, host?: InitCheckHost): Record<string, unknown> | null {
+  const target = getMcpConfigTarget(workspaceDir, host);
   if (!existsSync(target.path)) return null;
 
   try {
@@ -278,8 +291,8 @@ export function getMcpTemplates(): McpTemplate[] {
   return MCP_TEMPLATES;
 }
 
-export function getMcpStatuses(workspaceDir: string): McpStatus[] {
-  const mcpConfig = readMcpConfig(workspaceDir);
+export function getMcpStatuses(workspaceDir: string, host?: InitCheckHost): McpStatus[] {
+  const mcpConfig = readMcpConfig(workspaceDir, host);
   return MCP_TEMPLATES.map((tpl) => {
     const configured = !!(mcpConfig && tpl.id in mcpConfig);
     return {
@@ -331,9 +344,10 @@ export interface McpWriteResult {
 export function writeMcpConfig(
   workspaceDir: string,
   mcpId: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  host?: InitCheckHost,
 ): McpWriteResult {
-  const target = getMcpConfigTarget(workspaceDir);
+  const target = getMcpConfigTarget(workspaceDir, host);
   const configPath = target.path;
   let existing: Record<string, unknown> = {};
 
@@ -405,8 +419,8 @@ function toOpenCodeMcpConfig(config: Record<string, unknown>): Record<string, un
   return { type: 'local', command: [command, ...args].filter(Boolean) };
 }
 
-export function checkMcpServers(workspaceDir: string): CheckResult[] {
-  const mcpConfig = readMcpConfig(workspaceDir);
+export function checkMcpServers(workspaceDir: string, host?: InitCheckHost): CheckResult[] {
+  const mcpConfig = readMcpConfig(workspaceDir, host);
   const results: CheckResult[] = [];
 
   for (const tpl of MCP_TEMPLATES) {
@@ -526,12 +540,12 @@ export function checkProjects(workspaceDir: string): CheckResult[] {
   return results;
 }
 
-export function runFullCheck(options: { workspaceDir?: string }): InitReport {
+export function runFullCheck(options: InitCheckOptions): InitReport {
   const workspaceDir = resolve(options.workspaceDir ?? process.cwd());
-  const adapter = detectAdapter(workspaceDir);
+  const adapter = detectAdapter(workspaceDir, options.host);
 
   const results: CheckResult[] = [
-    ...checkMcpServers(workspaceDir),
+    ...checkMcpServers(workspaceDir, options.host),
     ...checkExternalTools(),
     ...checkRuntime(workspaceDir),
     ...checkProjects(workspaceDir),
@@ -557,6 +571,9 @@ export function runFullCheck(options: { workspaceDir?: string }): InitReport {
 }
 
 export interface JsonReport {
+  timestamp: string;
+  workspaceDir: string;
+  mcpVerification: 'configuration_only';
   ready: boolean;
   blockingCount: number;
   warningCount: number;
@@ -566,10 +583,13 @@ export interface JsonReport {
   results: CheckResult[];
 }
 
-export function runJsonCheck(options: { workspaceDir?: string }): JsonReport {
+export function runJsonCheck(options: InitCheckOptions): JsonReport {
   const report = runFullCheck(options);
-  const mcpStatuses = getMcpStatuses(resolve(options.workspaceDir ?? process.cwd()));
+  const mcpStatuses = getMcpStatuses(resolve(options.workspaceDir ?? process.cwd()), options.host);
   return {
+    timestamp: report.timestamp,
+    workspaceDir: report.workspaceDir,
+    mcpVerification: 'configuration_only',
     ready: report.ready,
     blockingCount: report.blockingCount,
     warningCount: report.warningCount,

@@ -73,7 +73,7 @@ npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master
 
 **下载 ZIP，手动安装**
 
-下载并解压[0.4.0 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.0/oh-my-patent-skill-0.4.0.zip)，
+下载并解压[0.4.1 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.1/oh-my-patent-skill-0.4.1.zip)，
 将其中完整的 `oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
 目录已包含运行时，无需构建源码。
 Release 同时提供 `SHA256SUMS`，用于校验下载的归档。
@@ -105,6 +105,8 @@ Skills CLI 也可加上 `--agent <host>` 显式选择宿主。
 并使用同一种安装方式进行更新和卸载，详见[安装指南](docs/skill.md)。
 
 </details>
+
+环境检查与各宿主的手动检查命令详见[哨兵说明](docs/sentinel.md)。
 
 ### 开始使用
 
@@ -167,7 +169,7 @@ Archimedes 会引导你收集材料、发展创新点、撰写交底书并完成
 | 接下来阅读 | 内容 |
 |---|---|
 | [安装模式](./docs/skill.md) | 插件与 Skill 的安装、更新、卸载和迁移 |
-| [发布说明](./docs/releases/0.4.0.md) | 0.4.0 版本变更 |
+| [发布说明](./docs/releases/0.4.1.md) | 0.4.1 版本变更 |
 | [使用指南与 CLI](./docs/usage.md) | 安装、平台差异、全部 CLI 命令域与卸载行为 |
 | [工作流](./docs/workflow-diagram.md) | 十个阶段、审查回路与阈值行为 |
 | [智能体与协作](./docs/agents.md) | 注册 ID、技能、命令和协作模式 |

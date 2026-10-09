@@ -17,6 +17,7 @@ Create a new patent project.
 3. Initializes `.patent/state.json` with stage INIT
 4. Creates `references/` subdirectory
 5. Returns project creation confirmation
+6. Archimedes invokes the environment sentinel and saves its actual report before entering RESEARCH
 
 ## Example
 ```

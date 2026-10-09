@@ -76,7 +76,7 @@ No global oh-my-patent CLI is required.
 
 **ZIP download — manual installation**
 
-Download and extract the [0.4.0 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.0/oh-my-patent-skill-0.4.0.zip).
+Download and extract the [0.4.1 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.1/oh-my-patent-skill-0.4.1.zip).
 Copy the complete `oh-my-patent` directory inside the archive to the Skill
 location for your host below. The runtime is included; no source build is needed.
 The Release also includes `SHA256SUMS` for checking downloaded archives.
@@ -109,6 +109,8 @@ Keep `SKILL.md`, `references/`, `assets/` and `scripts/` together. Use the same
 installation method for updates and removal; see the [installation guide](docs/skill.md).
 
 </details>
+
+Environment checks and host-specific manual commands: [sentinel guide](docs/sentinel.md).
 
 ### Start a project
 
@@ -174,7 +176,7 @@ The [agent reference](./docs/agents-en.md) lists the 14 registered agents, 6 ski
 | Read next | Contents |
 |---|---|
 | [Installation modes](./docs/skill.md) | Plugin and Skill setup, updates, removal and migration |
-| [Release notes](./docs/releases/0.4.0.md) | Version 0.4.0 changes |
+| [Release notes](./docs/releases/0.4.1.md) | Version 0.4.1 changes |
 | [Usage and CLI](./docs/usage-en.md) | Installation, platform differences, all CLI domains, and uninstall behavior |
 | [Workflow](./docs/workflow-diagram-en.md) | Ten stages, review loops, and threshold behavior |
 | [Agents and collaboration](./docs/agents-en.md) | Registered IDs, skills, commands, and collaboration patterns |

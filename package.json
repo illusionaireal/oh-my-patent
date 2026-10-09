@@ -1,6 +1,6 @@
 {
   "name": "oh-my-patent",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Archimedes, your Eureka-to-patent guide. An AI patent plugin for Claude Code, Codex, and OpenCode that turns technical ideas into patent disclosures with traceable, forkable decision paths.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,7 @@
     "oh-my-patent": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && npm run build:skill",
+    "build": "tsc && npm run build:check && npm run build:skill",
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -22,7 +22,8 @@
     "package:skill": "node scripts/package-skill.mjs",
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
     "publish:skill": "node scripts/publish-standalone-skill.mjs",
-    "publish:release": "node scripts/release-publication.mjs"
+    "publish:release": "node scripts/release-publication.mjs",
+    "build:check": "node scripts/build-check.mjs"
   },
   "keywords": [
     "patent",

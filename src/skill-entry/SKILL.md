@@ -43,6 +43,13 @@ not activate this workflow. Do not redirect them into patent work.
 
 ## Capability and confidentiality gate
 
+Load [sentinel](references/role-patent-init-sentinel.md) at activation and on resume.
+Use an actually exposed native subagent tool for this bounded check when available;
+otherwise perform the sentinel role sequentially and record that execution mode.
+Save the actual doctor result and observed host capabilities in the selected project's
+references/init-report.json before first RESEARCH. On resume, refresh the observations
+before work continues. An unavailable or failed doctor is not a passing check.
+
 Read [execution](references/execution.md) at activation and
 [runtime](references/runtime.md) before any persisted mutation.
 Check actual file tools, execution and Node with `node "<skill>/scripts/runtime.mjs"

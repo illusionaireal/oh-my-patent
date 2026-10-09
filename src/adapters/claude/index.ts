@@ -26,11 +26,14 @@ import { ensureUnlinkedPath } from '../../core/path-safety.js';
 // Claude Code adapter
 // ============================================================================
 
+import { checkRuntimePath, checkRuntimeContent, renderCheckPrompt } from '../check-runtime.js';
+
 export class ClaudeCodeAdapter implements ToolAdapter {
   readonly name = 'claude-code';
 
   async generate(def: PortableDef, config: Record<string, unknown>): Promise<GenerateResult> {
     const files = new Map<string, string>();
+    files.set(checkRuntimePath('claude-code'), checkRuntimeContent());
     const instructions: string[] = [];
 
     // 1. Generate per-agent prompt files under .claude/agents/
@@ -65,6 +68,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       '  - CLAUDE.md → <project-root>/CLAUDE.md',
       '  - .claude/ → <project-root>/.claude/',
       '  - .mcp.json → <project-root>/.mcp.json (merge with existing servers)',
+      '  - .oh-my-patent/runtime/claude-code/ → <project-root>/.oh-my-patent/runtime/claude-code/',
       '',
       'Then run Claude Code in the project directory:',
       '  claude --agent archimedes',
@@ -73,6 +77,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       'Or describe your intent in natural language (Chinese or English).',
     );
 
+    for (const [path, content] of files) files.set(path, renderCheckPrompt(content, 'claude-code'));
     return { files, instructions };
   }
 
@@ -447,7 +452,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
   }
 
   getGeneratedFilePaths(def: PortableDef): string[] {
-    const paths: string[] = [];
+    const paths: string[] = [checkRuntimePath('claude-code')];
     for (const agent of def.agents) {
       paths.push(join('.claude', 'agents', `${agent.id}.md`));
     }
@@ -472,6 +477,7 @@ export class ClaudeCodeAdapter implements ToolAdapter {
    */
   getManagedDirectories(): string[] {
     return [
+      join('.oh-my-patent', 'runtime', 'claude-code'),
       join('.claude', 'agents'),
       join('.claude', 'commands'),
       join('.claude', 'skills'),
@@ -501,6 +507,11 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       try {
         ensureUnlinkedPath(workspaceDir, resolve(workspaceDir, relPath));
       } catch {
+        filesSkipped.push(relPath);
+        continue;
+      }
+      if (relPath === checkRuntimePath('claude-code') && existsSync(resolve(workspaceDir, relPath)) &&
+        readFileSync(resolve(workspaceDir, relPath), 'utf8') !== checkRuntimeContent()) {
         filesSkipped.push(relPath);
         continue;
       }
@@ -544,6 +555,9 @@ export class ClaudeCodeAdapter implements ToolAdapter {
       }
     };
 
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent', 'runtime', 'claude-code'), '.oh-my-patent/runtime/claude-code/');
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent', 'runtime'), '.oh-my-patent/runtime/');
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent'), '.oh-my-patent/');
     tryRmdir(resolve(workspaceDir, '.claude', 'agents'), '.claude/agents/');
     tryRmdir(resolve(workspaceDir, '.claude', 'commands'), '.claude/commands/');
     for (const skill of def.skills) {
