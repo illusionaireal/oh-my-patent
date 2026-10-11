@@ -30,9 +30,21 @@ host tools separately. A configured service has not passed a connectivity check.
 
 Archimedes saves the real report and host capability observations in the selected
 project's references/init-report.json. Do not change formal workflow state here.
-Missing git/mmdc or runtime capabilities block plugin readiness; missing MCP sources
-produce warnings and allow user-approved degraded retrieval. Failed execution and
-unknown capabilities must never be recorded as passed.
+Missing git/mmdc or runtime capabilities block plugin readiness. Report retrievalCoverage,
+configuredCount and degradedRetrieval: zero configured sources (none) blocks RESEARCH;
+academic sources only (google_scholar/semantic_scholar, fallback_only) blocks by default;
+at least one patent source (patsnap_search/uspto_patent/cnipa_patent, professional) passes
+the configuration gate. Missing individual sources remain warnings. Template priority
+is setup advice; retrievalRole determines coverage. No source must be individually required.
+
+Only after explicit user acceptance of academic-only limitations, rerun the same checker
+with --accept-degraded-retrieval --degradation-reason "user acceptance reference/reason".
+Save the resulting confirmation, timestamp and limitation in the report. Consent applies
+to this invocation; recheck on resume. It cannot waive zero sources or runtime/tool blockers.
+Observe actual approved host retrieval tools too: none/unknown blocks formal RESEARCH,
+and academic-only tools require explicit acceptance even if a patent source is configured.
+Failed execution and unknown capabilities must never be recorded as passed. A search plan
+or supplied-material analysis is assistance outside the blocked formal workflow.
 
 ## Invocation
 

@@ -14,6 +14,12 @@ export async function runCheck(argv: string[], defaults: { workspaceDir: string;
   if (hostName && !INIT_CHECK_HOSTS.includes(hostName as InitCheckHost)) throw new Error('Unknown check host. Use --tool claude-code|codex|opencode');
   if (defaults.host && hostName !== defaults.host) throw new Error('Installed check runtime cannot select another host');
   const host = hostName as InitCheckHost | undefined;
+  const acceptDegraded = opts['accept-degraded-retrieval'];
+  const consentReason = opts['degradation-reason']?.trim();
+  if (acceptDegraded !== undefined || consentReason !== undefined) {
+    if (acceptDegraded !== 'true' || !consentReason || consentReason === 'true') throw new Error('Use --accept-degraded-retrieval with --degradation-reason <user acceptance reference>');
+    if (opts['mcp-add'] || opts['mcp-status']) throw new Error('Degraded retrieval consent requires a readiness report');
+  }
   if (opts['mcp-add']) {
     if (opts.json || opts.output || opts['mcp-status']) throw new Error('Do not combine --mcp-add with report options');
     const userValues: Record<string, string> = Object.create(null);
@@ -36,7 +42,8 @@ export async function runCheck(argv: string[], defaults: { workspaceDir: string;
     console.log(JSON.stringify(getMcpStatuses(workspaceDir, host)));
     return;
   }
-  const report = opts.json ? runJsonCheck({ workspaceDir, host }) : runFullCheck({ workspaceDir, host });
+  const checkOptions = { workspaceDir, host, degradedRetrievalConsent: consentReason };
+  const report = opts.json ? runJsonCheck(checkOptions) : runFullCheck(checkOptions);
   const text = opts.json ? JSON.stringify(report) : formatReport(report as ReturnType<typeof runFullCheck>);
   if (opts.output) {
     const output = resolve(workspaceDir, opts.output);

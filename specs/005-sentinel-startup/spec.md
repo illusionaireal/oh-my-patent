@@ -10,7 +10,10 @@ Approved scope: the maintainer requested execution of the sentinel repair plan o
    Configuration presence never establishes a live MCP connection.
 4. Require the orchestrator to inspect environment readiness before first RESEARCH
    and on resume. Save real results and unknown capabilities; distinguish native
-   delegation from sequential checks. Preserve user-approved degraded retrieval.
+   delegation from sequential checks. Zero retrieval sources block RESEARCH; academic
+   fallback-only coverage requires explicit user acceptance and a recorded limitation;
+   at least one professional patent source passes the coverage gate. Configured sources
+   do not prove actual host tool access. Runtime/tool blockers cannot be waived.
 5. Skill activation loads the sentinel reference and uses its own runtime doctor.
 6. Cover installed archives, host routing, relocation, failure output and ownership
    in Ubuntu/Windows CI. Record real model-host calls separately, never infer them

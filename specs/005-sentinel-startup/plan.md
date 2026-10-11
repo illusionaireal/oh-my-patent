@@ -10,6 +10,11 @@
 - Fix sentinel metadata; replace source-tree CLI examples; require real capability
   observations and persisted reports before research/resume.
 - Load the portable sentinel explicitly from the Skill activation gate.
+- Gate retrieval on coverage using explicit professional/fallback template roles.
+  Count a coverage blocker independently from individual missing-source warnings.
+  Allow invocation-scoped academic-only consent with a recorded reference/reason and
+  limitation; never waive zero sources or local tool/runtime failures. Keep the checker
+  configuration-only and observe actual approved host tools in the orchestration gate.
 - Build and verify archives, test relocation without dependencies, and record CI.
   Real Claude Code/Codex/OpenCode model traces require their host sessions; none
   are available in this execution environment.

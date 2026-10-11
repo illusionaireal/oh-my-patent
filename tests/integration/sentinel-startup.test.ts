@@ -1,6 +1,6 @@
 import { afterEach, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { loadPortableDef } from '../../src/adapters/loader.js';
@@ -95,6 +95,52 @@ it('reads and updates only the explicitly selected MCP configuration', () => {
   expect(readFileSync(join(workspace, '.mcp.json'), 'utf8')).toBe(claude);
   expect(readFileSync(join(workspace, 'codex.json'), 'utf8')).toBe(codex);
   expect(getMcpStatuses(workspace, 'opencode').find(item => item.id === 'google_scholar')?.configured).toBe(true);
+});
+
+it.each(hosts)('enforces retrieval coverage and auditable consent in the installed %s checker', async host => {
+  const workspace = root();
+  const def = await loadPortableDef({ pluginDir: resolve('.'), workspaceDir: workspace });
+  const generated = await adapters[hosts.indexOf(host)].generate(def, {});
+  const script = join(workspace, checkRuntimePath(host));
+  mkdirSync(dirname(script), { recursive: true });
+  writeFileSync(script, generated.files.get(checkRuntimePath(host))!);
+  // Real bundled execution; deterministic local tools on both Ubuntu and Windows.
+  const bin = join(workspace, 'bin'); mkdirSync(bin);
+  for (const tool of ['git', 'mmdc']) {
+    writeFileSync(join(bin, tool + (process.platform === 'win32' ? '.cmd' : '')),
+      process.platform === 'win32' ? '@echo off\r\necho fixture-v1\r\n' : '#!/bin/sh\necho fixture-v1\n', { mode: 0o755 });
+  }
+  const env = { ...process.env, PATH: [bin, dirname(process.execPath), process.env.PATH].join(delimiter) };
+  const run = (args: string[] = []) => {
+    const result = spawnSync(process.execPath, [script, '--json', ...args], { cwd: workspace, env, encoding: 'utf8' });
+    expect(result.status, result.stderr).toBe(0);
+    return JSON.parse(result.stdout);
+  };
+  const consent = ['--accept-degraded-retrieval', '--degradation-reason', 'User accepted academic-only coverage (decision #7)'];
+  // Other hosts' configured patent sources must not unblock this host.
+  for (const other of hosts.filter(h => h !== host)) writeMcpConfig(workspace, 'cnipa_patent', { command: 'fixture' }, other);
+  expect(run()).toMatchObject({ ready: false, retrievalCoverage: 'none', blockingCount: 1 });
+  expect(run(consent)).toMatchObject({ ready: false, retrievalCoverage: 'none', degradedRetrieval: { accepted: false } });
+  writeMcpConfig(workspace, 'google_scholar', { command: 'fixture' }, host);
+  expect(run()).toMatchObject({ ready: false, retrievalCoverage: 'fallback_only', blockingCount: 1 });
+  const saved = 'projects/example/references/init-report.json';
+  const accepted = run([...consent, '--output', saved]);
+  expect(accepted).toMatchObject({ ready: true, blockingCount: 0, retrievalCoverage: 'fallback_only',
+    mcpVerification: 'configuration_only', degradedRetrieval: { accepted: true, reason: consent[2] } });
+  expect(accepted.degradedRetrieval.limitation).toContain('缺少专业专利库覆盖');
+  expect(JSON.parse(readFileSync(join(workspace, saved), 'utf8'))).toEqual(accepted);
+  expect(run().ready).toBe(false); // A saved accepted report cannot waive the next check.
+  for (const id of ['patsnap_search', 'uspto_patent', 'cnipa_patent']) {
+    writeMcpConfig(workspace, id, { command: 'fixture' }, host);
+    expect(run()).toMatchObject({ ready: true, retrievalCoverage: 'professional', blockingCount: 0 });
+  }
+  for (const args of [['--accept-degraded-retrieval'], ['--degradation-reason', 'decision'],
+    ['--accept-degraded-retrieval', '--degradation-reason'],
+    ['--accept-degraded-retrieval', '--degradation-reason', '   '], [...consent, '--mcp-status']]) {
+    const result = spawnSync(process.execPath, [script, '--json', ...args], { cwd: workspace, env, encoding: 'utf8' });
+    expect(result.status).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({ ok: false, ready: false, error: { code: 'CHECK_FAILED' } });
+  }
 });
 
 it.each([new OpenCodeAdapter(), new CodexAdapter()])('preserves another host and an edited checker on %s uninstall', async adapter => {

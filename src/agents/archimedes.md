@@ -185,8 +185,13 @@
    - 将真实检查 JSON、时间、宿主/版本、execution_mode、工具观测、缺失项、
      unknown 项及用户选择的降级措施保存到选定项目的 `references/init-report.json`。
    - 执行失败或 ready=false 不能宣称环境就绪。只检测配置不证明 MCP 已连接。
-   - MCP 缺失可由用户选择配置/降级；无获准检索工具时保存检索计划或分析用户材料，
-     明确证据不足。阻塞项需解决后继续正式工作流。
+   - 检索覆盖度 none 硬阻塞；fallback_only 默认阻塞，仅在用户明确接受学术兜底
+     局限后，以 --accept-degraded-retrieval --degradation-reason "确认引用或理由"
+     重新执行同一检查器并保存报告；professional 通过配置门禁。不得替用户同意。
+   - 同时核实本宿主实际获准检索工具：零可用源或 unknown 阻塞，不能仅凭配置放行；
+     仅学术源仍需降级确认。恢复时重新检查，旧报告/旧确认不能自动放行。
+     无获准检索时仅保存检索计划或分析用户材料，明确证据不足，不推进正式 RESEARCH。
+     运行时/git/mmdc 阻塞始终需解决。
 1) 用 `task` 调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```

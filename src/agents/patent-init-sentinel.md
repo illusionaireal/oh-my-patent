@@ -17,7 +17,8 @@ node "{{PATENT_CHECK_SCRIPT}}" --json
 全局 oh-my-patent 命令、node_modules 或 npx 缓存。缺少脚本时报告需要重新安装插件，
 不能编造检查结果或偷偷下载另一个版本。
 
-返回 timestamp、adapter、ready、blockingCount、warningCount、mcpStatuses、results。
+返回 timestamp、adapter、ready、blockingCount、warningCount、mcpStatuses、results、
+retrievalCoverage、configuredCount、degradedRetrieval。
 `mcpVerification=configuration_only` 表示只检查配置；配置存在不证明 MCP 已连接、
 认证有效或工具可调用。读取当前宿主实际暴露的工具，分别记录文件读写、原生子代理、
 检索、SVG、预览、本地渲染、生图与审阅能力。无法观察的项目记为 unknown。
@@ -29,8 +30,21 @@ node "{{PATENT_CHECK_SCRIPT}}" --json
 references/init-report.json，再决定是否继续；哨兵不修改 .patent/state.json。
 执行失败、无法读取报告或 ready=false 时，不能宣称环境就绪。
 运行时/工作目录及插件所需的 git、mmdc 缺失按报告标为阻塞。
-MCP 缺失是警告：用户可选择配置、使用获准的其他检索工具，或明确接受检索能力降级。
-没有获准检索工具时只能提供检索计划/分析用户材料，不能声称已完成实际检索。
+检索覆盖度分档：none（零源）硬阻塞，不能用降级确认放行；fallback_only（仅
+google_scholar / semantic_scholar）默认阻塞；professional（至少配置 patsnap_search /
+uspto_patent / cnipa_patent）通过配置门禁。单个源缺失是警告，覆盖度不足是阻塞。
+priority 仅表示配置建议，retrievalRole 决定分档；不要求所有源配齐。
+仅 fallback_only 可在用户明确接受证据局限后由主编排器重新执行：
+
+```bash
+node "{{PATENT_CHECK_SCRIPT}}" --json --accept-degraded-retrieval --degradation-reason "用户确认引用或理由"
+```
+
+哨兵不得替用户同意。保存新报告中的确认依据、timestamp 和 limitation；确认仅作用于
+本次检查，恢复时重新检查，不能沿用旧 ready。工具/运行时阻塞不受降级确认影响。
+配置门禁通过后仍需主编排器核实当前宿主实际可调用、获准的检索工具：零个可用工具
+或可用性 unknown 均不得进入正式 RESEARCH；仅学术源时仍需明确降级确认。
+阻塞时可提供检索计划/分析用户材料，不能推进正式工作流或声称已完成实际检索。
 
 ## 配置指导
 

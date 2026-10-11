@@ -18,7 +18,14 @@ execution_mode、缺失项和降级措施，由主编排器保存 references/ini
 能力不足时：
 - 无运行时：可辅助写文档，不手写正式状态、不承诺分支恢复。
 - 无原生子代理：记录 execution_mode=sequential，顺序完成角色检查。
-- 无获准检索：给出检索计划或分析用户材料，明确证据不足。
+- 检索按实际获准工具分档，返回 retrievalCoverage=none/fallback_only/professional。
+  none（零源）或工具可用性 unknown 阻塞正式 RESEARCH，不能用降级确认解除；
+  fallback_only（仅学术文献源，如 Google Scholar / Semantic Scholar）默认阻塞，
+  仅在用户明确接受专业专利覆盖不足后放行；professional（专业专利源，如智慧芽 /
+  USPTO / CNIPA）通过检索门禁。不要求所有源配齐，不凭配置或 doctor 推断检索可用。
+  主编排器保存用户确认引用/理由、时间、缺少专利库覆盖的 limitation 及实际工具观测；
+  哨兵不得替用户同意。恢复时重新检查，不自动复用旧确认。
+  无获准检索时可给检索计划或分析用户材料，但不得推进正式工作流或声称完成实际检索。
 - 无生图/渲染：交付自包含 SVG 或规格；没有预览时视觉审阅待完成。
 
 未公开材料外发默认拒绝。记录获准服务、实际接收方、同意引用、执行模式和未知项。

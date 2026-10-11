@@ -47,12 +47,40 @@ particular Codex version has native MCP tools configured.
 
 `mcpVerification=configuration_only` means no MCP connection or authentication
 was verified. Observe actual host tool access separately. `ready=false`, failed
-execution or unknown capabilities must not be reported as passed. Missing MCP
-sources allow user-approved degraded retrieval; missing plugin runtime/git/mmdc
-remain blockers. Record retrieval limitations; a search plan is not a completed search.
+execution or unknown capabilities must not be reported as passed. Retrieval is gated
+by coverage, not the number of missing templates:
+
+| retrievalCoverage | Configured sources | Result |
+| --- | --- | --- |
+| none | No recognized enabled source | Hard blocker; consent cannot waive it |
+| fallback_only | Only google_scholar and/or semantic_scholar | Blocked until explicit user acceptance of academic-only limitations |
+| professional | At least one patsnap_search, uspto_patent or cnipa_patent | Passes the configuration gate; individual missing sources are warnings |
+
+`priority` is setup advice only (recommended/optional); `retrievalRole` controls coverage.
+Google Scholar is an academic fallback, not an individually required source. An enabled
+configuration object is counted; disabled/null entries and unrelated servers do not count.
+No connection, authentication or executable validation is implied by this classification.
+Observe actual approved host retrieval tools separately: none or unknown blocks formal
+RESEARCH; academic tools only still require explicit acceptance. Plugin runtime/git/mmdc
+blockers cannot be waived. A search plan is not a completed search.
+
+After the user explicitly accepts academic-only retrieval, rerun the checker, for example:
+
+```bash
+node ".oh-my-patent/runtime/codex/check.mjs" --json --accept-degraded-retrieval --degradation-reason "User acceptance reference/reason" --output projects/<project>/references/init-report.json
+```
+
+Use the active host's checker path. Both flags are required. The report records
+configuredCount, retrievalCoverage and degradedRetrieval (requested, accepted, reason,
+limitation), together with its timestamp. Consent applies only to that invocation;
+resume starts with a new default check and needs fresh acceptance if still fallback-only.
+Never supply acceptance on the user's behalf. It does not authorize external disclosure.
 
 MCP 只检测配置，连接/认证/实际工具可调用性需在当前宿主中观察。执行失败、阻塞
-或未知能力不得写为通过；缺少 MCP 时可以记录用户选择的检索降级及证据不足。
+或未知能力不得写为通过。零源硬阻塞；仅学术源默认阻塞，需用户明确接受专业专利
+覆盖不足后重新检查并保存确认理由和局限；至少一个专业专利源通过配置门禁。
+不得凭配置推断当前宿主工具可用。无获准检索时仅辅助计划/材料分析，不推进正式
+RESEARCH。恢复时重新检查，不自动复用旧确认。
 主编排器将实际 JSON、宿主/版本、执行模式与工具观测保存为
 `references/init-report.json`，哨兵不修改正式工作流状态。
 
@@ -67,6 +95,8 @@ execution/Node, document assistance remains available with persistence unavailab
 Skill 激活及恢复时读取哨兵角色，并使用安装目录内运行时的完整路径执行 doctor。
 角色引用不自动注册独立 Agent；没有原生委派时记录顺序检查。doctor 通过只证明
 运行时可执行，检索、生图、预览及子代理能力分别观察和记录。
+Skill 使用实际获准工具按同样三档阻塞，不依赖插件 MCP 清单，不要求 Git/mmdc；
+主编排器保存覆盖度、真实工具观测及明确降级确认，doctor 通过不能解除检索阻塞。
 
 ## Verification boundary / 验证边界
 

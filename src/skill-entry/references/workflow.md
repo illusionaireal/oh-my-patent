@@ -6,7 +6,7 @@ scope: a review-only or search-only artifact does not establish a ten-stage hist
 | Stage | Evidence/artifact and gate |
 | --- | --- |
 | INIT | User technical facts, scope, selected language/jurisdiction and capabilities |
-| RESEARCH | Search plan or actual evidence cards; clearly record missing retrieval |
+| RESEARCH | Approved retrieval available; academic-only requires explicit acceptance; record actual evidence cards and limitations |
 | BRAINSTORM_R1 | Divergent candidates, supporting facts and explicit assumptions |
 | BRAINSTORM_R2 | Adversarial comparison, scores as screening signals, human selection |
 | DRAFT | MAIN.md with referenced technical facts and unresolved questions |
