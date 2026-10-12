@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { digest, json, projectFile, ProjectError, type Preconditions, type WritePlan } from '../core/project-store.js';
 import { effectiveConfig } from '../core/project-config.js';
 import { validateFigureSpec } from '../core/figures.js';
-import { validateFigureCapabilities, planFigure, offerFigure, chooseFigure,
+import { validateFigureCapabilities, planFigure, offerFigure, chooseFigure, figureFormats, FIGURE_RENDER_TIMEOUT_MS,
   type FigureChoice, type FigureOffer } from '../core/figure-selection.js';
 
 const CAPABILITIES_PATH = '.patent/figure-capabilities.json';
@@ -30,7 +30,7 @@ function load(root: string, params: Record<string, unknown>, expected?: Precondi
   const previous: FigureChoice | undefined = existsSync(projectFile(root, choicePath))
     ? JSON.parse(readFileSync(projectFile(root, choicePath), 'utf8')) : undefined;
   if (previous && (previous.schema_version !== 1 || previous.figure_id !== spec.figure_id || previous.status !== 'selected'
-    || !['user', 'timeout_default', 'immediate_default'].includes(previous.source) || !Number.isFinite(Date.parse(previous.selected_at)))) throw new ProjectError('INVALID_INPUT', 'Invalid saved figure selection');
+    || !['user', 'timeout_default', 'immediate_default', 'failure_default'].includes(previous.source) || !Number.isFinite(Date.parse(previous.selected_at)))) throw new ProjectError('INVALID_INPUT', 'Invalid saved figure selection');
   if (expected) {
     if (existsSync(projectFile(root, offerPath))) requiredInput(expected, offerPath);
     for (const path of [params.spec_path, CAPABILITIES_PATH, 'MAIN.md', ...(previous ? [choicePath] : []),
@@ -42,19 +42,47 @@ function load(root: string, params: Record<string, unknown>, expected?: Precondi
 export function figurePlan(root: string, params: Record<string, unknown>): unknown { return load(root, params).plan; }
 export function figureSelectionMutation(root: string, operation: string, params: Record<string, unknown>, expected: Preconditions): WritePlan {
   const data = load(root, params, expected);
+  const pending: FigureOffer | undefined = existsSync(projectFile(root, data.offerPath))
+    ? JSON.parse(readFileSync(projectFile(root, data.offerPath), 'utf8')) : undefined;
   if (operation === 'figure.offer') {
-    const offer = offerFigure(data.plan);
+    const offer = offerFigure(data.plan, Date.now(), pending);
     return { files: { [data.offerPath]: json(offer) }, data: { offer, plan: data.plan } };
   }
-  const offer: FigureOffer | undefined = params.mode === 'timeout' && existsSync(projectFile(root, data.offerPath))
-    ? JSON.parse(readFileSync(projectFile(root, data.offerPath), 'utf8')) : undefined;
-  if (offer) requiredInput(expected, data.offerPath);
-  const choice = chooseFigure(data.plan, data.capabilities, params.mode, params.backend, params.decision_reference, offer, data.previous);
-  const nextSpec = choice.backend === data.spec.backend ? data.specText : json({ ...data.spec, backend: choice.backend, formats: choice.backend === 'svg' && !data.spec.formats.includes('svg') ? [...data.spec.formats, 'svg'] : data.spec.formats });
+  const choice = operation === 'figure.fallback' ? fallback(root, params, expected, data)
+    : chooseFigure(data.plan, data.capabilities, params.mode, params.backend, params.decision_reference,
+      params.mode === 'timeout' ? pending : undefined, data.previous);
+  const formats = figureFormats(choice.backend, data.spec.formats);
+  const changed = choice.backend !== data.spec.backend || JSON.stringify(formats) !== JSON.stringify(data.spec.formats);
+  const nextSpec = changed ? json({ ...data.spec, backend: choice.backend, formats }) : data.specText;
+  if (JSON.stringify(formats) !== JSON.stringify(data.spec.formats)) choice.reasons.push(`Output formats adjusted for ${choice.backend}: ${formats.join(', ')}`);
   choice.spec_digest = digest(nextSpec);
   const saved = { ...choice, main_digest: data.mainDigest };
   return { files: { [data.choicePath]: json(saved), [params.spec_path as string]: nextSpec,
     ...(existsSync(projectFile(root, data.offerPath)) ? { [data.offerPath]: null } : {}) }, data: saved };
+}
+
+/** A host-reported local failure permits one SVG fallback, never an external retry. */
+function fallback(root: string, params: Record<string, unknown>, expected: Preconditions, data: ReturnType<typeof load>): FigureChoice {
+  const selected = assertFigureSelection(root, params.spec_path as string, expected);
+  if (selected.execution !== 'local' || selected.backend === 'svg' || selected.source === 'failure_default'
+    || data.capabilities.backends.svg.status !== 'available') throw new ProjectError('RENDER_FAILED', 'Automatic local fallback unavailable; stop this figure and report the failure');
+  const path = `${data.base}/render-failure.json`;
+  if (params.failure_path !== path) throw new ProjectError('INVALID_INPUT', 'Use the canonical render-failure.json path');
+  requiredInput(expected, path);
+  const failure = JSON.parse(readFileSync(projectFile(root, path), 'utf8'));
+  if (!failure || typeof failure !== 'object' || Array.isArray(failure)) throw new ProjectError('INVALID_INPUT', 'Local failure evidence must be an object');
+  const start = Date.parse(failure.started_at), end = Date.parse(failure.finished_at), deadline = Date.parse(failure.deadline_at);
+  if (failure.schema_version !== 1 || failure.figure_id !== selected.figure_id || failure.backend !== selected.backend
+    || failure.selection_digest !== digest(readFileSync(projectFile(root, data.choicePath))) || failure.spec_digest !== selected.spec_digest
+    || failure.main_digest !== selected.main_digest || failure.execution !== 'local' || failure.tool !== data.capabilities.backends[selected.backend].tool
+    || typeof failure.evidence !== 'string' || !failure.evidence.trim() || !['failed', 'timeout'].includes(failure.outcome)
+    || !Number.isFinite(start) || !Number.isFinite(end) || end < start || end > Date.now()
+    || start < Date.parse(selected.revalidated_at ?? selected.selected_at) || deadline !== start + FIGURE_RENDER_TIMEOUT_MS
+    || failure.outcome === 'timeout' && end < deadline) throw new ProjectError('INVALID_INPUT', 'Record the actual local failure with current input/choice hashes and a 60-second deadline');
+  const choice = chooseFigure(data.plan, data.capabilities, 'user', 'svg', 'system fallback');
+  return { ...choice, source: 'failure_default', decision_reference: null, failure_reference: path,
+    failure_digest: digest(readFileSync(projectFile(root, path))),
+    reasons: [...choice.reasons, `Local ${selected.backend} ${failure.outcome}; one direct SVG fallback, no automatic retries`] };
 }
 
 /** Validate current capability/spec/MAIN binding before generation or new registration. */

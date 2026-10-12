@@ -139,3 +139,24 @@ verified in host sessions; synthetic tests do not certify real providers.
 中文：启动盘点绘图能力，首次绘图时逐图选择。有真实计时交互等待最多 30 秒，超时
 采用可执行本地默认；无计时能力告知默认后立即继续。系统选择单独留痕，不替代外发/
 付费批准。缺 mmdc 不阻塞全局；无预览允许草稿，但必需附图不能通过最终视觉审阅。
+
+### Follow-up reliability / 恢复与期限
+
+Startup JSON separates stageReadiness.runtime, research.configurationReady (configuration
+only, actual host tools unknown), diagramDraft and diagramFinal (unknown until observed).
+The legacy ready aggregate still describes startup/research. Retrieval gaps block new
+RESEARCH/evidence collection, not independent drawing or drafting from existing evidence.
+
+Observation refresh and repeated offers keep the original choice deadline. Expiry recomputes
+the available local default; changed technical inputs/preferences or host/session conflict.
+Refresh nearly expiring observations before offering; interruption may require another
+observation refresh, never another wait for an unchanged offered decision. Installed plugins
+inherit workspace configuration automatically and persist the effective initial project settings.
+Selection also normalizes native output formats. Provenance retains a full audit digest and
+a separate content/execution review digest, so unchanged figures keep review on resume.
+Older provenance without the separate digest retains its conservative hash behaviour.
+
+Local rendering uses a host-enforced 60-second deadline. Actual failure evidence permits
+one figure.fallback to available direct SVG with failure_default; further/remote failure
+stops that figure. The runtime validates recorded evidence but does not execute/cancel
+host tools. No external retry, disclosure or spending is automatically approved.

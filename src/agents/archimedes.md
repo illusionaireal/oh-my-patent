@@ -192,6 +192,9 @@
      仅学术源仍需降级确认。恢复时重新检查，旧报告/旧确认不能自动放行。
      无获准检索时仅保存检索计划或分析用户材料，明确证据不足，不推进正式 RESEARCH。
      运行时/git 阻塞始终需解决；mmdc 缺失只记录绘图缺口。
+   - 按阶段消费哨兵报告：基础运行时始终检查，检索缺口仅阻塞 RESEARCH/补充检索；
+     已有证据的撰写或绘图按自身能力继续，不能用 ready=false 停止所有恢复任务。
+     绘图/审阅 unknown 不当作通过。能力刷新不清空未改动图的已通过审阅。
    - 绘图能力在启动/恢复时盘点，不阻塞前面的检索与撰写。首次进入 DIAGRAM_DRAFT
      前，根据 MAIN 创建逐图规格，并按 patent-diagram-generator 的共同流程执行
      figure.plan / figure.offer / figure.select；preferredBackend 参与选择，精确附图默认 SVG。

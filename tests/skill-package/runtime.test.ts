@@ -119,6 +119,7 @@ it('records, restores and branches without duplicate nodes or inconsistent snaps
 it('requires matched disclosure evidence for an imagegen handoff', async () => {
   const root = await setup(); figure(root);
   put(root, 'figures/fig1/figure-spec.json', json({ ...spec, backend: 'imagegen' }));
+  put(root, 'figures/fig1/result.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5t0AAAAASUVORK5CYII=', 'base64'));
   const payload = 'Synthetic sensor image request; no real service was called.';
   const payloadPath = '.patent/disclosures/previews/image.txt';
   const consentPath = '.patent/disclosures/consents/image.json';
@@ -126,7 +127,7 @@ it('requires matched disclosure evidence for an imagegen handoff', async () => {
   const consent = { id: 'image', operation_id: 'generate-image', content_digest: digest(payload), recipient: 'https://example.test/images', purpose: 'figure.generate', tool: 'synthetic-image-tool', approved_at: '2026-09-30T00:00:00Z', expires_at: '2026-09-30T01:00:00Z', reuse: 'one_operation', approval_reference: 'synthetic-test-approval' };
   const event = { operation_id: consent.operation_id, consent_id: consent.id, content_digest: consent.content_digest, recipient: consent.recipient, purpose: consent.purpose, tool: consent.tool, time: '2026-09-30T00:01:00Z', outcome: 'acknowledged' };
   put(root, payloadPath, payload); put(root, consentPath, json(consent)); put(root, eventPath, json(event));
-  const params = { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.svg', tool: consent.tool, provider: 'synthetic-provider', payload_path: payloadPath, consent_reference: consentPath, disclosure_reference: eventPath };
+  const params = { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.png', tool: consent.tool, provider: 'synthetic-provider', payload_path: payloadPath, consent_reference: consentPath, disclosure_reference: eventPath };
   await ensureSelection(root);
   const inputs = [...selectionInputs(root), params.result_path, payloadPath, consentPath, eventPath];
   put(root, eventPath, json({ ...event, content_digest: digest('different payload') }));

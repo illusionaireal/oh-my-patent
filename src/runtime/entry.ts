@@ -16,6 +16,9 @@ export async function runRuntime(argv: string[], workspaceDir?: string): Promise
     if (workspaceDir && request.project) {
       request.project = resolve(workspaceDir, request.project);
       ensureUnlinkedPath(workspaceDir, request.project);
+      // Installed plugins know their workspace even when invoked from another cwd.
+      if (request.params !== undefined && (!request.params || typeof request.params !== 'object' || Array.isArray(request.params))) throw new ProjectError('INVALID_INPUT', 'params must be an object');
+      request.params = { ...request.params, workspace: workspaceDir };
     }
     const data = await runOperation(request);
     process.stdout.write(JSON.stringify({ ok: true, data, artifacts: [], warnings: [] }) + '\n');

@@ -19,6 +19,23 @@ Approved by the maintainer on 2026-10-12, including a non-blocking default after
   Unavailable preview permits drafting but not a passing visual review.
 - Preserve independent human innovation/final acceptance and content-bound disclosure.
 
+Follow-up approved on 2026-10-12:
+
+- Separate observation freshness from content/execution review freshness. Refresh/reuse
+  preserves passed review; technical content or execution boundary changes still invalidate it.
+- Keep the original offered deadline across observation refresh and repeated offers. At
+  expiry re-evaluate local availability; spec/MAIN/preference or host/session changes conflict.
+  Nearly expiring observations require refresh before offering; expired ones are refreshed
+  without resetting an existing offer. No stale capability is accepted.
+- Normalize output formats when selecting the backend, including same-backend repairs.
+- Installed runtimes supply their workspace context for configuration inheritance, then
+  retain task > saved project > workspace > defaults precedence.
+- Report runtime/research-configuration/drawing/visual readiness separately. Retrieval
+  gaps gate RESEARCH or new evidence collection; they do not block independent later work.
+- Bound host local rendering to 60 seconds, require actual failure evidence, and permit
+  one recorded local SVG fallback. SVG/remote/unavailable fallback paths stop that figure;
+  no automatic external call or retry. Host execution remains separately verified.
+
 Existing registered figures remain inspectable. New registration requires a recorded
 selection; existing unregistered projects need selection before rendering/registration.
 Reinstall plugin integrations or update the complete Skill to receive runtime/prompt changes.

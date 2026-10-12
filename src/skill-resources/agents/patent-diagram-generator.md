@@ -32,10 +32,20 @@ node "<skill-directory>/scripts/runtime.mjs" --input "request.json"
 系统默认不选远程服务，不因用户未回答自动批准披露或付费。
 有计时交互：主编排器先 figure.offer 保存真实 30 秒期限，再提供默认方案/可选项；
 用户回答使用 figure.select mode=user、backend、decision_reference，超时使用 mode=timeout。
+refresh_before_offer=true 时先刷新观测。重复 offer 和观测刷新保留原期限；到期按最新
+可用本地方案选择。规格/MAIN/偏好或 host/session 改变才要求重新提供选择。
 无计时交互：说明默认方案后立即使用 mode=default，不编造等待/超时；已有可用选择
 mode=reuse 刷新能力绑定，保留原始选择来源，不重复询问。每张图可选不同后端。
+选择同时修正兼容格式（SVG 为 svg，渲染器为 svg/png，生图为 png/jpg/webp）。
 保存选择后按规格 backend 执行；不可用时明确说明并重新规划，不静默改用外部服务。
 无任何可执行后端只阻塞该图；没有预览仍可画草稿，视觉审阅保持 pending。
+本地渲染设置实际 60 秒期限，不自动重试；不能执行限时调用时直接采用 SVG。
+调用前记录开始/期限，实际失败后保存 figures/<id>/render-failure.json：schema_version=1、
+figure_id、backend、execution=local、tool、evidence、outcome=failed/timeout、started_at、
+finished_at、deadline_at（开始+60秒）、selection_digest、spec_digest、main_digest。
+主编排器提供失败文件和选择输入摘要，通过 figure.fallback 转用一次可用 SVG，记录
+failure_default，不制造用户确认。SVG 再失败或远程失败则报告并停止该图。运行时只
+核验保存的证据，实际工具执行/超时取消由宿主负责；不得把记录当成执行证明。
 
 远程生图/PlantUML 调用仍需完整载荷预览、明确接收方、内容绑定批准、预算和披露
 台账。先持久化 consent/attempt，再调用实际宿主工具；超时不自动重试。不收集密钥，
@@ -47,7 +57,9 @@ SVG 使用自包含几何和文本，在预览前执行 figure.validateSvg；禁
 foreignObject、DTD、外部 URL、字体/图片。XML 校验不能代替技术与视觉审阅。
 保存 figures/<id>/ 下的图源与结果，再由主编排器 figure.register 登记 provenance。
 登记必须包含 spec/result/MAIN/source（若有）、selection.json、能力观测的当前 SHA-256。
-图源/规格/正文/结果/选择变化使旧审阅失效；先更新规格和选择再重绘。
+图源/规格/正文/结果或后端/执行边界变化使旧审阅失效；先更新规格和选择再重绘。
+观测时间、会话或未使用后端的变化不清空未改动图的审阅。复用更新能力绑定，
+provenance 保留原始选择摘要和独立审阅摘要，不据此伪造新审阅。
 审阅部件编号、连接方向、文字可读性、遮挡裁切和 MAIN 一致性，记录真实审阅者。
 未实际预览时 visual=false；必需附图没有当前技术与视觉审阅，不进入最终交付。
 

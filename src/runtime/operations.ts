@@ -10,6 +10,7 @@ import { loadPath, loadNode, savePath, saveNode, saveInnovationSnapshot } from '
 import { createBranchFromNode } from '../commands/path-branch.js';
 import { restoreInnovation } from '../commands/path-restore.js';
 import { figurePlan, figureSelectionMutation, assertFigureSelection } from './figure-selection.js';
+import { selectionReviewDigest } from '../core/figure-selection.js';
 import { validateFigureSpec, validateSvg, inspectFigure, type FigureProvenance } from '../core/figures.js';
 
 export interface RuntimeRequest {
@@ -119,7 +120,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
     return { proposed: migrate(current.state, root), path_files: Object.keys(migratePathFiles(current.state, root)), state_digest: current.state_digest, writes: false };
   }
   if (request.operation === 'project.recoverLock') { new ProjectStore(root).recoverLock(string(params.owner_token, 'owner_token')); return { recovered: true }; }
-  const operations = ['project.create', 'project.migrate', 'workflow.advance', 'path.record', 'path.branch', 'path.restore', 'figure.register', 'figure.offer', 'figure.select'];
+  const operations = ['project.create', 'project.migrate', 'workflow.advance', 'path.record', 'path.branch', 'path.restore', 'figure.register', 'figure.offer', 'figure.select', 'figure.fallback'];
   if (!operations.includes(request.operation)) throw new ProjectError('UNKNOWN_OPERATION', `Unknown operation: ${request.operation}`);
   const mutation: Mutation = { ...request, operation_id: string(request.operation_id, 'operation_id'), expected: request.expected! };
   return new ProjectStore(root).mutate(mutation, async current => {
@@ -149,7 +150,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
     requireCurrentState(current);
     const files: Record<string, string | null> = {};
     let data: unknown;
-    if (request.operation === 'figure.offer' || request.operation === 'figure.select') {
+    if (['figure.offer', 'figure.select', 'figure.fallback'].includes(request.operation)) {
       const selected = figureSelectionMutation(root, request.operation, params, request.expected!);
       Object.assign(files, selected.files); data = selected.data;
     } else if (request.operation === 'workflow.advance') {
@@ -254,6 +255,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
       const provenance: FigureProvenance = {
         figure_id: spec.figure_id, spec_digest: digest(specText), result_digest: digest(result), main_digest: digest(readFileSync(projectFile(root, 'MAIN.md'))),
         selection_path: `${base}/selection.json`, selection_digest: digest(readFileSync(projectFile(root, `${base}/selection.json`))),
+        selection_review_digest: selectionReviewDigest(selection),
         result_path: resultPath, backend: spec.backend, tool: string(params.tool, 'tool'), generated_at: new Date().toISOString(),
         review: review ?? { status: 'pending', reviewer_type: 'model', reviewer: 'unreviewed', technical: false, visual: false, findings: [] },
       };

@@ -30,5 +30,10 @@ Save actual observations from assets/figure-capabilities.example.json. Prefer an
 saved local choice or preference, else SVG. Timed interaction defaults after a persisted
 30-second deadline; no timed interaction defaults immediately. Save selection.json and
 its true source. Never infer consent from default/timeout. New registration binds selection
-and capabilities; changed selection invalidates prior review. No preview permits drafting
+and capabilities; substantive content/backend/execution changes invalidate prior review.
+Refreshing observations or reusing an unchanged choice preserves the existing review.
+Output formats are normalized to the selected backend; image tools keep raster originals.
+Local renderers have a 60-second host deadline with one recorded SVG fallback through
+figure.fallback, then stop on further failure; see runtime.md for the evidence contract.
+No preview permits drafting
 but prevents visual pass/final required-figure completion.

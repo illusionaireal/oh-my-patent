@@ -45,7 +45,13 @@ to this invocation; recheck on resume. It cannot waive zero sources or runtime/t
 Observe actual approved host retrieval tools too: none/unknown blocks formal RESEARCH,
 and academic-only tools require explicit acceptance even if a patent source is configured.
 Failed execution and unknown capabilities must never be recorded as passed. A search plan
-or supplied-material analysis is assistance outside the blocked formal workflow.
+or supplied-material analysis cannot be described as completed retrieval.
+
+Consume stageReadiness by phase: runtime readiness applies to every plugin task;
+research.configurationReady is only the configuration gate for RESEARCH/new evidence
+collection. diagramDraft/diagramFinal remain unknown until actual host observation.
+Top-level ready retains its startup/research meaning; a retrieval gap does not block
+independent drafting or figures from existing evidence when their own capabilities pass.
 
 ## Invocation
 

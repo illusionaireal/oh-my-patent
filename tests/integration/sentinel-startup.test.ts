@@ -191,3 +191,28 @@ it.each(hosts)('shares the bundled figure-selection runtime in the installed %s 
   expect(run({ interface_version: 1, operation: 'project.create', project: '../outside', operation_id: 'outside',
     expected: { revision: null }, params: { topic: 'escape', topic_slug: 'escape' } }, 1).ok).toBe(false);
 }, 15000);
+
+it.each(hosts)('inherits workspace preferences and honors project/task overrides in installed %s runtime', async host => {
+  const workspace = root();
+  const def = await loadPortableDef({ pluginDir: resolve('.'), workspaceDir: workspace });
+  const generated = await adapters[hosts.indexOf(host)].generate(def, {});
+  const script = join(workspace, checkRuntimePath(host));
+  mkdirSync(dirname(script), { recursive: true }); writeFileSync(script, generated.files.get(checkRuntimePath(host))!);
+  writeFileSync(join(workspace, '.oh-my-patent/config.json'), JSON.stringify({ figures: { preferredBackend: 'mermaid' }, jurisdiction: 'US' }));
+  const project = 'projects/02-preference';
+  const run = (operation: string, params: object, extra = {}) => {
+    const result = spawnSync(process.execPath, [script, '--runtime'], { cwd: root(), input: JSON.stringify({ interface_version: 1, operation, project, params, ...extra }), encoding: 'utf8' });
+    expect(result.status, result.stdout + result.stderr).toBe(0); return JSON.parse(result.stdout).data;
+  };
+  run('project.create', { topic: 'Synthetic inheritance', topic_slug: 'preference' }, { operation_id: 'create', expected: { revision: null } });
+  const projectRoot = join(workspace, project);
+  expect(JSON.parse(readFileSync(join(projectRoot, '.patent/config.json'), 'utf8'))).toMatchObject({ jurisdiction: 'US', figures: { preferredBackend: 'mermaid' } });
+  mkdirSync(join(projectRoot, 'figures/fig1'), { recursive: true });
+  writeFileSync(join(projectRoot, 'figures/fig1/figure-spec.json'), readFileSync('src/skill-entry/assets/figure-spec.example.json'));
+  writeFileSync(join(projectRoot, '.patent/figure-capabilities.json'), JSON.stringify(capabilityFixture()));
+  const params = { spec_path: 'figures/fig1/figure-spec.json' };
+  expect(run('figure.plan', params).default_backend).toBe('mermaid');
+  writeFileSync(join(projectRoot, '.patent/config.json'), JSON.stringify({ figures: { preferredBackend: 'svg' } }));
+  expect(run('figure.plan', params).default_backend).toBe('svg');
+  expect(run('figure.plan', { ...params, figures: { preferredBackend: 'mermaid' } }).default_backend).toBe('mermaid');
+}, 15000);

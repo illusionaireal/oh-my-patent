@@ -2831,6 +2831,145 @@ import { resolve as resolve4 } from "node:path";
 // src/core/figures.ts
 var import_saxes = __toESM(require_saxes(), 1);
 import { readFileSync as readFileSync4 } from "node:fs";
+
+// src/core/figure-selection.ts
+var FIGURE_BACKENDS = ["svg", "mermaid", "plantuml", "imagegen"];
+var FIGURE_CHOICE_TIMEOUT_MS = 3e4;
+var FIGURE_CAPABILITY_MAX_AGE_MS = 30 * 6e4;
+var FIGURE_RENDER_TIMEOUT_MS = 6e4;
+var text = (value) => typeof value === "string" && !!value.trim();
+function selectionReviewDigest(choice) {
+  return digest(JSON.stringify({
+    figure_id: choice.figure_id,
+    backend: choice.backend,
+    execution: choice.execution,
+    spec_digest: choice.spec_digest,
+    main_digest: choice.main_digest
+  }));
+}
+function figureFormats(backend, formats) {
+  const supported = backend === "svg" ? ["svg"] : backend === "imagegen" ? ["png", "jpg", "webp"] : ["svg", "png"];
+  const compatible = [...new Set(formats.filter((format) => supported.includes(format)))];
+  return compatible.length ? compatible : [supported[0]];
+}
+function validateFigureCapabilities(input, now = Date.now()) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new ProjectError("INVALID_INPUT", "Figure capability observations required");
+  const c = input;
+  const age = now - Date.parse(c.observed_at);
+  if (c.schema_version !== 1 || !text(c.host) || !text(c.session_id) || !Number.isFinite(age) || age < 0 || age > FIGURE_CAPABILITY_MAX_AGE_MS) throw new ProjectError("MISSING_CAPABILITY", "Refresh figure observations for the active host/session (maximum age 30 minutes)");
+  const observation = (o) => {
+    if (!o || !["available", "unavailable", "unknown"].includes(o.status) || !text(o.evidence) || !(o.tool === null || text(o.tool)) || o.status === "available" && !text(o.tool)) throw new ProjectError("INVALID_INPUT", "Record status, actual tool and observation evidence");
+  };
+  if (!c.backends || typeof c.backends !== "object" || Object.keys(c.backends).some((k) => !FIGURE_BACKENDS.includes(k))) throw new ProjectError("INVALID_INPUT", "Invalid backend observations");
+  for (const backend of FIGURE_BACKENDS) {
+    const o = c.backends[backend];
+    observation(o);
+    if (!["local", "remote"].includes(o.execution) || ["svg", "mermaid"].includes(backend) && o.execution !== "local" || backend === "imagegen" && o.execution !== "remote") throw new ProjectError("INVALID_INPUT", "Invalid backend execution boundary");
+  }
+  observation(c.preview);
+  observation(c.timed_selection);
+  return c;
+}
+function planFigure(spec, specDigest, config, capabilities, capabilitiesDigest, previous) {
+  const candidates = FIGURE_BACKENDS.map((backend) => ({
+    backend,
+    available: capabilities.backends[backend].status === "available",
+    execution: capabilities.backends[backend].execution,
+    reason: capabilities.backends[backend].evidence
+  }));
+  const isLocalReady = (backend) => candidates.some((c) => c.backend === backend && c.available && c.execution === "local");
+  const reusable = previous?.status === "selected" && FIGURE_BACKENDS.includes(previous.backend) && isLocalReady(previous.backend) ? previous.backend : null;
+  const preferred = config.figures.preferredBackend;
+  const preferredLocal = preferred !== "auto" && isLocalReady(preferred) ? preferred : null;
+  const defaultBackend = reusable ?? preferredLocal ?? FIGURE_BACKENDS.find(isLocalReady) ?? null;
+  const reasons = [];
+  if (preferred !== "auto" && !preferredLocal && reusable === null) reasons.push(`Preferred ${preferred} is unavailable or requires scoped external approval; choosing an available local default`);
+  if (previous && reusable === null) reasons.push("Saved backend is unavailable or remote; fresh selection required");
+  if (!defaultBackend) reasons.push("No available local default; choose/configure a backend before drawing this figure");
+  if (capabilities.preview.status !== "available") reasons.push("Preview unavailable or unknown; draft allowed, visual review remains pending");
+  return {
+    figure_id: spec.figure_id,
+    preferred_backend: preferred,
+    default_backend: defaultBackend,
+    reusable_backend: reusable,
+    candidates,
+    review_ready: capabilities.preview.status === "available",
+    timed_selection: capabilities.timed_selection.status === "available",
+    timeout_ms: FIGURE_CHOICE_TIMEOUT_MS,
+    verification: "host_reported",
+    capabilities_digest: capabilitiesDigest,
+    // Availability is re-evaluated at expiry. Observation refresh must not restart the UI clock.
+    fingerprint: digest(JSON.stringify({
+      specDigest,
+      preferred,
+      previous: previous?.backend ?? null,
+      host: capabilities.host,
+      session: capabilities.session_id
+    })),
+    reasons,
+    refresh_before_offer: Date.now() - Date.parse(capabilities.observed_at) > FIGURE_CAPABILITY_MAX_AGE_MS - FIGURE_CHOICE_TIMEOUT_MS
+  };
+}
+function offerFigure(plan, now = Date.now(), previous) {
+  if (!plan.timed_selection) throw new ProjectError("MISSING_CAPABILITY", "Host has no observed timed selection; use immediate default");
+  if (previous?.schema_version === 1 && previous.status === "offered" && previous.figure_id === plan.figure_id && previous.fingerprint === plan.fingerprint && Number.isFinite(Date.parse(previous.offered_at)) && Date.parse(previous.deadline_at) === Date.parse(previous.offered_at) + FIGURE_CHOICE_TIMEOUT_MS) return previous;
+  if (plan.refresh_before_offer) throw new ProjectError("MISSING_CAPABILITY", "Refresh observations before starting the 30-second choice window");
+  return {
+    schema_version: 1,
+    figure_id: plan.figure_id,
+    status: "offered",
+    offered_at: new Date(now).toISOString(),
+    deadline_at: new Date(now + FIGURE_CHOICE_TIMEOUT_MS).toISOString(),
+    fingerprint: plan.fingerprint
+  };
+}
+function chooseFigure(plan, capabilities, mode, backend, decisionReference, offer, previous, now = Date.now()) {
+  let selected;
+  let source;
+  let reference = null;
+  if (mode === "user") {
+    if (!FIGURE_BACKENDS.includes(backend) || !text(decisionReference)) throw new ProjectError("INVALID_INPUT", "User selection needs backend and decision_reference");
+    selected = backend;
+    source = "user";
+    reference = decisionReference;
+  } else if (mode === "timeout") {
+    if (!offer || offer.status !== "offered" || offer.figure_id !== plan.figure_id || offer.fingerprint !== plan.fingerprint) throw new ProjectError("CONFLICT", "Offer is absent or changed; refresh the plan");
+    const start = Date.parse(offer.offered_at), deadline = Date.parse(offer.deadline_at);
+    if (offer.schema_version !== 1 || !Number.isFinite(start) || deadline !== start + FIGURE_CHOICE_TIMEOUT_MS || now < deadline) throw new ProjectError("INVALID_INPUT", "The observed 30-second choice window has not expired");
+    selected = plan.default_backend;
+    source = "timeout_default";
+  } else if (mode === "default") {
+    if (plan.timed_selection) throw new ProjectError("INVALID_INPUT", "Timed host requires an offer/timeout or a user selection");
+    selected = plan.default_backend;
+    source = "immediate_default";
+  } else if (mode === "reuse") {
+    if (!previous || !plan.reusable_backend) throw new ProjectError("MISSING_CAPABILITY", "Saved choice cannot execute; refresh selection");
+    selected = plan.reusable_backend;
+    source = previous.source;
+    reference = previous.decision_reference;
+  } else throw new ProjectError("INVALID_INPUT", "Use selection mode user, timeout, default or reuse");
+  if (!selected || !plan.candidates.some((c) => c.backend === selected && c.available)) throw new ProjectError("MISSING_CAPABILITY", "Selected/default backend is not available; configure a tool or choose another backend");
+  return {
+    schema_version: 1,
+    figure_id: plan.figure_id,
+    status: "selected",
+    backend: selected,
+    execution: capabilities.backends[selected].execution,
+    source,
+    decision_reference: reference,
+    selected_at: mode === "reuse" ? previous.selected_at : new Date(now).toISOString(),
+    ...mode === "reuse" && previous?.failure_reference ? { failure_reference: previous.failure_reference, failure_digest: previous.failure_digest } : {},
+    ...mode === "reuse" ? { revalidated_at: new Date(now).toISOString() } : {},
+    capabilities_digest: plan.capabilities_digest,
+    spec_digest: "",
+    host: capabilities.host,
+    session_id: capabilities.session_id,
+    review_ready: plan.review_ready,
+    reasons: plan.reasons
+  };
+}
+
+// src/core/figures.ts
 var ID = /^[a-zA-Z][a-zA-Z0-9_-]{0,79}$/;
 var validId = (value) => typeof value === "string" && ID.test(value);
 function exactKeys(value, names) {
@@ -2888,119 +3027,10 @@ function inspectFigure(root, id) {
   const spec = readFileSync4(projectFile(root, `${base}/figure-spec.json`), "utf8");
   validateFigureSpec(JSON.parse(spec));
   const p = JSON.parse(readFileSync4(projectFile(root, `${base}/provenance.json`), "utf8"));
-  const current = digest(spec) === p.spec_digest && digest(readFileSync4(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync4(projectFile(root, "MAIN.md"))) === p.main_digest && (!p.selection_path || digest(readFileSync4(projectFile(root, p.selection_path))) === p.selection_digest) && (!p.source_path || digest(readFileSync4(projectFile(root, p.source_path))) === p.source_digest);
+  const selection = p.selection_path ? readFileSync4(projectFile(root, p.selection_path), "utf8") : void 0;
+  const selectionCurrent = selection === void 0 || (p.selection_review_digest ? selectionReviewDigest(JSON.parse(selection)) === p.selection_review_digest : digest(selection) === p.selection_digest);
+  const current = digest(spec) === p.spec_digest && digest(readFileSync4(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync4(projectFile(root, "MAIN.md"))) === p.main_digest && selectionCurrent && (!p.source_path || digest(readFileSync4(projectFile(root, p.source_path))) === p.source_digest);
   return { ...p, review: current ? p.review : { ...p.review, status: "pending" }, review_current: current };
-}
-
-// src/core/figure-selection.ts
-var FIGURE_BACKENDS = ["svg", "mermaid", "plantuml", "imagegen"];
-var FIGURE_CHOICE_TIMEOUT_MS = 3e4;
-var FIGURE_CAPABILITY_MAX_AGE_MS = 30 * 6e4;
-var text = (value) => typeof value === "string" && !!value.trim();
-function validateFigureCapabilities(input, now = Date.now()) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) throw new ProjectError("INVALID_INPUT", "Figure capability observations required");
-  const c = input;
-  const age = now - Date.parse(c.observed_at);
-  if (c.schema_version !== 1 || !text(c.host) || !text(c.session_id) || !Number.isFinite(age) || age < 0 || age > FIGURE_CAPABILITY_MAX_AGE_MS) throw new ProjectError("MISSING_CAPABILITY", "Refresh figure observations for the active host/session (maximum age 30 minutes)");
-  const observation = (o) => {
-    if (!o || !["available", "unavailable", "unknown"].includes(o.status) || !text(o.evidence) || !(o.tool === null || text(o.tool)) || o.status === "available" && !text(o.tool)) throw new ProjectError("INVALID_INPUT", "Record status, actual tool and observation evidence");
-  };
-  if (!c.backends || typeof c.backends !== "object" || Object.keys(c.backends).some((k) => !FIGURE_BACKENDS.includes(k))) throw new ProjectError("INVALID_INPUT", "Invalid backend observations");
-  for (const backend of FIGURE_BACKENDS) {
-    const o = c.backends[backend];
-    observation(o);
-    if (!["local", "remote"].includes(o.execution) || ["svg", "mermaid"].includes(backend) && o.execution !== "local" || backend === "imagegen" && o.execution !== "remote") throw new ProjectError("INVALID_INPUT", "Invalid backend execution boundary");
-  }
-  observation(c.preview);
-  observation(c.timed_selection);
-  return c;
-}
-function planFigure(spec, specDigest, config, capabilities, capabilitiesDigest, previous) {
-  const candidates = FIGURE_BACKENDS.map((backend) => ({
-    backend,
-    available: capabilities.backends[backend].status === "available",
-    execution: capabilities.backends[backend].execution,
-    reason: capabilities.backends[backend].evidence
-  }));
-  const isLocalReady = (backend) => candidates.some((c) => c.backend === backend && c.available && c.execution === "local");
-  const reusable = previous?.status === "selected" && FIGURE_BACKENDS.includes(previous.backend) && isLocalReady(previous.backend) ? previous.backend : null;
-  const preferred = config.figures.preferredBackend;
-  const preferredLocal = preferred !== "auto" && isLocalReady(preferred) ? preferred : null;
-  const defaultBackend = reusable ?? preferredLocal ?? FIGURE_BACKENDS.find(isLocalReady) ?? null;
-  const reasons = [];
-  if (preferred !== "auto" && !preferredLocal && reusable === null) reasons.push(`Preferred ${preferred} is unavailable or requires scoped external approval; choosing an available local default`);
-  if (previous && reusable === null) reasons.push("Saved backend is unavailable or remote; fresh selection required");
-  if (!defaultBackend) reasons.push("No available local default; choose/configure a backend before drawing this figure");
-  if (capabilities.preview.status !== "available") reasons.push("Preview unavailable or unknown; draft allowed, visual review remains pending");
-  return {
-    figure_id: spec.figure_id,
-    preferred_backend: preferred,
-    default_backend: defaultBackend,
-    reusable_backend: reusable,
-    candidates,
-    review_ready: capabilities.preview.status === "available",
-    timed_selection: capabilities.timed_selection.status === "available",
-    timeout_ms: FIGURE_CHOICE_TIMEOUT_MS,
-    verification: "host_reported",
-    capabilities_digest: capabilitiesDigest,
-    fingerprint: digest(JSON.stringify({ specDigest, capabilitiesDigest, config, previous: previous?.backend ?? null })),
-    reasons
-  };
-}
-function offerFigure(plan, now = Date.now()) {
-  if (!plan.timed_selection) throw new ProjectError("MISSING_CAPABILITY", "Host has no observed timed selection; use immediate default");
-  return {
-    schema_version: 1,
-    figure_id: plan.figure_id,
-    status: "offered",
-    offered_at: new Date(now).toISOString(),
-    deadline_at: new Date(now + FIGURE_CHOICE_TIMEOUT_MS).toISOString(),
-    fingerprint: plan.fingerprint
-  };
-}
-function chooseFigure(plan, capabilities, mode, backend, decisionReference, offer, previous, now = Date.now()) {
-  let selected;
-  let source;
-  let reference = null;
-  if (mode === "user") {
-    if (!FIGURE_BACKENDS.includes(backend) || !text(decisionReference)) throw new ProjectError("INVALID_INPUT", "User selection needs backend and decision_reference");
-    selected = backend;
-    source = "user";
-    reference = decisionReference;
-  } else if (mode === "timeout") {
-    if (!offer || offer.status !== "offered" || offer.figure_id !== plan.figure_id || offer.fingerprint !== plan.fingerprint) throw new ProjectError("CONFLICT", "Offer is absent or changed; refresh the plan");
-    const start = Date.parse(offer.offered_at), deadline = Date.parse(offer.deadline_at);
-    if (!plan.timed_selection || !Number.isFinite(start) || deadline !== start + FIGURE_CHOICE_TIMEOUT_MS || now < deadline) throw new ProjectError("INVALID_INPUT", "The observed 30-second choice window has not expired");
-    selected = plan.default_backend;
-    source = "timeout_default";
-  } else if (mode === "default") {
-    if (plan.timed_selection) throw new ProjectError("INVALID_INPUT", "Timed host requires an offer/timeout or a user selection");
-    selected = plan.default_backend;
-    source = "immediate_default";
-  } else if (mode === "reuse") {
-    if (!previous || !plan.reusable_backend) throw new ProjectError("MISSING_CAPABILITY", "Saved choice cannot execute; refresh selection");
-    selected = plan.reusable_backend;
-    source = previous.source;
-    reference = previous.decision_reference;
-  } else throw new ProjectError("INVALID_INPUT", "Use selection mode user, timeout, default or reuse");
-  if (!selected || !plan.candidates.some((c) => c.backend === selected && c.available)) throw new ProjectError("MISSING_CAPABILITY", "Selected/default backend is not available; configure a tool or choose another backend");
-  return {
-    schema_version: 1,
-    figure_id: plan.figure_id,
-    status: "selected",
-    backend: selected,
-    execution: capabilities.backends[selected].execution,
-    source,
-    decision_reference: reference,
-    selected_at: mode === "reuse" ? previous.selected_at : new Date(now).toISOString(),
-    ...mode === "reuse" ? { revalidated_at: new Date(now).toISOString() } : {},
-    capabilities_digest: plan.capabilities_digest,
-    spec_digest: "",
-    host: capabilities.host,
-    session_id: capabilities.session_id,
-    review_ready: plan.review_ready,
-    reasons: plan.reasons
-  };
 }
 
 // src/runtime/figure-selection.ts
@@ -3025,7 +3055,7 @@ function load(root, params, expected) {
   const config = effectiveConfig(typeof params.workspace === "string" ? resolve4(params.workspace) : void 0, root, params);
   const choicePath = `${base}/selection.json`, offerPath = `${base}/choice-offer.json`;
   const previous = existsSync4(projectFile(root, choicePath)) ? JSON.parse(readFileSync5(projectFile(root, choicePath), "utf8")) : void 0;
-  if (previous && (previous.schema_version !== 1 || previous.figure_id !== spec.figure_id || previous.status !== "selected" || !["user", "timeout_default", "immediate_default"].includes(previous.source) || !Number.isFinite(Date.parse(previous.selected_at)))) throw new ProjectError("INVALID_INPUT", "Invalid saved figure selection");
+  if (previous && (previous.schema_version !== 1 || previous.figure_id !== spec.figure_id || previous.status !== "selected" || !["user", "timeout_default", "immediate_default", "failure_default"].includes(previous.source) || !Number.isFinite(Date.parse(previous.selected_at)))) throw new ProjectError("INVALID_INPUT", "Invalid saved figure selection");
   if (expected) {
     if (existsSync4(projectFile(root, offerPath))) requiredInput(expected, offerPath);
     for (const path4 of [
@@ -3044,14 +3074,24 @@ function figurePlan(root, params) {
 }
 function figureSelectionMutation(root, operation, params, expected) {
   const data = load(root, params, expected);
+  const pending = existsSync4(projectFile(root, data.offerPath)) ? JSON.parse(readFileSync5(projectFile(root, data.offerPath), "utf8")) : void 0;
   if (operation === "figure.offer") {
-    const offer2 = offerFigure(data.plan);
-    return { files: { [data.offerPath]: json(offer2) }, data: { offer: offer2, plan: data.plan } };
+    const offer = offerFigure(data.plan, Date.now(), pending);
+    return { files: { [data.offerPath]: json(offer) }, data: { offer, plan: data.plan } };
   }
-  const offer = params.mode === "timeout" && existsSync4(projectFile(root, data.offerPath)) ? JSON.parse(readFileSync5(projectFile(root, data.offerPath), "utf8")) : void 0;
-  if (offer) requiredInput(expected, data.offerPath);
-  const choice = chooseFigure(data.plan, data.capabilities, params.mode, params.backend, params.decision_reference, offer, data.previous);
-  const nextSpec = choice.backend === data.spec.backend ? data.specText : json({ ...data.spec, backend: choice.backend, formats: choice.backend === "svg" && !data.spec.formats.includes("svg") ? [...data.spec.formats, "svg"] : data.spec.formats });
+  const choice = operation === "figure.fallback" ? fallback(root, params, expected, data) : chooseFigure(
+    data.plan,
+    data.capabilities,
+    params.mode,
+    params.backend,
+    params.decision_reference,
+    params.mode === "timeout" ? pending : void 0,
+    data.previous
+  );
+  const formats = figureFormats(choice.backend, data.spec.formats);
+  const changed = choice.backend !== data.spec.backend || JSON.stringify(formats) !== JSON.stringify(data.spec.formats);
+  const nextSpec = changed ? json({ ...data.spec, backend: choice.backend, formats }) : data.specText;
+  if (JSON.stringify(formats) !== JSON.stringify(data.spec.formats)) choice.reasons.push(`Output formats adjusted for ${choice.backend}: ${formats.join(", ")}`);
   choice.spec_digest = digest(nextSpec);
   const saved = { ...choice, main_digest: data.mainDigest };
   return { files: {
@@ -3059,6 +3099,26 @@ function figureSelectionMutation(root, operation, params, expected) {
     [params.spec_path]: nextSpec,
     ...existsSync4(projectFile(root, data.offerPath)) ? { [data.offerPath]: null } : {}
   }, data: saved };
+}
+function fallback(root, params, expected, data) {
+  const selected = assertFigureSelection(root, params.spec_path, expected);
+  if (selected.execution !== "local" || selected.backend === "svg" || selected.source === "failure_default" || data.capabilities.backends.svg.status !== "available") throw new ProjectError("RENDER_FAILED", "Automatic local fallback unavailable; stop this figure and report the failure");
+  const path4 = `${data.base}/render-failure.json`;
+  if (params.failure_path !== path4) throw new ProjectError("INVALID_INPUT", "Use the canonical render-failure.json path");
+  requiredInput(expected, path4);
+  const failure = JSON.parse(readFileSync5(projectFile(root, path4), "utf8"));
+  if (!failure || typeof failure !== "object" || Array.isArray(failure)) throw new ProjectError("INVALID_INPUT", "Local failure evidence must be an object");
+  const start = Date.parse(failure.started_at), end = Date.parse(failure.finished_at), deadline = Date.parse(failure.deadline_at);
+  if (failure.schema_version !== 1 || failure.figure_id !== selected.figure_id || failure.backend !== selected.backend || failure.selection_digest !== digest(readFileSync5(projectFile(root, data.choicePath))) || failure.spec_digest !== selected.spec_digest || failure.main_digest !== selected.main_digest || failure.execution !== "local" || failure.tool !== data.capabilities.backends[selected.backend].tool || typeof failure.evidence !== "string" || !failure.evidence.trim() || !["failed", "timeout"].includes(failure.outcome) || !Number.isFinite(start) || !Number.isFinite(end) || end < start || end > Date.now() || start < Date.parse(selected.revalidated_at ?? selected.selected_at) || deadline !== start + FIGURE_RENDER_TIMEOUT_MS || failure.outcome === "timeout" && end < deadline) throw new ProjectError("INVALID_INPUT", "Record the actual local failure with current input/choice hashes and a 60-second deadline");
+  const choice = chooseFigure(data.plan, data.capabilities, "user", "svg", "system fallback");
+  return {
+    ...choice,
+    source: "failure_default",
+    decision_reference: null,
+    failure_reference: path4,
+    failure_digest: digest(readFileSync5(projectFile(root, path4))),
+    reasons: [...choice.reasons, `Local ${selected.backend} ${failure.outcome}; one direct SVG fallback, no automatic retries`]
+  };
 }
 function assertFigureSelection(root, specPath, expected, visual = false) {
   const { spec, specText, mainDigest, capabilities, plan, choicePath, previous } = load(root, { spec_path: specPath });
@@ -3193,7 +3253,7 @@ async function runOperation(request) {
     new ProjectStore(root).recoverLock(string(params.owner_token, "owner_token"));
     return { recovered: true };
   }
-  const operations = ["project.create", "project.migrate", "workflow.advance", "path.record", "path.branch", "path.restore", "figure.register", "figure.offer", "figure.select"];
+  const operations = ["project.create", "project.migrate", "workflow.advance", "path.record", "path.branch", "path.restore", "figure.register", "figure.offer", "figure.select", "figure.fallback"];
   if (!operations.includes(request.operation)) throw new ProjectError("UNKNOWN_OPERATION", `Unknown operation: ${request.operation}`);
   const mutation = { ...request, operation_id: string(request.operation_id, "operation_id"), expected: request.expected };
   return new ProjectStore(root).mutate(mutation, async (current) => {
@@ -3230,7 +3290,7 @@ Evidence and technical details pending.
     requireCurrentState(current);
     const files = {};
     let data;
-    if (request.operation === "figure.offer" || request.operation === "figure.select") {
+    if (["figure.offer", "figure.select", "figure.fallback"].includes(request.operation)) {
       const selected = figureSelectionMutation(root, request.operation, params, request.expected);
       Object.assign(files, selected.files);
       data = selected.data;
@@ -3341,6 +3401,7 @@ Evidence and technical details pending.
         main_digest: digest(readFileSync6(projectFile(root, "MAIN.md"))),
         selection_path: `${base}/selection.json`,
         selection_digest: digest(readFileSync6(projectFile(root, `${base}/selection.json`))),
+        selection_review_digest: selectionReviewDigest(selection),
         result_path: resultPath,
         backend: spec.backend,
         tool: string(params.tool, "tool"),
@@ -3389,6 +3450,8 @@ async function runRuntime(argv, workspaceDir) {
     if (workspaceDir && request.project) {
       request.project = resolve6(workspaceDir, request.project);
       ensureUnlinkedPath(workspaceDir, request.project);
+      if (request.params !== void 0 && (!request.params || typeof request.params !== "object" || Array.isArray(request.params))) throw new ProjectError("INVALID_INPUT", "params must be an object");
+      request.params = { ...request.params, workspace: workspaceDir };
     }
     const data = await runOperation(request);
     process.stdout.write(JSON.stringify({ ok: true, data, artifacts: [], warnings: [] }) + "\n");

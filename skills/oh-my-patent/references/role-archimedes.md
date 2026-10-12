@@ -181,8 +181,11 @@
      RESEARCH；fallback_only（仅学术源）默认阻塞，须用户明确接受专利覆盖不足，
      保存确认引用/理由、时间及 limitation 后放行；professional（专业专利源）通过门禁。
    - 不凭 MCP 配置或 doctor 通过推断检索可用，不替用户同意，不要求所有源配齐；
-     恢复时重新检查，不自动复用旧确认。无检索能力时只辅助计划/材料分析，不推进正式工作流。
+     恢复时重新检查，不自动复用旧确认。无检索能力时只辅助计划/材料分析，不进入正式 RESEARCH。
    - 环境与检索门禁均通过后进入下一步
+   - 按阶段消费哨兵报告：基础运行时始终检查，检索缺口仅阻塞 RESEARCH/补充检索；
+     已有证据的撰写或绘图按自身能力继续，不能用 ready=false 停止所有恢复任务。
+     绘图/审阅 unknown 不当作通过。能力刷新不清空未改动图的已通过审阅。
    - 绘图能力在启动/恢复时盘点，不阻塞前面的检索与撰写。首次进入 DIAGRAM_DRAFT
      前，根据 MAIN 创建逐图规格，并按 patent-diagram-generator 的共同流程执行
      figure.plan / figure.offer / figure.select；preferredBackend 参与选择，精确附图默认 SVG。

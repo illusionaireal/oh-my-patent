@@ -32,6 +32,7 @@ input hashes. Keep the complete request when retrying; changed input needs a new
 | figure.plan | spec_path; optional workspace/figures config override; reads saved actual host observations |
 | figure.offer | spec_path; persists a real 30-second deadline on a timed host |
 | figure.select | spec_path, mode user/timeout/default/reuse; user mode needs backend and decision_reference |
+| figure.fallback | spec_path, failure_path; one local renderer failure may switch to available direct SVG |
 | figure.register | spec_path, result_path, tool, optional source_path, provider, model, review |
 | figure.inspect | figure_id; stale hashes yield pending review |
 
@@ -66,13 +67,23 @@ figure.plan reads preferredBackend (task > project > workspace > defaults) and r
 host_reported candidates. Per-figure saved executable local choices take precedence;
 otherwise the executable local preference, then SVG, then another local renderer.
 Remote tools are never automatic defaults; choice is not content disclosure or budget approval.
+Installed plugins automatically supply the workspace configuration context. Creation saves
+the effective initial configuration; later task overrides take precedence over that saved
+project configuration, which takes precedence over the workspace. Portable callers supply
+workspace explicitly when they want to inherit its configuration.
 On a timed host, figure.offer saves choice-offer.json, then figure.select mode=timeout
-is accepted only after its actual 30-second deadline with an unchanged plan. Without a
+is accepted only after its actual 30-second deadline with unchanged spec/MAIN/preference
+and host/session. Repeated offers retain that deadline. Observation timestamps, evidence
+and candidate availability may refresh without restarting the clock; expiry selects the
+currently available local default. Refresh before offering when refresh_before_offer=true.
+If observations expire during interruption, refresh them and consume the original offer;
+never use stale observations or claim a new choice window elapsed. Without a
 real timed host interaction, mode=default selects immediately (immediate_default).
 Mode=user records a supplied real decision reference; mode=reuse revalidates an existing
 local choice without manufacturing a new decision. Saved selection.json records source,
 capability/spec/MAIN hashes, host/session, limitations and review readiness. Select updates
-spec.backend atomically; unavailable choices block the affected figure. Per-figure sources
+spec.backend and compatible output formats atomically (SVG: svg; renderers: svg/png;
+image tools: png/jpg/webp). Unavailable choices block the affected figure. Per-figure sources
 can differ. Refresh observations on resume; reselect/reuse to update the binding.
 
 Selection mutations need current spec/MAIN/capability/config (if present), prior selection
@@ -88,6 +99,24 @@ preview), provider, consent_reference under `.patent/disclosures/consents/` and 
 acknowledged disclosure_reference under `.patent/disclosures/events/`; hash all three.
 The saved event must match the consent's payload, recipient, purpose, tool, operation
 and approval period. This validates saved evidence, not the host tool's execution.
+
+Registration retains the full selection digest for audit and a separate content/execution
+digest for review freshness. Reuse after observation/session refresh preserves passed
+review when backend/execution/spec/MAIN/source/result are unchanged. Older provenance
+without the separate digest keeps its original conservative full-selection hash check.
+
+Local renderer calls have a 60-second host-enforced deadline and no automatic retry.
+Persist figures/<id>/render-failure.json with schema_version=1, figure_id, backend,
+execution=local, tool, evidence, outcome=failed/timeout, started_at, finished_at,
+deadline_at (start+60 seconds), selection_digest, spec_digest, main_digest. Capture start
+before the actual call and hash the complete current selection. After observed failure,
+figure.fallback requires that file's expected digest plus the usual selection inputs;
+it switches once to available SVG with source=failure_default and no human decision claim.
+An SVG failure, unavailable SVG or remote failure stops that figure and reports the
+limitation. Do not loop or restart a renderer automatically; explicit repair/reselection
+starts a new user-directed attempt. A host lacking bounded local execution uses direct
+SVG. Runtime validates saved evidence/deadlines; it does not run/cancel host tools or
+certify that they were called. Remote consent/attempt/ledger rules still apply separately.
 
 For DONE with no figures, pass figures_not_required=true and human_decision=true.
 To omit an optional figure, pass omitted_figures=[{figure_id,reason}], the specification

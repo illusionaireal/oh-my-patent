@@ -77,3 +77,10 @@ PlantUML 记录实际本地或远程路径。观测超过 30 分钟需刷新。
 不得通过视觉审阅。默认/超时不授权远程披露或付费，原保密和人类最终验收继续执行。
 共享入口是同一安装态脚本加 --runtime --input request.json，可运行 figure.plan /
 figure.offer / figure.select，接口和 Skill 相同；不依赖源码或全局 CLI。
+
+按当前阶段报告能力：基础运行时、检索、草稿绘图和视觉审阅分别记录。插件 JSON 的
+stageReadiness.runtime 为基础门禁，research.configurationReady 仅证明检索配置；
+diagramDraft/diagramFinal 为 unknown，必须结合宿主真实观察。ready 保留原来的启动/
+RESEARCH 综合语义，不能直接作为所有恢复任务的总开关。检索缺口阻塞 RESEARCH 或
+补充证据检索；已有证据的撰写/绘图可在自身能力通过后继续，不能声称已完成新检索。
+观测刷新和重复 offer 不重置选择期限；refresh_before_offer=true 时先刷新再提供窗口。
