@@ -18,14 +18,17 @@ OpenCode. Choose one installation method and the command or location for your ho
 With Git and Node.js >=22.20, run this in your patent workspace:
 
 ```sh
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+npx skills add illusionaireal/oh-my-patent
 ```
 
-The installer detects hosts and offers selection when needed. Choose Claude Code,
-Codex or OpenCode, and choose Project for a complete copy in the current workspace.
+The installer discovers the packaged `oh-my-patent` Skill and detects hosts.
+When prompted, choose Claude Code, Codex or OpenCode, Project scope and Copy
+for a complete copy in the current workspace. Append `--skill oh-my-patent --copy`
+to select the Skill and copy method explicitly.
 Append `--global` for user-level installation across projects, or `--agent <host>`
 to select a host explicitly (`claude-code`, `codex` or `opencode`).
-No global oh-my-patent CLI is required.
+No global oh-my-patent CLI is required. This source follows the repository's default
+branch; npm package versions follow published releases.
 
 ### ZIP or npm archive
 

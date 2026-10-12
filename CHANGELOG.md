@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.2] - Unreleased
+
+### Fixed
+
+- Include the merged sentinel and figure fixes from [#12](https://github.com/illusionaireal/oh-my-patent/pull/12) and [#13](https://github.com/illusionaireal/oh-my-patent/pull/13): installed checks, host-specific MCP configuration and explicit retrieval coverage gates.
+- Report runtime, research and drawing readiness separately; missing Mermaid no longer blocks startup.
+- Share per-figure selection across plugin and Skill, with 30-second timed defaults or immediate local defaults on hosts without timed interaction.
+- Preserve unchanged figure reviews and existing choice deadlines when capabilities refresh; normalize backend output formats and inherit workspace configuration in installed runtimes.
+- Allow one recorded local-render failure fallback to available SVG, with a host-enforced 60-second render deadline. Remote calls and spending still require explicit approval.
+
+### Changed
+
+- Set package, lockfile, plugin and generated Skill versions to `0.4.2`; the standalone npm Skill inherits this version.
+- Use `npx skills add illusionaireal/oh-my-patent` in both READMEs, the installation guide and standalone package README, with explicit copy and host options documented separately.
+- Replace the fixed README ZIP link with the published Releases page and explain repository-default-branch versus npm release installation.
+- Document capability checks, timeout defaults, upgrade steps and verification limits in [bilingual release notes](docs/releases/0.4.2.md).
+
+Reinstall plugin integrations or update the complete Skill directory to receive the changes.
+Legacy project migration remains explicit; final figure review and human acceptance remain required.
+This entry prepares the next release; it does not record an npm or GitHub Release publication.
+
 ## [0.4.0] - 2026-10-05
 
 ### Added

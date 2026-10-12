@@ -62,21 +62,25 @@ use `npx oh-my-patent@latest <command>` or install the CLI globally as above.
 Use the [Skills CLI](https://github.com/vercel-labs/skills) with Git and Node.js >=22.20:
 
 ```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+npx skills add illusionaireal/oh-my-patent
 ```
 
-The installer detects hosts and offers selection when needed. Choose Claude Code,
-Codex or OpenCode, and choose **Project** to copy the complete Skill and runtime into
-the current workspace. Open it in the selected host and select `oh-my-patent`.
+The installer discovers the packaged `oh-my-patent` Skill and detects hosts.
+When prompted, select Claude Code, Codex or OpenCode, **Project** scope and **Copy**
+to install the complete Skill and runtime into the current workspace. Append
+`--skill oh-my-patent --copy` to select the Skill and copy method explicitly.
+Open the workspace in the selected host and select `oh-my-patent`.
 For use across projects, append `--global` for user-level installation.
-No global oh-my-patent CLI is required.
+No global oh-my-patent CLI is required. This command follows the repository's
+default branch; npm `@latest` follows the latest published package.
 
 <details>
 <summary>Other Skill installation methods: ZIP, project CLI and npm archive</summary>
 
 **ZIP download — manual installation**
 
-Download and extract the [0.4.1 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.1/oh-my-patent-skill-0.4.1.zip).
+Open [GitHub Releases](https://github.com/illusionaireal/oh-my-patent/releases),
+choose a published version and download its `oh-my-patent-skill-VERSION.zip` asset.
 Copy the complete `oh-my-patent` directory inside the archive to the Skill
 location for your host below. The runtime is included; no source build is needed.
 The Release also includes `SHA256SUMS` for checking downloaded archives.
@@ -111,6 +115,22 @@ installation method for updates and removal; see the [installation guide](docs/s
 </details>
 
 Environment checks and host-specific manual commands: [sentinel guide](docs/sentinel.md).
+
+### Retrieval and drawing readiness
+
+The sentinel checks the runtime and reports research and drawing readiness separately.
+Research needs an available retrieval source; academic-only retrieval requires explicit
+acceptance of its limits. A configured MCP server still needs an actual host-tool check.
+Existing evidence can support independent drafting or drawing while a retrieval gap is resolved.
+
+For each figure, the workflow reuses an available saved local choice, then tries the
+local preference, direct SVG or another available local renderer. Missing Mermaid
+does not block startup. If the host supports timed selection, no response within
+30 seconds uses the current local default; otherwise the default is immediate.
+Hosts bound local rendering to 60 seconds; a recorded failure or timeout can switch
+once from a local renderer to available SVG. No available local option stops that figure.
+Defaults do not authorize remote calls or spending. Drafts can proceed without preview,
+but final required figures need preview, current review and human acceptance.
 
 ### Start a project
 
@@ -176,7 +196,7 @@ The [agent reference](./docs/agents-en.md) lists the 14 registered agents, 6 ski
 | Read next | Contents |
 |---|---|
 | [Installation modes](./docs/skill.md) | Plugin and Skill setup, updates, removal and migration |
-| [Release notes](./docs/releases/0.4.1.md) | Version 0.4.1 changes |
+| [Release notes](./docs/releases/0.4.2.md) | Version changes and upgrade guidance |
 | [Usage and CLI](./docs/usage-en.md) | Installation, platform differences, all CLI domains, and uninstall behavior |
 | [Workflow](./docs/workflow-diagram-en.md) | Ten stages, review loops, and threshold behavior |
 | [Agents and collaboration](./docs/agents-en.md) | Registered IDs, skills, commands, and collaboration patterns |

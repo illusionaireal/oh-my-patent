@@ -60,20 +60,24 @@ npx oh-my-patent@latest adapt install
 使用 [Skills CLI](https://github.com/vercel-labs/skills)，需要 Git 和 Node.js >=22.20：
 
 ```bash
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+npx skills add illusionaireal/oh-my-patent
 ```
 
-安装器会检测宿主，并在需要时提示选择。选择 Claude Code、Codex 或 OpenCode，
-安装范围选择 **Project**，即可将完整 Skill 与运行时复制到当前工作区。
+安装器会发现已打包的 `oh-my-patent` Skill 并检测宿主。出现提示时，选择
+Claude Code、Codex 或 OpenCode，安装范围选择 **Project**，安装方式选择 **Copy**，
+即可将完整 Skill 与运行时复制到当前工作区。
+也可追加 `--skill oh-my-patent --copy`，显式指定 Skill 和复制方式。
 在所选宿主中打开工作区并选择 `oh-my-patent`。
 需要跨项目使用时，可加上 `--global` 安装到用户目录。无需全局安装 oh-my-patent CLI。
+此命令跟随仓库默认分支；npm 的 `@latest` 则跟随最新已发布包。
 
 <details>
 <summary>其他 Skill 安装方式：ZIP、项目 CLI 和 npm 归档</summary>
 
 **下载 ZIP，手动安装**
 
-下载并解压[0.4.1 Skill ZIP](https://github.com/illusionaireal/oh-my-patent/releases/download/0.4.1/oh-my-patent-skill-0.4.1.zip)，
+打开 [GitHub Releases](https://github.com/illusionaireal/oh-my-patent/releases)，
+选择已发布版本，下载并解压其 `oh-my-patent-skill-VERSION.zip` 附件，
 将其中完整的 `oh-my-patent` 目录复制到下表中对应宿主的 Skill 位置。
 目录已包含运行时，无需构建源码。
 Release 同时提供 `SHA256SUMS`，用于校验下载的归档。
@@ -107,6 +111,19 @@ Skills CLI 也可加上 `--agent <host>` 显式选择宿主。
 </details>
 
 环境检查与各宿主的手动检查命令详见[哨兵说明](docs/sentinel.md)。
+
+### 检索与绘图能力检查
+
+哨兵检查基础运行环境，并分别报告检索和绘图能力。检索需要可用来源；仅有学术检索时，
+需要用户明确接受其局限。MCP 配置存在后，仍需检查宿主实际工具是否可用。
+已有证据支持的独立撰写或绘图，可以在检索能力缺口待解决时继续。
+
+每张图优先复用仍可执行的已保存本地方案，再采用本地偏好、直接 SVG 或其他可用本地渲染器。
+缺少 Mermaid 不阻塞启动。宿主支持计时选择时，30 秒未响应就采用当前本地默认；
+不支持计时交互时立即默认。宿主将本地渲染限制在 60 秒内；记录的失败或超时可让本地渲染器
+转用一次可用 SVG。没有可用本地方案时停止该图。
+默认选择不授权远程调用或付费。没有预览能力仍可画草稿，最终必需附图则需要预览、
+当前有效的审阅和人工验收。
 
 ### 开始使用
 
@@ -169,7 +186,7 @@ Archimedes 会引导你收集材料、发展创新点、撰写交底书并完成
 | 接下来阅读 | 内容 |
 |---|---|
 | [安装模式](./docs/skill.md) | 插件与 Skill 的安装、更新、卸载和迁移 |
-| [发布说明](./docs/releases/0.4.1.md) | 0.4.1 版本变更 |
+| [发布说明](./docs/releases/0.4.2.md) | 版本变更与升级说明 |
 | [使用指南与 CLI](./docs/usage.md) | 安装、平台差异、全部 CLI 命令域与卸载行为 |
 | [工作流](./docs/workflow-diagram.md) | 十个阶段、审查回路与阈值行为 |
 | [智能体与协作](./docs/agents.md) | 注册 ID、技能、命令和协作模式 |
