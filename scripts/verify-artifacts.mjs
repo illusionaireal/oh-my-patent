@@ -1,10 +1,11 @@
 // Smoke: npm run verify:artifacts (after package:skill). Uses system tar for npm tgz.
-import { readFileSync, readdirSync, mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync, rmSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { standalonePublishPlan } from './standalone-skill-package.mjs';
+import { pathToFileURL } from 'node:url';
 const artifacts = resolve('release-artifacts');
 const manifest = JSON.parse(readFileSync(join(artifacts,'release-manifest.json'),'utf8'));
 const sha = data => createHash('sha256').update(data).digest('hex');
@@ -38,6 +39,23 @@ try {
   for (const [kind, count] of [['agents', 14], ['skills', 6], ['commands', 9]]) {
     if (plugin[kind].length !== count) throw new Error(`Original plugin ${kind} inventory changed`);
     for (const entry of plugin[kind]) readFileSync(join(root, 'package', entry.file));
+  }
+  // Load the generators from the actual npm archive, not the source checkout.
+  const packedImport = name => import(pathToFileURL(join(root, 'package/dist', name)).href);
+  const { loadPortableDef } = await packedImport('adapters/loader.js');
+  const packedWorkspace = join(root, 'installed plugin 中文 space'); mkdirSync(packedWorkspace);
+  const definition = await loadPortableDef({ pluginDir: join(root, 'package'), workspaceDir: packedWorkspace });
+  if (definition.agents.find(agent => agent.id === 'patent-init-sentinel')?.role !== 'subagent') throw new Error('Sentinel is not a subagent');
+  const checkScripts = [];
+  for (const [host, module, exported] of [['claude-code', 'claude', 'ClaudeCodeAdapter'], ['codex', 'codex', 'CodexAdapter'], ['opencode', 'opencode', 'OpenCodeAdapter']]) {
+    const Adapter = (await packedImport(`adapters/${module}/index.js`))[exported];
+    const generated = await new Adapter().generate(definition, {});
+    for (const text of generated.files.values()) if (text.includes('{{PATENT_CHECK_SCRIPT}}')) throw new Error('Unresolved checker prompt');
+    const name = `.oh-my-patent/runtime/${host}/check.mjs`;
+    const contents = generated.files.get(join('.oh-my-patent', 'runtime', host, 'check.mjs'));
+    if (!contents) throw new Error(`Missing installed checker: ${host}`);
+    const destination = join(packedWorkspace, name); mkdirSync(join(destination, '..'), { recursive: true }); writeFileSync(destination, contents);
+    checkScripts.push([host, destination]);
   }
   const script = join(root,'package/skills/oh-my-patent/scripts/runtime.mjs');
   const doctor = JSON.parse(execFileSync(process.execPath,[script,'--doctor'],{cwd:root,encoding:'utf8'}));
@@ -91,5 +109,13 @@ try {
   if (standaloneCreate.status !== 0 || !JSON.parse(standaloneCreate.stdout).ok) throw new Error('Standalone runtime project creation failed');
   // Verify the Skill tarball/dist-tag selection and stable host gate for every version.
   standalonePublishPlan(resolve('.'), artifacts, process.env.GITHUB_SHA);
-  console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,skill_tarball:standalone.tarball,skill_npm_files:standaloneCount,zip:zipName,node:process.versions.node}));
+  // Simulate a vanished npm/npx package location; the installed scripts must stand alone.
+  renameSync(join(root, 'package'), join(root, 'removed package cache'));
+  for (const [host, script] of checkScripts) {
+    const checked = spawnSync(process.execPath, [script, '--json'], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '' } });
+    if (checked.status !== 0) throw new Error(`Installed ${host} checker failed: ${checked.stdout} ${checked.stderr}`);
+    const report = JSON.parse(checked.stdout);
+    if (report.workspaceDir !== packedWorkspace || report.mcpVerification !== 'configuration_only' || report.ready !== false || !report.timestamp) throw new Error(`Incorrect installed ${host} report`);
+  }
+  console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,skill_tarball:standalone.tarball,skill_npm_files:standaloneCount,zip:zipName,node:process.versions.node,installed_check_hosts:checkScripts.map(([host]) => host)}));
 } finally { rmSync(root,{recursive:true,force:true}); }

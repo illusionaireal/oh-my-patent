@@ -176,10 +176,13 @@
 - 不得虚构子代理材料；原生调用不可用时明确标注顺序检查及证据缺口。
 
 建议调用顺序（最小闭环）：
-0) 进入 RESEARCH 前，使用实际原生子代理工具调用 `patent-init-sentinel` 检测环境
-   - 如果检测到 MCP 未配置，引导用户完成配置后再继续
-   - 用户可选择跳过配置直接开始检索（缺失 MCP 只影响部分检索能力）
-   - 环境就绪后进入下一步
+0) 首次进入 RESEARCH 前及恢复项目时，必须加载 `role-patent-init-sentinel.md` 检测环境；有实际原生子代理工具时委派，否则明确记录顺序检查。返回真实 doctor JSON/宿主观测，由主编排器保存 `references/init-report.json`；执行失败或未知项不得报告通过
+   - 按实际获准检索工具记录 retrievalCoverage：none（零源）或 unknown 阻塞正式
+     RESEARCH；fallback_only（仅学术源）默认阻塞，须用户明确接受专利覆盖不足，
+     保存确认引用/理由、时间及 limitation 后放行；professional（专业专利源）通过门禁。
+   - 不凭 MCP 配置或 doctor 通过推断检索可用，不替用户同意，不要求所有源配齐；
+     恢复时重新检查，不自动复用旧确认。无检索能力时只辅助计划/材料分析，不推进正式工作流。
+   - 环境与检索门禁均通过后进入下一步
 1) 使用实际原生子代理工具调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```

@@ -37,12 +37,15 @@ import { ensureUnlinkedPath } from '../../core/path-safety.js';
 // Codex adapter
 // ============================================================================
 
+import { checkRuntimePath, checkRuntimeContent, renderCheckPrompt } from '../check-runtime.js';
+
 export class CodexAdapter implements ToolAdapter {
   readonly name = 'codex';
   private readonly pluginName = 'oh-my-patent';
 
   async generate(def: PortableDef, config: Record<string, unknown>): Promise<GenerateResult> {
     const files = new Map<string, string>();
+    files.set(checkRuntimePath('codex'), checkRuntimeContent());
     const instructions: string[] = [];
     const pluginRoot = join('plugins', this.pluginName);
 
@@ -82,6 +85,7 @@ export class CodexAdapter implements ToolAdapter {
       'Copy the generated files to your project root directory:',
       '  - AGENTS.md  → <project-root>/AGENTS.md',
       '  - codex.json → <project-root>/codex.json',
+      '  - .oh-my-patent/runtime/codex/ → <project-root>/.oh-my-patent/runtime/codex/',
       '  - .codex/    → <project-root>/.codex/',
       '  - .agents/plugins/marketplace.json → <project-root>/.agents/plugins/marketplace.json',
       `  - plugins/${this.pluginName}/ → <project-root>/plugins/${this.pluginName}/`,
@@ -99,6 +103,7 @@ export class CodexAdapter implements ToolAdapter {
       'The orchestration logic is embedded in AGENTS.md, and codex.json is a manifest for wrappers.',
     );
 
+    for (const [path, content] of files) files.set(path, renderCheckPrompt(content, 'codex'));
     return { files, instructions };
   }
 
@@ -614,7 +619,7 @@ export class CodexAdapter implements ToolAdapter {
   }
 
   getGeneratedFilePaths(def: PortableDef): string[] {
-    const paths: string[] = [];
+    const paths: string[] = [checkRuntimePath('codex')];
     const pluginRoot = join('plugins', this.pluginName);
 
     for (const agent of def.agents) {
@@ -654,6 +659,7 @@ export class CodexAdapter implements ToolAdapter {
   getManagedDirectories(): string[] {
     const pluginRoot = join('plugins', this.pluginName);
     return [
+      join('.oh-my-patent', 'runtime', 'codex'),
       join('.codex', 'agents'),
       join('.codex', 'commands'),
       join('.codex', 'skills'),
@@ -714,6 +720,9 @@ export class CodexAdapter implements ToolAdapter {
     };
 
     const pluginRoot = join('plugins', this.pluginName);
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent', 'runtime', 'codex'), '.oh-my-patent/runtime/codex/');
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent', 'runtime'), '.oh-my-patent/runtime/');
+    tryRmdir(resolve(workspaceDir, '.oh-my-patent'), '.oh-my-patent/');
     tryRmdir(resolve(workspaceDir, pluginRoot, 'skills'), `${pluginRoot}/skills/`);
     tryRmdir(resolve(workspaceDir, pluginRoot, '.codex-plugin'), `${pluginRoot}/.codex-plugin/`);
     tryRmdir(resolve(workspaceDir, pluginRoot, 'agents'), `${pluginRoot}/agents/`);

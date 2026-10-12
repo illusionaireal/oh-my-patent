@@ -19,11 +19,14 @@ import {
 import { stampGenerated } from '../generated-marker.js';
 import { ensureUnlinkedPath } from '../../core/path-safety.js';
 
+import { checkRuntimePath, checkRuntimeContent, renderCheckPrompt } from '../check-runtime.js';
+
 export class OpenCodeAdapter implements ToolAdapter {
   readonly name = 'opencode';
 
   async generate(def: PortableDef, _config: Record<string, unknown>): Promise<GenerateResult> {
     const files = new Map<string, string>();
+    files.set(checkRuntimePath('opencode'), checkRuntimeContent());
 
     for (const agent of def.agents) {
       files.set(join('.opencode', 'agent', `${agent.id}.md`), this.generateAgent(agent));
@@ -37,6 +40,7 @@ export class OpenCodeAdapter implements ToolAdapter {
       files.set(join('.opencode', 'skills', skill.id, 'SKILL.md'), this.generateSkill(skill));
     }
 
+    for (const [path, content] of files) files.set(path, renderCheckPrompt(content, 'opencode'));
     return {
       files,
       instructions: [
@@ -44,6 +48,7 @@ export class OpenCodeAdapter implements ToolAdapter {
         '  - .opencode/agent/ → native agents',
         '  - .opencode/command/ → slash commands',
         '  - .opencode/skills/ → on-demand skills',
+        '  - .oh-my-patent/runtime/opencode/ → installed environment checker',
         '',
         'Then run OpenCode in the workspace and use /archimedes to start the workflow.',
       ],
@@ -52,6 +57,7 @@ export class OpenCodeAdapter implements ToolAdapter {
 
   getGeneratedFilePaths(def: PortableDef): string[] {
     return [
+      checkRuntimePath('opencode'),
       ...def.agents.map((agent) => join('.opencode', 'agent', `${agent.id}.md`)),
       ...def.commands.map((command) => join('.opencode', 'command', `${command.id}.md`)),
       ...def.skills.map((skill) => join('.opencode', 'skills', skill.id, 'SKILL.md')),
@@ -66,6 +72,7 @@ export class OpenCodeAdapter implements ToolAdapter {
    */
   getManagedDirectories(): string[] {
     return [
+      join('.oh-my-patent', 'runtime', 'opencode'),
       join('.opencode', 'agent'),
       join('.opencode', 'command'),
       join('.opencode', 'skills'),
@@ -83,7 +90,7 @@ export class OpenCodeAdapter implements ToolAdapter {
       const fullPath = resolve(workspaceDir, relPath);
       try {
         ensureUnlinkedPath(workspaceDir, fullPath);
-        if (existsSync(fullPath) && readFileSync(fullPath, 'utf-8') === this.fileContent(def, relPath)) {
+        if (existsSync(fullPath) && readFileSync(fullPath, 'utf-8') === renderCheckPrompt(this.fileContent(def, relPath), 'opencode')) {
           rmSync(fullPath, { force: true });
           filesRemoved.push(relPath);
         } else if (existsSync(fullPath)) {
@@ -95,6 +102,9 @@ export class OpenCodeAdapter implements ToolAdapter {
     }
 
     const directories = [
+      join(workspaceDir, '.oh-my-patent', 'runtime', 'opencode'),
+      join(workspaceDir, '.oh-my-patent', 'runtime'),
+      join(workspaceDir, '.oh-my-patent'),
       join(workspaceDir, '.opencode', 'agent'),
       join(workspaceDir, '.opencode', 'command'),
       ...def.skills.map((skill) => join(workspaceDir, '.opencode', 'skills', skill.id)),
@@ -149,6 +159,7 @@ export class OpenCodeAdapter implements ToolAdapter {
   }
 
   private fileContent(def: PortableDef, relPath: string): string {
+    if (relPath === checkRuntimePath('opencode')) return checkRuntimeContent();
     const agent = def.agents.find((item) => relPath === join('.opencode', 'agent', `${item.id}.md`));
     if (agent) return this.generateAgent(agent);
 

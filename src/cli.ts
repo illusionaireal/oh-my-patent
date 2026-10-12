@@ -85,7 +85,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { FigureSpec, defaultDiagramSpecsFile } from './core/diagram-types.js';
 import { DiagramRenderer } from './core/diagram-renderer.js';
 import { insertFigureReferences } from './core/diagram-inserter.js';
-import { runFullCheck, formatReport, runJsonCheck, getMcpStatuses, buildMcpConfig, writeMcpConfig } from './core/init-checker.js';
+import { runCheck } from './commands/check.js';
 import { ensureInside, ensureUnlinkedPath, isSafeRelPath } from './core/path-safety.js';
 import { parseArgs, isDangerousKey } from './core/cli-args.js';
 
@@ -1003,61 +1003,7 @@ Options:
         exitWithError(`Unknown diagram subcommand: ${subcommand}. Available: render, status, rerender`);
     }
   } else if (domain === 'check') {
-    const checkOpts = parseArgs(args.slice(1));
-    const workspaceDir = checkOpts['workspace-dir'] ? resolve(checkOpts['workspace-dir']) : getDefaultWorkspaceDir();
-
-    if (checkOpts.json) {
-      const report = runJsonCheck({ workspaceDir });
-      console.log(JSON.stringify(report));
-    } else if (checkOpts['mcp-status']) {
-      const statuses = getMcpStatuses(workspaceDir);
-      console.log(JSON.stringify(statuses));
-    } else if (checkOpts['mcp-add']) {
-      const mcpId = checkOpts['mcp-add'];
-      const userValues: Record<string, string> = Object.create(null);
-      if (checkOpts['mcp-key']) {
-        for (const pair of checkOpts['mcp-key'].split(',')) {
-          const [k, ...v] = pair.split('=');
-          if (k && v.length > 0) {
-            const key = k.trim();
-            if (isDangerousKey(key)) continue;
-            (userValues as Record<string, string>)[key] = v.join('=').trim();
-          }
-        }
-      }
-      const config = buildMcpConfig(mcpId, userValues);
-      if (!config) {
-        exitWithError(`Unknown MCP template: ${mcpId}. Available: ${['patsnap_search','google_scholar','uspto_patent','cnipa_patent','semantic_scholar'].join(', ')}`);
-      }
-      const result = writeMcpConfig(workspaceDir, mcpId, config);
-      const safeConfig = JSON.parse(JSON.stringify(config));
-      if (safeConfig.url && typeof safeConfig.url === 'string') {
-        safeConfig.url = safeConfig.url.replace(/apikey=[^&]+/gi, 'apikey=***');
-      }
-      // The masked copy above only protects the terminal. The file on disk still
-      // holds the key, so the plaintext warning goes to stderr where a human
-      // cannot miss it (REQ-009).
-      console.error(result.warning);
-      console.log(JSON.stringify({
-        ok: result.success,
-        mcpId,
-        message: result.message,
-        configPath: result.configPath,
-        warning: result.warning,
-        gitignoreUpdated: result.gitignoreUpdated,
-        fileMode: result.fileMode,
-        config: safeConfig,
-      }));
-    } else {
-      const report = runFullCheck({ workspaceDir });
-      const formatted = formatReport(report);
-      if (checkOpts.output) {
-        writeFileSync(resolve(checkOpts.output), formatted, 'utf-8');
-        console.log(JSON.stringify({ ok: true, ready: report.ready, blockingCount: report.blockingCount, warningCount: report.warningCount, output: checkOpts.output }));
-      } else {
-        console.log(formatted);
-      }
-    }
+    await runCheck(args.slice(1), { workspaceDir: getDefaultWorkspaceDir() });
   } else {
     exitWithError(`Unknown domain: ${domain}. Available: path, adapt, tui, diagram, check`);
   }

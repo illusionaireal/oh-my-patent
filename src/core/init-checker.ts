@@ -5,6 +5,23 @@ import { execSync } from 'child_process';
 import { stripJsonComments } from './jsonc.js';
 import { randomBytes } from 'crypto';
 
+export const INIT_CHECK_HOSTS = ['claude-code', 'codex', 'opencode'] as const;
+export type InitCheckHost = typeof INIT_CHECK_HOSTS[number];
+export interface InitCheckOptions {
+  workspaceDir?: string;
+  host?: InitCheckHost;
+  /** The user's explicit acceptance reference/reason, for this check only. */
+  degradedRetrievalConsent?: string;
+}
+
+export type RetrievalCoverage = 'none' | 'fallback_only' | 'professional';
+export interface DegradedRetrieval {
+  requested: boolean;
+  accepted: boolean;
+  reason: string | null;
+  limitation: string | null;
+}
+
 export type CheckStatus = 'ready' | 'missing' | 'warning';
 
 export interface CheckResult {
@@ -13,6 +30,8 @@ export interface CheckResult {
   status: CheckStatus;
   detail: string;
   guidance?: string;
+  blocking?: boolean;
+  retrievalRole?: 'professional' | 'fallback';
 }
 
 export interface InitReport {
@@ -24,6 +43,9 @@ export interface InitReport {
   warningCount: number;
   ready: boolean;
   summary: string;
+  retrievalCoverage: RetrievalCoverage;
+  configuredCount: number;
+  degradedRetrieval: DegradedRetrieval;
 }
 
 export interface McpUserInput {
@@ -39,7 +61,9 @@ export interface McpTemplate {
   id: string;
   name: string;
   description: string;
-  priority: 'required' | 'recommended' | 'optional';
+  /** Setup advice only; retrievalRole determines coverage and the gate. */
+  priority: 'recommended' | 'optional';
+  retrievalRole: 'professional' | 'fallback';
   transport: 'stdio' | 'streamableHttp';
   urlTemplate?: string;
   command?: string;
@@ -53,6 +77,7 @@ export interface McpStatus {
   name: string;
   description: string;
   priority: string;
+  retrievalRole: 'professional' | 'fallback';
   configured: boolean;
   template?: McpTemplate;
 }
@@ -63,6 +88,7 @@ const MCP_TEMPLATES: McpTemplate[] = [
     name: '智慧芽专利检索',
     description: '全球2.1亿+专利数据，覆盖174个专利受理局，含法律状态/同族/引证/权利要求/全文',
     priority: 'recommended',
+    retrievalRole: 'professional',
     transport: 'streamableHttp',
     urlTemplate: 'https://connect.zhihuiya.com/1458a4/mcp?apikey={apikey}',
     userInputs: [
@@ -81,7 +107,8 @@ const MCP_TEMPLATES: McpTemplate[] = [
     id: 'google_scholar',
     name: 'Google Scholar',
     description: '学术文献检索，覆盖面广，引用数据较全',
-    priority: 'required',
+    priority: 'recommended',
+    retrievalRole: 'fallback',
     transport: 'stdio',
     command: 'mcp-google-scholar',
     args: [],
@@ -92,6 +119,7 @@ const MCP_TEMPLATES: McpTemplate[] = [
     name: 'USPTO Patent',
     description: '美国专利授权与申请，权利要求质量高',
     priority: 'recommended',
+    retrievalRole: 'professional',
     transport: 'stdio',
     command: 'mcp-uspto-patent',
     args: [],
@@ -102,6 +130,7 @@ const MCP_TEMPLATES: McpTemplate[] = [
     name: 'CNIPA Patent',
     description: '中国国家知识产权局专利，本土布局参考',
     priority: 'recommended',
+    retrievalRole: 'professional',
     transport: 'stdio',
     command: 'mcp-cnipa-patent',
     args: [],
@@ -112,6 +141,7 @@ const MCP_TEMPLATES: McpTemplate[] = [
     name: 'Semantic Scholar',
     description: 'AI 学术检索 + 结构化引用图',
     priority: 'optional',
+    retrievalRole: 'fallback',
     transport: 'stdio',
     command: 'mcp-semantic-scholar',
     args: [],
@@ -155,7 +185,8 @@ function tryExec(command: string): string | null {
   }
 }
 
-function detectAdapter(workspaceDir: string): string {
+function detectAdapter(workspaceDir: string, host?: InitCheckHost): string {
+  if (host) return { 'claude-code': 'Claude Code', codex: 'Codex', opencode: 'OpenCode' }[host];
   if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) return 'Claude Code';
   if (existsSync(join(workspaceDir, '.codex')) || existsSync(join(workspaceDir, 'codex.json'))) return 'Codex';
   if (existsSync(join(workspaceDir, 'opencode.jsonc'))) return 'OpenCode';
@@ -224,7 +255,15 @@ function ensureGitignored(
   return { updated: true, gitignorePath, pattern: rel };
 }
 
-function getMcpConfigTarget(workspaceDir: string): McpConfigTarget {
+function getMcpConfigTarget(workspaceDir: string, host?: InitCheckHost): McpConfigTarget {
+  if (host) {
+    const targets: Record<InitCheckHost, McpConfigTarget> = {
+      'claude-code': { path: join(workspaceDir, '.mcp.json'), key: 'mcpServers', adapter: 'claude' },
+      codex: { path: join(workspaceDir, 'codex.json'), key: 'mcpServers', adapter: 'codex' },
+      opencode: { path: join(workspaceDir, 'opencode.jsonc'), key: 'mcp', adapter: 'opencode' },
+    };
+    return targets[host];
+  }
   if (existsSync(join(workspaceDir, '.claude')) || existsSync(join(workspaceDir, '.mcp.json'))) {
     return {
       path: join(workspaceDir, '.mcp.json'),
@@ -259,8 +298,8 @@ function parseConfig(content: string, configPath: string): Record<string, unknow
   }
 }
 
-function readMcpConfig(workspaceDir: string): Record<string, unknown> | null {
-  const target = getMcpConfigTarget(workspaceDir);
+function readMcpConfig(workspaceDir: string, host?: InitCheckHost): Record<string, unknown> | null {
+  const target = getMcpConfigTarget(workspaceDir, host);
   if (!existsSync(target.path)) return null;
 
   try {
@@ -278,15 +317,23 @@ export function getMcpTemplates(): McpTemplate[] {
   return MCP_TEMPLATES;
 }
 
-export function getMcpStatuses(workspaceDir: string): McpStatus[] {
-  const mcpConfig = readMcpConfig(workspaceDir);
+function isMcpConfigured(config: Record<string, unknown> | null, id: string): boolean {
+  if (!config || !Object.prototype.hasOwnProperty.call(config, id)) return false;
+  const entry = config[id];
+  return !!entry && typeof entry === 'object' && !Array.isArray(entry)
+    && (entry as Record<string, unknown>).enabled !== false;
+}
+
+export function getMcpStatuses(workspaceDir: string, host?: InitCheckHost): McpStatus[] {
+  const mcpConfig = readMcpConfig(workspaceDir, host);
   return MCP_TEMPLATES.map((tpl) => {
-    const configured = !!(mcpConfig && tpl.id in mcpConfig);
+    const configured = isMcpConfigured(mcpConfig, tpl.id);
     return {
       id: tpl.id,
       name: tpl.name,
       description: tpl.description,
       priority: tpl.priority,
+      retrievalRole: tpl.retrievalRole,
       configured,
       template: configured ? undefined : tpl,
     };
@@ -331,9 +378,10 @@ export interface McpWriteResult {
 export function writeMcpConfig(
   workspaceDir: string,
   mcpId: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  host?: InitCheckHost,
 ): McpWriteResult {
-  const target = getMcpConfigTarget(workspaceDir);
+  const target = getMcpConfigTarget(workspaceDir, host);
   const configPath = target.path;
   let existing: Record<string, unknown> = {};
 
@@ -405,24 +453,27 @@ function toOpenCodeMcpConfig(config: Record<string, unknown>): Record<string, un
   return { type: 'local', command: [command, ...args].filter(Boolean) };
 }
 
-export function checkMcpServers(workspaceDir: string): CheckResult[] {
-  const mcpConfig = readMcpConfig(workspaceDir);
+export function checkMcpServers(workspaceDir: string, host?: InitCheckHost): CheckResult[] {
+  const mcpConfig = readMcpConfig(workspaceDir, host);
   const results: CheckResult[] = [];
 
   for (const tpl of MCP_TEMPLATES) {
-    if (mcpConfig && tpl.id in mcpConfig) {
+    if (isMcpConfigured(mcpConfig, tpl.id)) {
       results.push({
         category: 'mcp',
         name: tpl.id,
         status: 'ready',
+        blocking: false,
+        retrievalRole: tpl.retrievalRole,
         detail: `${tpl.name} - 已配置`,
       });
     } else {
-      const isRequired = tpl.priority === 'required';
       results.push({
         category: 'mcp',
         name: tpl.id,
-        status: isRequired ? 'missing' : 'warning',
+        status: 'warning',
+        blocking: false,
+        retrievalRole: tpl.retrievalRole,
         detail: `${tpl.name} - 未配置 (${tpl.priority})`,
       });
     }
@@ -526,23 +577,42 @@ export function checkProjects(workspaceDir: string): CheckResult[] {
   return results;
 }
 
-export function runFullCheck(options: { workspaceDir?: string }): InitReport {
+export function runFullCheck(options: InitCheckOptions): InitReport {
   const workspaceDir = resolve(options.workspaceDir ?? process.cwd());
-  const adapter = detectAdapter(workspaceDir);
+  const adapter = detectAdapter(workspaceDir, options.host);
+
+  const mcpResults = checkMcpServers(workspaceDir, options.host);
+  const configured = mcpResults.filter(r => r.status === 'ready');
+  const retrievalCoverage: RetrievalCoverage = configured.some(r => r.retrievalRole === 'professional')
+    ? 'professional' : configured.length > 0 ? 'fallback_only' : 'none';
+  const reason = options.degradedRetrievalConsent?.trim() || null;
+  const accepted = retrievalCoverage === 'fallback_only' && reason !== null;
+  const limitation = retrievalCoverage === 'fallback_only'
+    ? '仅学术兜底检索，缺少专业专利库覆盖；不能声称已完成全面专利检索或新颖性验证'
+    : null;
+  const degradedRetrieval: DegradedRetrieval = { requested: reason !== null, accepted, reason, limitation };
+  const retrievalBlocked = retrievalCoverage === 'none' || (retrievalCoverage === 'fallback_only' && !accepted);
+  const retrievalDetail = retrievalCoverage === 'none'
+    ? '检索能力缺失：零个检索源已配置，禁止进入 RESEARCH；降级确认不能解除此阻塞'
+    : retrievalCoverage === 'fallback_only'
+      ? `${limitation}；${accepted ? '用户已明确接受降级检索' : '需用户明确接受降级检索后重新检查'}`
+      : '已配置至少一个专业专利源（未验证连接或实际工具调用）';
 
   const results: CheckResult[] = [
-    ...checkMcpServers(workspaceDir),
+    ...mcpResults,
+    { category: 'mcp', name: 'retrieval-coverage', status: retrievalBlocked ? 'missing' : accepted ? 'warning' : 'ready',
+      blocking: retrievalBlocked, detail: retrievalDetail },
     ...checkExternalTools(),
     ...checkRuntime(workspaceDir),
     ...checkProjects(workspaceDir),
   ];
 
   const blockingCount = results.filter(
-    (r) => r.status === 'missing' && (r.category === 'tool' || r.category === 'runtime')
+    (r) => r.status === 'missing' && (r.category === 'tool' || r.category === 'runtime' || r.blocking === true)
   ).length;
 
   const warningCount = results.filter(
-    (r) => r.status === 'warning' || (r.status === 'missing' && r.category === 'mcp')
+    (r) => r.status === 'warning'
   ).length;
 
   const ready = blockingCount === 0;
@@ -551,12 +621,19 @@ export function runFullCheck(options: { workspaceDir?: string }): InitReport {
     ? warningCount > 0
       ? `环境基本就绪，${warningCount} 个警告项建议处理`
       : '环境完全就绪，所有检测项通过'
-    : `${blockingCount} 个阻塞项需要解决后才能正常使用`;
+    : `${blockingCount} 个阻塞项需要解决后才能正常使用${retrievalBlocked ? `；${retrievalDetail}` : ''}`;
 
-  return { timestamp: new Date().toISOString(), adapter, workspaceDir, results, blockingCount, warningCount, ready, summary };
+  return { timestamp: new Date().toISOString(), adapter, workspaceDir, results, blockingCount, warningCount, ready, summary,
+    retrievalCoverage, configuredCount: configured.length, degradedRetrieval };
 }
 
 export interface JsonReport {
+  timestamp: string;
+  workspaceDir: string;
+  mcpVerification: 'configuration_only';
+  retrievalCoverage: RetrievalCoverage;
+  configuredCount: number;
+  degradedRetrieval: DegradedRetrieval;
   ready: boolean;
   blockingCount: number;
   warningCount: number;
@@ -566,10 +643,16 @@ export interface JsonReport {
   results: CheckResult[];
 }
 
-export function runJsonCheck(options: { workspaceDir?: string }): JsonReport {
+export function runJsonCheck(options: InitCheckOptions): JsonReport {
   const report = runFullCheck(options);
-  const mcpStatuses = getMcpStatuses(resolve(options.workspaceDir ?? process.cwd()));
+  const mcpStatuses = getMcpStatuses(resolve(options.workspaceDir ?? process.cwd()), options.host);
   return {
+    timestamp: report.timestamp,
+    workspaceDir: report.workspaceDir,
+    mcpVerification: 'configuration_only',
+    retrievalCoverage: report.retrievalCoverage,
+    configuredCount: report.configuredCount,
+    degradedRetrieval: report.degradedRetrieval,
     ready: report.ready,
     blockingCount: report.blockingCount,
     warningCount: report.warningCount,
@@ -625,6 +708,11 @@ export function formatReport(report: InitReport): string {
   lines.push(`- **阻塞项**: ${report.blockingCount}`);
   lines.push(`- **警告项**: ${report.warningCount}`);
   lines.push(`- **摘要**: ${report.summary}`);
+  lines.push(`- **检索覆盖度（仅配置）**: ${report.retrievalCoverage} / ${report.configuredCount} 个源`);
+  if (report.degradedRetrieval.accepted) {
+    lines.push(`- **降级确认依据**: ${report.degradedRetrieval.reason}`);
+    lines.push(`- **检索局限**: ${report.degradedRetrieval.limitation}`);
+  }
 
   return lines.join('\n');
 }
