@@ -1,5 +1,5 @@
 {
-  "package_version": "0.4.1",
+  "package_version": "0.4.2",
   "interface_version": 1,
   "state_schema_version": 1,
   "node": ">=22",
@@ -99,8 +99,8 @@
     "src/runtime/operations.ts": "223f8d11d2ebfe5a5fd3d71c1470e9cfdbc7a758b38483afcc59645a066ec22a",
     "src/runtime/skill-entry.ts": "b3b78db89f5318ca1c7662284bfcb8a07f2dc2c6fe23d3f0f8c9a730029b58b0",
     "src/skills/jurisdiction.ts": "3d28cc6fb61a959bef087c4b39fefad93a41aad5ca00c0815f778cb44c3c0e08",
-    "package.json": "8ca5ecfae61420ba1fb4be08f8e58835e1d96d1915631d5f299c0246051fdf26",
-    "package-lock.json": "77f714097eada2573d0ec0b16186d2dcb8591ab92600ad90dbc5e16e685852ab",
+    "package.json": "33ec0a322017f0b7f84260e175f02d13b892838e9640ee5dc67d7f8fd60b548d",
+    "package-lock.json": "7616f6e8dbdd36ecde05804b310d9e26b888c4bec3245804b261dba3921f4bf8",
     "scripts/build-skill.mjs": "48a2caf6069439b59ea59e4ef5facee85b65f9681c33b5fee851778ec7c7867e",
     "LICENSE": "dcdb53c9959f2628a2e3172fbd5020abfead1a85fd47099a9a1c27d2b42f8bad",
     "node_modules/saxes/package.json": "32052572b41c2a890ed0854798c48454cc5991dcaafe5fb1718a4253046acfd3",

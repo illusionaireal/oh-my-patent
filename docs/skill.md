@@ -1,4 +1,4 @@
-# Installation modes (0.4.0)
+# Installation modes
 
 oh-my-patent provides plugin and portable Skill installation modes. Plugin mode
 is the default, with **14 agents, 6 skills and 9 commands**. Node.js >=22 is required.
@@ -26,19 +26,25 @@ without installing the oh-my-patent CLI. It requires Git and Node.js >=22.20.
 Run this in your patent workspace:
 
 ```sh
-npx skills@latest add https://github.com/illusionaireal/oh-my-patent/tree/master/skills/oh-my-patent --skill oh-my-patent --copy
+npx skills add illusionaireal/oh-my-patent
 ```
 
 The installer detects hosts and offers selection when needed. Select Claude Code,
-Codex or OpenCode and choose Project to install in the current workspace. When
+Codex or OpenCode, Project scope and Copy to install in the current workspace. When
 launched from a coding agent, the installer can select that agent without prompting.
 To choose a host explicitly, append `--agent <host>` using the table above.
 
-The explicit `skills/oh-my-patent` source selects the built portable package;
-the repository also contains plugin capabilities and Skill source templates.
-`--copy` installs real files. Installation is project-local by default; `--global`
-selects the host's user-level scope. The source URL follows `master`; replace
-`master` with an existing tag or commit for a fixed revision.
+The shorthand discovers the built portable package under `skills/oh-my-patent`.
+Append `--skill oh-my-patent --copy` to select it and copy real files explicitly;
+`--global` selects the host's user-level scope. Keep the complete Skill directory.
+
+The shorthand follows the repository's default branch, currently `master`, whereas
+`npx oh-my-patent@latest` uses the latest published npm package. To pin a repository
+revision, replace `<ref>` below with an existing tag or commit:
+
+```sh
+npx skills add "https://github.com/illusionaireal/oh-my-patent/tree/<ref>/skills/oh-my-patent" --skill oh-my-patent --copy
+```
 
 For this installation method, use the Skills CLI for updates and removal.
 For removal, replace `<host>` with the same host value used at installation:
@@ -258,10 +264,10 @@ publishes both npm packages and attaches the verified archives when a GitHub Rel
 is published. The **Publish standalone Skill** workflow
 (`.github/workflows/npm-publish-skill.yml`) is a manual Skill-only supplement.
 It publishes only `oh-my-patent-skill`, built from the generated portable package.
-The standalone archive has its own package.json/README and the exact same 44 Skill
+The standalone archive has its own package.json/README and the same generated Skill
 resources; it contains no plugin CLI/source tree or runtime npm dependencies.
 
-The independent package inherits the repository version, currently `0.4.0`.
+The independent package inherits the version in the repository's `package.json`.
 Its metadata is in `distribution/skill-package.json`. Stable releases use `latest`;
 prereleases use `next`. Stable publication checks first-wave host installation and
 workflow verification in `distribution/targets.json`; the 0.4.0 acceptance source is

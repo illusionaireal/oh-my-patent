@@ -6,6 +6,9 @@
 
 | Guide | Contents |
 |---|---|
+| [Installation modes](./skill.md) | Plugin and Skill installation, updates, removal and migration |
+| [Release notes](./releases/0.4.2.md) | Version changes and upgrade guidance |
+| [Sentinel and capabilities](./sentinel.md) | Retrieval gates, drawing defaults, deadlines and review requirements |
 | [Usage and CLI](./usage-en.md) | Installation, platform differences, checks, path and diagram commands, uninstall |
 | [Workflow](./workflow-diagram-en.md) | Ten stages, allowed transitions, scoring decisions, and recovery |
 | [Agents and collaboration](./agents-en.md) | 14 agents, 6 skills, 9 commands, and five collaboration patterns |
