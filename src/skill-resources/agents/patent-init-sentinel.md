@@ -33,3 +33,11 @@ execution_mode、缺失项和降级措施，由主编排器保存 references/ini
 不能宣称会话模型提供商的处理全部在本地。不收集密钥，不修改宿主配置或全局规则。
 
 向 Archimedes 返回观测结果与降级措施；不把未检测项填成通过。
+
+绘图启动盘点不阻塞前面的检索/撰写。首次 DIAGRAM_DRAFT、恢复或后端改变时刷新
+.patent/figure-capabilities.json（参考随包 assets/figure-capabilities.example.json）：
+记录 host/session、observed_at、各后端 status/tool/evidence/execution、preview、timed_selection；
+available 要有实际工具观测，超过 30 分钟需刷新。由主编排器使用 figure.plan / figure.offer /
+figure.select 保存逐图选择：有真实计时工具等待 30 秒后默认，无计时工具即时默认；
+分别记录系统选择来源，不冒充人类同意。已有可执行本地选择可复用，不重复询问。
+仅所选方案缺能力阻塞该图；无预览可写草稿，不通过视觉审阅。系统默认不授权外发或付费。

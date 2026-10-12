@@ -46,6 +46,7 @@ export interface InitReport {
   retrievalCoverage: RetrievalCoverage;
   configuredCount: number;
   degradedRetrieval: DegradedRetrieval;
+  figureToolChecks: { mermaidCli: CheckStatus; verification: 'local_version_only'; hostCapabilities: 'unknown' };
 }
 
 export interface McpUserInput {
@@ -155,7 +156,7 @@ const REQUIRED_TOOLS = [
     desc: 'Mermaid CLI - 渲染流程图/架构图',
     command: 'mmdc --version',
     installHint: 'npm install -g @mermaid-js/mermaid-cli',
-    blocking: true,
+    blocking: false,
   },
   {
     name: 'git',
@@ -498,7 +499,8 @@ export function checkExternalTools(): CheckResult[] {
       results.push({
         category: 'tool',
         name: tool.name,
-        status: 'missing',
+        status: tool.blocking ? 'missing' : 'warning',
+        blocking: tool.blocking,
         detail: `${tool.desc} - 未找到`,
         guidance: `安装: ${tool.installHint}`,
       });
@@ -623,8 +625,10 @@ export function runFullCheck(options: InitCheckOptions): InitReport {
       : '环境完全就绪，所有检测项通过'
     : `${blockingCount} 个阻塞项需要解决后才能正常使用${retrievalBlocked ? `；${retrievalDetail}` : ''}`;
 
+  const figureToolChecks: InitReport['figureToolChecks'] = { mermaidCli: results.find(r => r.name === 'mmdc')!.status,
+    verification: 'local_version_only', hostCapabilities: 'unknown' };
   return { timestamp: new Date().toISOString(), adapter, workspaceDir, results, blockingCount, warningCount, ready, summary,
-    retrievalCoverage, configuredCount: configured.length, degradedRetrieval };
+    retrievalCoverage, configuredCount: configured.length, degradedRetrieval, figureToolChecks };
 }
 
 export interface JsonReport {
@@ -634,6 +638,7 @@ export interface JsonReport {
   retrievalCoverage: RetrievalCoverage;
   configuredCount: number;
   degradedRetrieval: DegradedRetrieval;
+  figureToolChecks: { mermaidCli: CheckStatus; verification: 'local_version_only'; hostCapabilities: 'unknown' };
   ready: boolean;
   blockingCount: number;
   warningCount: number;
@@ -653,6 +658,7 @@ export function runJsonCheck(options: InitCheckOptions): JsonReport {
     retrievalCoverage: report.retrievalCoverage,
     configuredCount: report.configuredCount,
     degradedRetrieval: report.degradedRetrieval,
+    figureToolChecks: report.figureToolChecks,
     ready: report.ready,
     blockingCount: report.blockingCount,
     warningCount: report.warningCount,

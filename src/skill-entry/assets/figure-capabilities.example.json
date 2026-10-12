@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "host": "REPLACE_WITH_ACTIVE_HOST",
+  "session_id": "REPLACE_WITH_ACTIVE_SESSION",
+  "observed_at": "REPLACE_WITH_CURRENT_ISO_TIMESTAMP",
+  "backends": {
+    "svg": {
+      "status": "unknown",
+      "tool": null,
+      "evidence": "Not yet observed in the active host/session",
+      "execution": "local"
+    },
+    "mermaid": {
+      "status": "unknown",
+      "tool": null,
+      "evidence": "Not yet observed in the active host/session",
+      "execution": "local"
+    },
+    "plantuml": {
+      "status": "unknown",
+      "tool": null,
+      "evidence": "Not yet observed in the active host/session",
+      "execution": "remote"
+    },
+    "imagegen": {
+      "status": "unknown",
+      "tool": null,
+      "evidence": "Not yet observed in the active host/session",
+      "execution": "remote"
+    }
+  },
+  "preview": {
+    "status": "unknown",
+    "tool": null,
+    "evidence": "Not yet observed in the active host/session"
+  },
+  "timed_selection": {
+    "status": "unknown",
+    "tool": null,
+    "evidence": "Not yet observed in the active host/session"
+  }
+}

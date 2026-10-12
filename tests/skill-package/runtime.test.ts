@@ -7,6 +7,7 @@ import { digest, inspectProject, json } from '../../src/core/project-store.js';
 import { inspectFigure } from '../../src/core/figures.js';
 import { loadNode, loadPath, loadInnovationSnapshot } from '../../src/core/path-persistence.js';
 import { createInnovationSnapshot } from '../../src/core/brainstorm-path.js';
+import { ensureSelection, selectionInputs } from '../figure-selection-fixture.js';
 import { WORKFLOW_STAGE_ORDER } from '../../src/core/workflow.js';
 
 const roots: string[] = [];
@@ -27,14 +28,16 @@ function request(root: string, operation: string, id: string, params: Record<str
   return { interface_version: 1, operation, project: root, operation_id: id, params, expected: { revision: current.state!.revision!, state_digest: current.state_digest!, inputs: Object.fromEntries(inputs.map(name => [name, digest(readFileSync(join(root, name)))])) } };
 }
 async function register(root: string, id: string, extra: Record<string, unknown> = {}): Promise<unknown> {
-  return runOperation(request(root, 'figure.register', id, { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.svg', source_path: 'figures/fig1/source.svg', tool: 'direct-svg', review: passed, ...extra }, ['MAIN.md', 'figures/fig1/figure-spec.json', 'figures/fig1/result.svg', 'figures/fig1/source.svg']));
+  await ensureSelection(root);
+  return runOperation(request(root, 'figure.register', id, { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.svg', source_path: 'figures/fig1/source.svg', tool: 'direct-svg', review: passed, ...extra }, [...selectionInputs(root), 'figures/fig1/result.svg', 'figures/fig1/source.svg']));
 }
 function figure(root: string): void {
   put(root, 'figures/fig1/figure-spec.json', json(spec));
   put(root, 'figures/fig1/result.svg', svg); put(root, 'figures/fig1/source.svg', svg);
 }
 async function advance(root: string, target: string, extra: Record<string, unknown> = {}): Promise<unknown> {
-  return runOperation(request(root, 'workflow.advance', `advance-${target}`, { target, artifacts: ['MAIN.md'], ...extra }, ['MAIN.md']));
+  if (['DIAGRAM_DRAFT', 'DIAGRAM_FINAL'].includes(target)) await ensureSelection(root);
+  return runOperation(request(root, 'workflow.advance', `advance-${target}`, { target, artifacts: ['MAIN.md'], ...extra }, ['DIAGRAM_DRAFT', 'DIAGRAM_FINAL'].includes(target) ? selectionInputs(root) : ['MAIN.md']));
 }
 
 it('runs all stages across relocation, preserving human gates and current figure review', async () => {
@@ -89,7 +92,8 @@ it('hashes a raster result as bytes and records a local-renderer handoff', async
   put(root, 'figures/fig1/figure-spec.json', json({ ...spec, backend: 'mermaid', formats: ['png'] }));
   put(root, 'figures/fig1/result.png', png); put(root, 'figures/fig1/source.mmd', 'graph LR\n sensor --> processor');
   const params = { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.png', source_path: 'figures/fig1/source.mmd', tool: 'synthetic-local-renderer' };
-  const result = await runOperation(request(root, 'figure.register', 'raster', params, ['MAIN.md', params.spec_path, params.result_path, params.source_path]));
+  await ensureSelection(root);
+  const result = await runOperation(request(root, 'figure.register', 'raster', params, [...selectionInputs(root), params.result_path, params.source_path]));
   expect(result).toMatchObject({ result: { result_digest: digest(png), review: { status: 'pending', visual: false } } });
 });
 
@@ -123,7 +127,8 @@ it('requires matched disclosure evidence for an imagegen handoff', async () => {
   const event = { operation_id: consent.operation_id, consent_id: consent.id, content_digest: consent.content_digest, recipient: consent.recipient, purpose: consent.purpose, tool: consent.tool, time: '2026-09-30T00:01:00Z', outcome: 'acknowledged' };
   put(root, payloadPath, payload); put(root, consentPath, json(consent)); put(root, eventPath, json(event));
   const params = { spec_path: 'figures/fig1/figure-spec.json', result_path: 'figures/fig1/result.svg', tool: consent.tool, provider: 'synthetic-provider', payload_path: payloadPath, consent_reference: consentPath, disclosure_reference: eventPath };
-  const inputs = ['MAIN.md', params.spec_path, params.result_path, payloadPath, consentPath, eventPath];
+  await ensureSelection(root);
+  const inputs = [...selectionInputs(root), params.result_path, payloadPath, consentPath, eventPath];
   put(root, eventPath, json({ ...event, content_digest: digest('different payload') }));
   await expect(runOperation(request(root, 'figure.register', 'bad-evidence', params, inputs))).rejects.toMatchObject({ code: 'DISCLOSURE_DENIED' });
   put(root, eventPath, json(event));

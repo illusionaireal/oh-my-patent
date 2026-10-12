@@ -183,6 +183,14 @@
    - 不凭 MCP 配置或 doctor 通过推断检索可用，不替用户同意，不要求所有源配齐；
      恢复时重新检查，不自动复用旧确认。无检索能力时只辅助计划/材料分析，不推进正式工作流。
    - 环境与检索门禁均通过后进入下一步
+   - 绘图能力在启动/恢复时盘点，不阻塞前面的检索与撰写。首次进入 DIAGRAM_DRAFT
+     前，根据 MAIN 创建逐图规格，并按 patent-diagram-generator 的共同流程执行
+     figure.plan / figure.offer / figure.select；preferredBackend 参与选择，精确附图默认 SVG。
+   - 有真实计时交互时提供默认项并等待最多 30 秒，超时自动采用可执行本地默认项；
+     无计时能力则告知默认项并立即继续，分别记录 timeout_default / immediate_default，
+     不伪造用户确认。已有本地方案仍可执行时 mode=reuse，不重复询问；每图可不同。
+   - 保存 .patent/figure-capabilities.json 和每图 selection.json；恢复时刷新实际工具观测。
+     缺少预览允许草稿，但最终必需附图仍需当前技术/视觉审阅。系统默认不能批准外发/付费。
 1) 使用实际原生子代理工具调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```

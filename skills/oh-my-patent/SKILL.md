@@ -142,7 +142,17 @@ do not silently map an invalid jurisdiction to CN.
 ## Figures
 
 Read [figures](references/figures.md) before drawing or editing.
-Create `figures/<id>/figure-spec.json` first, using the packaged specification example.
+Before first DIAGRAM_DRAFT and on resume refresh .patent/figure-capabilities.json using
+assets/figure-capabilities.example.json: actual tools/evidence, active host/session, preview
+and timed interaction, unknown where unobserved. Create each figures/<id>/figure-spec.json,
+then figure.plan to apply preferredBackend. Reuse executable saved local per-figure choices;
+otherwise use the ready local preference, then SVG, then another available local renderer.
+With observed timed interaction, figure.offer and wait up to 30 seconds; record the actual
+response with figure.select mode=user or consume the expired offer with mode=timeout.
+Without timed interaction announce the default and mode=default immediately; never invent
+waiting/timeout or human consent. Per-figure selection.json records source and limitations.
+Defaults cannot approve external disclosure/spending. Unavailable paths only block that
+figure. Refresh/revalidate via mode=reuse on resume when the local choice is still ready.
 Clarify missing technical facts; do not invent components to make a convincing image.
 Prefer self-contained SVG for precise topology/numbering. Mermaid/PlantUML and host
 image tools are optional paths, subject to actual capability and disclosure rules.

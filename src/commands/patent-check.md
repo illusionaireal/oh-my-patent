@@ -30,7 +30,8 @@ host tools separately. A configured service has not passed a connectivity check.
 
 Archimedes saves the real report and host capability observations in the selected
 project's references/init-report.json. Do not change formal workflow state here.
-Missing git/mmdc or runtime capabilities block plugin readiness. Report retrievalCoverage,
+Missing git or runtime capabilities block plugin readiness. Missing mmdc is an optional
+figure warning; only an elected Mermaid path requires its renderer. Report retrievalCoverage,
 configuredCount and degradedRetrieval: zero configured sources (none) blocks RESEARCH;
 academic sources only (google_scholar/semantic_scholar, fallback_only) blocks by default;
 at least one patent source (patsnap_search/uspto_patent/cnipa_patent, professional) passes
@@ -53,3 +54,11 @@ actually exposed native delegation tool. Without one, perform the check sequenti
 and label the execution mode. This is an orchestration instruction, not a session-start
 hook. Manual /patent-check is available at any time. The check itself does not install
 tools or change configuration; setup commands require the user's explicit selection.
+
+Drawing observations include SVG, Mermaid, PlantUML, imagegen, preview and timed selection.
+The checker reports figureToolChecks as local_version_only; actual rendering remains host-reported.
+Before DIAGRAM_DRAFT/resume, save fresh .patent/figure-capabilities.json and run the shared
+figure.plan / figure.offer / figure.select operations through the installed checker with
+--runtime --input request.json. A real 30-second deadline defaults locally; hosts without
+timed interaction default immediately and label it honestly. No default grants egress/spending
+consent; pending visual review blocks final required-figure delivery, not drafting.

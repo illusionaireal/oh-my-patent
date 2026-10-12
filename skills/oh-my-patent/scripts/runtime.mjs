@@ -1579,10 +1579,10 @@ var require_saxes = __commonJS({
               case LESS: {
                 this.state = S_OPEN_WAKA;
                 if (handler !== void 0) {
-                  const { text } = this;
+                  const { text: text2 } = this;
                   const slice = chunk.slice(start, this.prevI);
-                  if (text.length !== 0) {
-                    handler(text + slice);
+                  if (text2.length !== 0) {
+                    handler(text2 + slice);
                     this.text = "";
                   } else if (slice.length !== 0) {
                     handler(slice);
@@ -1649,10 +1649,10 @@ var require_saxes = __commonJS({
               case LESS: {
                 this.state = S_OPEN_WAKA;
                 if (handler !== void 0) {
-                  const { text } = this;
+                  const { text: text2 } = this;
                   const slice = chunk.slice(start, this.prevI);
-                  if (text.length !== 0) {
-                    handler(text + slice);
+                  if (text2.length !== 0) {
+                    handler(text2 + slice);
                     this.text = "";
                   } else if (slice.length !== 0) {
                     handler(slice);
@@ -1742,9 +1742,9 @@ var require_saxes = __commonJS({
         if (this.state !== S_BEGIN && this.state !== S_TEXT) {
           this.fail("unexpected end.");
         }
-        const { text } = this;
-        if (text.length !== 0) {
-          (_a = this.textHandler) === null || _a === void 0 ? void 0 : _a.call(this, text);
+        const { text: text2 } = this;
+        if (text2.length !== 0) {
+          (_a = this.textHandler) === null || _a === void 0 ? void 0 : _a.call(this, text2);
           this.text = "";
         }
         this._closed = true;
@@ -1957,13 +1957,14 @@ var require_saxes = __commonJS({
   }
 });
 
-// src/runtime/skill-entry.ts
-import { readFileSync as readFileSync6 } from "node:fs";
+// src/runtime/entry.ts
+import { readFileSync as readFileSync7 } from "node:fs";
+import { resolve as resolve6 } from "node:path";
 
 // src/runtime/operations.ts
-import { existsSync as existsSync4, readFileSync as readFileSync5, readdirSync as readdirSync2, mkdtempSync, mkdirSync as mkdirSync3, writeFileSync as writeFileSync3, rmSync } from "node:fs";
+import { existsSync as existsSync5, readFileSync as readFileSync6, readdirSync as readdirSync2, mkdtempSync, mkdirSync as mkdirSync3, writeFileSync as writeFileSync3, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join6, resolve as resolve4, win32, posix } from "node:path";
+import { join as join6, resolve as resolve5, win32, posix } from "node:path";
 
 // src/skills/jurisdiction.ts
 var JurisdictionCode = /* @__PURE__ */ ((JurisdictionCode3) => {
@@ -2186,14 +2187,14 @@ function durableWrite(file, value) {
   atomicWriteFileSync(file, value, { flush: true });
 }
 function inspectProject(root) {
-  const text = readOrNull(projectFile(root, ".patent/state.json"));
+  const text2 = readOrNull(projectFile(root, ".patent/state.json"));
   const directory = projectFile(root, ".patent/transactions");
   const recoveryRequired = existsSync(directory) && readdirSync(directory).some((id) => {
     const file = projectFile(root, `.patent/transactions/${id}/journal.json`);
     const journal = readOrNull(file);
     return journal !== null && JSON.parse(journal).status === "prepared";
   });
-  return { state: text === null ? null : JSON.parse(text), state_digest: text === null ? null : digest(text), coordination: { locked: existsSync(projectFile(root, ".patent/write.lock")), recovery_required: recoveryRequired } };
+  return { state: text2 === null ? null : JSON.parse(text2), state_digest: text2 === null ? null : digest(text2), coordination: { locked: existsSync(projectFile(root, ".patent/write.lock")), recovery_required: recoveryRequired } };
 }
 function requireCurrentState(state) {
   if (!state) throw new ProjectError("MISSING_FILE", "Project state is absent");
@@ -2262,9 +2263,9 @@ var ProjectStore = class {
     if (!existsSync(directory)) return;
     for (const id of readdirSync(directory).sort()) {
       const file = projectFile(this.root, `.patent/transactions/${id}/journal.json`);
-      const text = readOrNull(file);
-      if (text === null) continue;
-      const journal = JSON.parse(text);
+      const text2 = readOrNull(file);
+      if (text2 === null) continue;
+      const journal = JSON.parse(text2);
       if (journal.status !== "prepared") continue;
       for (const name of Object.keys(journal.after)) {
         const value = readOrNull(projectFile(this.root, name));
@@ -2823,6 +2824,10 @@ async function restoreInnovation(projectPath, nodeId, innovationId) {
   };
 }
 
+// src/runtime/figure-selection.ts
+import { existsSync as existsSync4, readFileSync as readFileSync5 } from "node:fs";
+import { resolve as resolve4 } from "node:path";
+
 // src/core/figures.ts
 var import_saxes = __toESM(require_saxes(), 1);
 import { readFileSync as readFileSync4 } from "node:fs";
@@ -2883,8 +2888,187 @@ function inspectFigure(root, id) {
   const spec = readFileSync4(projectFile(root, `${base}/figure-spec.json`), "utf8");
   validateFigureSpec(JSON.parse(spec));
   const p = JSON.parse(readFileSync4(projectFile(root, `${base}/provenance.json`), "utf8"));
-  const current = digest(spec) === p.spec_digest && digest(readFileSync4(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync4(projectFile(root, "MAIN.md"))) === p.main_digest && (!p.source_path || digest(readFileSync4(projectFile(root, p.source_path))) === p.source_digest);
+  const current = digest(spec) === p.spec_digest && digest(readFileSync4(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync4(projectFile(root, "MAIN.md"))) === p.main_digest && (!p.selection_path || digest(readFileSync4(projectFile(root, p.selection_path))) === p.selection_digest) && (!p.source_path || digest(readFileSync4(projectFile(root, p.source_path))) === p.source_digest);
   return { ...p, review: current ? p.review : { ...p.review, status: "pending" }, review_current: current };
+}
+
+// src/core/figure-selection.ts
+var FIGURE_BACKENDS = ["svg", "mermaid", "plantuml", "imagegen"];
+var FIGURE_CHOICE_TIMEOUT_MS = 3e4;
+var FIGURE_CAPABILITY_MAX_AGE_MS = 30 * 6e4;
+var text = (value) => typeof value === "string" && !!value.trim();
+function validateFigureCapabilities(input, now = Date.now()) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new ProjectError("INVALID_INPUT", "Figure capability observations required");
+  const c = input;
+  const age = now - Date.parse(c.observed_at);
+  if (c.schema_version !== 1 || !text(c.host) || !text(c.session_id) || !Number.isFinite(age) || age < 0 || age > FIGURE_CAPABILITY_MAX_AGE_MS) throw new ProjectError("MISSING_CAPABILITY", "Refresh figure observations for the active host/session (maximum age 30 minutes)");
+  const observation = (o) => {
+    if (!o || !["available", "unavailable", "unknown"].includes(o.status) || !text(o.evidence) || !(o.tool === null || text(o.tool)) || o.status === "available" && !text(o.tool)) throw new ProjectError("INVALID_INPUT", "Record status, actual tool and observation evidence");
+  };
+  if (!c.backends || typeof c.backends !== "object" || Object.keys(c.backends).some((k) => !FIGURE_BACKENDS.includes(k))) throw new ProjectError("INVALID_INPUT", "Invalid backend observations");
+  for (const backend of FIGURE_BACKENDS) {
+    const o = c.backends[backend];
+    observation(o);
+    if (!["local", "remote"].includes(o.execution) || ["svg", "mermaid"].includes(backend) && o.execution !== "local" || backend === "imagegen" && o.execution !== "remote") throw new ProjectError("INVALID_INPUT", "Invalid backend execution boundary");
+  }
+  observation(c.preview);
+  observation(c.timed_selection);
+  return c;
+}
+function planFigure(spec, specDigest, config, capabilities, capabilitiesDigest, previous) {
+  const candidates = FIGURE_BACKENDS.map((backend) => ({
+    backend,
+    available: capabilities.backends[backend].status === "available",
+    execution: capabilities.backends[backend].execution,
+    reason: capabilities.backends[backend].evidence
+  }));
+  const isLocalReady = (backend) => candidates.some((c) => c.backend === backend && c.available && c.execution === "local");
+  const reusable = previous?.status === "selected" && FIGURE_BACKENDS.includes(previous.backend) && isLocalReady(previous.backend) ? previous.backend : null;
+  const preferred = config.figures.preferredBackend;
+  const preferredLocal = preferred !== "auto" && isLocalReady(preferred) ? preferred : null;
+  const defaultBackend = reusable ?? preferredLocal ?? FIGURE_BACKENDS.find(isLocalReady) ?? null;
+  const reasons = [];
+  if (preferred !== "auto" && !preferredLocal && reusable === null) reasons.push(`Preferred ${preferred} is unavailable or requires scoped external approval; choosing an available local default`);
+  if (previous && reusable === null) reasons.push("Saved backend is unavailable or remote; fresh selection required");
+  if (!defaultBackend) reasons.push("No available local default; choose/configure a backend before drawing this figure");
+  if (capabilities.preview.status !== "available") reasons.push("Preview unavailable or unknown; draft allowed, visual review remains pending");
+  return {
+    figure_id: spec.figure_id,
+    preferred_backend: preferred,
+    default_backend: defaultBackend,
+    reusable_backend: reusable,
+    candidates,
+    review_ready: capabilities.preview.status === "available",
+    timed_selection: capabilities.timed_selection.status === "available",
+    timeout_ms: FIGURE_CHOICE_TIMEOUT_MS,
+    verification: "host_reported",
+    capabilities_digest: capabilitiesDigest,
+    fingerprint: digest(JSON.stringify({ specDigest, capabilitiesDigest, config, previous: previous?.backend ?? null })),
+    reasons
+  };
+}
+function offerFigure(plan, now = Date.now()) {
+  if (!plan.timed_selection) throw new ProjectError("MISSING_CAPABILITY", "Host has no observed timed selection; use immediate default");
+  return {
+    schema_version: 1,
+    figure_id: plan.figure_id,
+    status: "offered",
+    offered_at: new Date(now).toISOString(),
+    deadline_at: new Date(now + FIGURE_CHOICE_TIMEOUT_MS).toISOString(),
+    fingerprint: plan.fingerprint
+  };
+}
+function chooseFigure(plan, capabilities, mode, backend, decisionReference, offer, previous, now = Date.now()) {
+  let selected;
+  let source;
+  let reference = null;
+  if (mode === "user") {
+    if (!FIGURE_BACKENDS.includes(backend) || !text(decisionReference)) throw new ProjectError("INVALID_INPUT", "User selection needs backend and decision_reference");
+    selected = backend;
+    source = "user";
+    reference = decisionReference;
+  } else if (mode === "timeout") {
+    if (!offer || offer.status !== "offered" || offer.figure_id !== plan.figure_id || offer.fingerprint !== plan.fingerprint) throw new ProjectError("CONFLICT", "Offer is absent or changed; refresh the plan");
+    const start = Date.parse(offer.offered_at), deadline = Date.parse(offer.deadline_at);
+    if (!plan.timed_selection || !Number.isFinite(start) || deadline !== start + FIGURE_CHOICE_TIMEOUT_MS || now < deadline) throw new ProjectError("INVALID_INPUT", "The observed 30-second choice window has not expired");
+    selected = plan.default_backend;
+    source = "timeout_default";
+  } else if (mode === "default") {
+    if (plan.timed_selection) throw new ProjectError("INVALID_INPUT", "Timed host requires an offer/timeout or a user selection");
+    selected = plan.default_backend;
+    source = "immediate_default";
+  } else if (mode === "reuse") {
+    if (!previous || !plan.reusable_backend) throw new ProjectError("MISSING_CAPABILITY", "Saved choice cannot execute; refresh selection");
+    selected = plan.reusable_backend;
+    source = previous.source;
+    reference = previous.decision_reference;
+  } else throw new ProjectError("INVALID_INPUT", "Use selection mode user, timeout, default or reuse");
+  if (!selected || !plan.candidates.some((c) => c.backend === selected && c.available)) throw new ProjectError("MISSING_CAPABILITY", "Selected/default backend is not available; configure a tool or choose another backend");
+  return {
+    schema_version: 1,
+    figure_id: plan.figure_id,
+    status: "selected",
+    backend: selected,
+    execution: capabilities.backends[selected].execution,
+    source,
+    decision_reference: reference,
+    selected_at: mode === "reuse" ? previous.selected_at : new Date(now).toISOString(),
+    ...mode === "reuse" ? { revalidated_at: new Date(now).toISOString() } : {},
+    capabilities_digest: plan.capabilities_digest,
+    spec_digest: "",
+    host: capabilities.host,
+    session_id: capabilities.session_id,
+    review_ready: plan.review_ready,
+    reasons: plan.reasons
+  };
+}
+
+// src/runtime/figure-selection.ts
+var CAPABILITIES_PATH = ".patent/figure-capabilities.json";
+function requiredInput(expected, path4) {
+  if (!expected?.inputs?.[path4]) throw new ProjectError("INVALID_INPUT", `Expected input digest required: ${path4}`);
+}
+function load(root, params, expected) {
+  if (typeof params.spec_path !== "string") throw new ProjectError("INVALID_INPUT", "spec_path required");
+  const specText = readFileSync5(projectFile(root, params.spec_path), "utf8");
+  const spec = validateFigureSpec(JSON.parse(specText));
+  const base = `figures/${spec.figure_id}`;
+  if (params.spec_path !== `${base}/figure-spec.json`) throw new ProjectError("INVALID_INPUT", "Use the canonical figure specification path");
+  const snapshotPath = `${base}/registered-spec.json`;
+  if (existsSync4(projectFile(root, snapshotPath))) {
+    const old = validateFigureSpec(JSON.parse(readFileSync5(projectFile(root, snapshotPath), "utf8")));
+    for (const part of spec.parts) if (old.parts.some((p) => p.id === part.id && p.number !== part.number)) throw new ProjectError("INVALID_INPUT", "Existing part numbers must remain stable");
+  }
+  const capabilitiesText = readFileSync5(projectFile(root, CAPABILITIES_PATH), "utf8");
+  const capabilities = validateFigureCapabilities(JSON.parse(capabilitiesText));
+  const mainDigest = digest(readFileSync5(projectFile(root, "MAIN.md")));
+  const config = effectiveConfig(typeof params.workspace === "string" ? resolve4(params.workspace) : void 0, root, params);
+  const choicePath = `${base}/selection.json`, offerPath = `${base}/choice-offer.json`;
+  const previous = existsSync4(projectFile(root, choicePath)) ? JSON.parse(readFileSync5(projectFile(root, choicePath), "utf8")) : void 0;
+  if (previous && (previous.schema_version !== 1 || previous.figure_id !== spec.figure_id || previous.status !== "selected" || !["user", "timeout_default", "immediate_default"].includes(previous.source) || !Number.isFinite(Date.parse(previous.selected_at)))) throw new ProjectError("INVALID_INPUT", "Invalid saved figure selection");
+  if (expected) {
+    if (existsSync4(projectFile(root, offerPath))) requiredInput(expected, offerPath);
+    for (const path4 of [
+      params.spec_path,
+      CAPABILITIES_PATH,
+      "MAIN.md",
+      ...previous ? [choicePath] : [],
+      ...existsSync4(projectFile(root, ".patent/config.json")) ? [".patent/config.json"] : []
+    ]) requiredInput(expected, path4);
+  }
+  const plan = planFigure(spec, digest(JSON.stringify({ spec: digest(specText), mainDigest })), config, capabilities, digest(capabilitiesText), previous);
+  return { spec, specText, mainDigest, capabilities, plan, previous, base, choicePath, offerPath };
+}
+function figurePlan(root, params) {
+  return load(root, params).plan;
+}
+function figureSelectionMutation(root, operation, params, expected) {
+  const data = load(root, params, expected);
+  if (operation === "figure.offer") {
+    const offer2 = offerFigure(data.plan);
+    return { files: { [data.offerPath]: json(offer2) }, data: { offer: offer2, plan: data.plan } };
+  }
+  const offer = params.mode === "timeout" && existsSync4(projectFile(root, data.offerPath)) ? JSON.parse(readFileSync5(projectFile(root, data.offerPath), "utf8")) : void 0;
+  if (offer) requiredInput(expected, data.offerPath);
+  const choice = chooseFigure(data.plan, data.capabilities, params.mode, params.backend, params.decision_reference, offer, data.previous);
+  const nextSpec = choice.backend === data.spec.backend ? data.specText : json({ ...data.spec, backend: choice.backend, formats: choice.backend === "svg" && !data.spec.formats.includes("svg") ? [...data.spec.formats, "svg"] : data.spec.formats });
+  choice.spec_digest = digest(nextSpec);
+  const saved = { ...choice, main_digest: data.mainDigest };
+  return { files: {
+    [data.choicePath]: json(saved),
+    [params.spec_path]: nextSpec,
+    ...existsSync4(projectFile(root, data.offerPath)) ? { [data.offerPath]: null } : {}
+  }, data: saved };
+}
+function assertFigureSelection(root, specPath, expected, visual = false) {
+  const { spec, specText, mainDigest, capabilities, plan, choicePath, previous } = load(root, { spec_path: specPath });
+  if (!previous) throw new ProjectError("MISSING_CAPABILITY", "Select a figure backend before generation/registration");
+  const selected = previous;
+  if (selected.capabilities_digest !== plan.capabilities_digest || selected.spec_digest !== digest(specText) || selected.main_digest !== mainDigest || selected.backend !== spec.backend || selected.host !== capabilities.host || selected.session_id !== capabilities.session_id || selected.execution !== capabilities.backends[spec.backend].execution) throw new ProjectError("CONFLICT", "Figure selection is stale; refresh observations and reselect/reuse");
+  if (!plan.candidates.some((c) => c.backend === selected.backend && c.available)) throw new ProjectError("MISSING_CAPABILITY", "Selected figure backend is unavailable");
+  if (expected) for (const path4 of [choicePath, CAPABILITIES_PATH]) requiredInput(expected, path4);
+  if (visual && capabilities.preview.status !== "available") throw new ProjectError("MISSING_CAPABILITY", "Actual preview is required before visual review/final figures");
+  return selected;
 }
 
 // src/runtime/operations.ts
@@ -2893,17 +3077,17 @@ function string(value, name) {
   return value;
 }
 function readJson(root, name) {
-  return JSON.parse(readFileSync5(projectFile(root, name), "utf8"));
+  return JSON.parse(readFileSync6(projectFile(root, name), "utf8"));
 }
 function tree(root, relative2) {
   const result = /* @__PURE__ */ Object.create(null);
   const dir = projectFile(root, relative2);
-  if (!existsSync4(dir)) return result;
+  if (!existsSync5(dir)) return result;
   for (const entry of readdirSync2(dir, { withFileTypes: true })) {
     const name = `${relative2}/${entry.name}`;
     projectFile(root, name);
     if (entry.isDirectory()) Object.assign(result, tree(root, name));
-    else result[name] = readFileSync5(projectFile(root, name), "utf8");
+    else result[name] = readFileSync6(projectFile(root, name), "utf8");
   }
   return result;
 }
@@ -2913,7 +3097,7 @@ async function stagePath(root, operation) {
   try {
     for (const [name, content] of Object.entries(before)) {
       const file = projectFile(staging, name);
-      mkdirSync3(resolve4(file, ".."), { recursive: true });
+      mkdirSync3(resolve5(file, ".."), { recursive: true });
       writeFileSync3(file, content);
     }
     const data = await operation(staging);
@@ -2928,7 +3112,7 @@ async function stagePath(root, operation) {
 function migrateArtifact(name, oldRoot, root) {
   const pathApi = /^[A-Za-z]:|^\\\\/.test(oldRoot) ? win32 : posix;
   const relative2 = (pathApi.isAbsolute(name) ? pathApi.relative(oldRoot, name) : name).replace(/\\/g, "/");
-  if (!existsSync4(projectFile(root, relative2))) throw new ProjectError("MISSING_FILE", `Resolve legacy artifact before migration: ${relative2}`);
+  if (!existsSync5(projectFile(root, relative2))) throw new ProjectError("MISSING_FILE", `Resolve legacy artifact before migration: ${relative2}`);
   return relative2;
 }
 function migratePathFiles(state, root) {
@@ -2981,10 +3165,10 @@ async function runOperation(request) {
     directory_fsync: false,
     imagegen: "host-owned-unverified"
   };
-  const root = resolve4(string(request.project, "project"));
+  const root = resolve5(string(request.project, "project"));
   const params = request.params ?? {};
   if (request.operation === "project.inspect") return inspectProject(root);
-  if (["project.validate", "workflow.inspect", "figure.inspect", "path.query"].includes(request.operation)) {
+  if (["project.validate", "workflow.inspect", "figure.inspect", "figure.plan", "path.query"].includes(request.operation)) {
     const inspected = inspectProject(root);
     const coordination = inspected.coordination;
     if (coordination.locked || coordination.recovery_required) throw new ProjectError("RECOVERY_REQUIRED", "Inspect owner/recover the interrupted transaction before reading formal artifacts");
@@ -2996,7 +3180,8 @@ async function runOperation(request) {
     return current;
   }
   if (request.operation === "figure.validateSpec") return validateFigureSpec(params.spec);
-  if (request.operation === "figure.validateSvg") return validateSvg(readFileSync5(projectFile(root, string(params.path, "path")), "utf8"));
+  if (request.operation === "figure.validateSvg") return validateSvg(readFileSync6(projectFile(root, string(params.path, "path")), "utf8"));
+  if (request.operation === "figure.plan") return figurePlan(root, params);
   if (request.operation === "figure.inspect") return inspectFigure(root, string(params.figure_id, "figure_id"));
   if (request.operation === "path.query") return { path: await loadPath(root), files: tree(root, ".brainstorm") };
   if (request.operation === "project.migrate" && params.dry_run === true) {
@@ -3008,7 +3193,7 @@ async function runOperation(request) {
     new ProjectStore(root).recoverLock(string(params.owner_token, "owner_token"));
     return { recovered: true };
   }
-  const operations = ["project.create", "project.migrate", "workflow.advance", "path.record", "path.branch", "path.restore", "figure.register"];
+  const operations = ["project.create", "project.migrate", "workflow.advance", "path.record", "path.branch", "path.restore", "figure.register", "figure.offer", "figure.select"];
   if (!operations.includes(request.operation)) throw new ProjectError("UNKNOWN_OPERATION", `Unknown operation: ${request.operation}`);
   const mutation = { ...request, operation_id: string(request.operation_id, "operation_id"), expected: request.expected };
   return new ProjectStore(root).mutate(mutation, async (current) => {
@@ -3017,7 +3202,7 @@ async function runOperation(request) {
       const topic = string(params.topic, "topic");
       const slug = string(params.topic_slug, "topic_slug");
       if (!/^[a-zA-Z0-9_-]{1,100}$/.test(slug)) throw new ProjectError("INVALID_INPUT", "Invalid topic_slug");
-      const config = effectiveConfig(typeof params.workspace === "string" ? resolve4(params.workspace) : void 0, root, params);
+      const config = effectiveConfig(typeof params.workspace === "string" ? resolve5(params.workspace) : void 0, root, params);
       const jurisdiction = config.jurisdiction;
       const state = createInitialState({ topic, topicSlug: slug, jurisdiction, projectPath: "." });
       const files2 = {
@@ -3031,7 +3216,7 @@ Technical drafting assistance, not legal advice. Have a qualified patent profess
 Evidence and technical details pending.
 `
       };
-      for (const name of Object.keys(files2)) if (name !== ".patent/config.json" && existsSync4(projectFile(root, name))) throw new ProjectError("CONFLICT", `Creation would replace existing ${name}`);
+      for (const name of Object.keys(files2)) if (name !== ".patent/config.json" && existsSync5(projectFile(root, name))) throw new ProjectError("CONFLICT", `Creation would replace existing ${name}`);
       return { files: files2, data: { created: true } };
     }
     if (request.operation === "project.migrate") {
@@ -3039,24 +3224,39 @@ Evidence and technical details pending.
       if (!request.expected?.state_digest) throw new ProjectError("INVALID_INPUT", "Migration requires the inspected state digest");
       const state = migrate(current, root);
       const paths = migratePathFiles(current, root);
-      const backups = Object.fromEntries(Object.keys(paths).map((name) => [`.patent/backups/${request.operation_id}/${name}`, readFileSync5(projectFile(root, name), "utf8")]));
-      return { files: { ...paths, ...backups, ".patent/state.json": json(state), [`.patent/backups/${request.operation_id}-legacy-state.json`]: readFileSync5(projectFile(root, ".patent/state.json"), "utf8") }, data: { migrated: true, path_files: Object.keys(paths) } };
+      const backups = Object.fromEntries(Object.keys(paths).map((name) => [`.patent/backups/${request.operation_id}/${name}`, readFileSync6(projectFile(root, name), "utf8")]));
+      return { files: { ...paths, ...backups, ".patent/state.json": json(state), [`.patent/backups/${request.operation_id}-legacy-state.json`]: readFileSync6(projectFile(root, ".patent/state.json"), "utf8") }, data: { migrated: true, path_files: Object.keys(paths) } };
     }
     requireCurrentState(current);
     const files = {};
     let data;
-    if (request.operation === "workflow.advance") {
+    if (request.operation === "figure.offer" || request.operation === "figure.select") {
+      const selected = figureSelectionMutation(root, request.operation, params, request.expected);
+      Object.assign(files, selected.files);
+      data = selected.data;
+    } else if (request.operation === "workflow.advance") {
       const target = string(params.target, "target");
       const artifacts = params.artifacts;
       if (!Array.isArray(artifacts) || !artifacts.length || !artifacts.every((a) => typeof a === "string")) throw new ProjectError("INVALID_INPUT", "Saved stage artifacts required");
       for (const name of artifacts) {
         const file = projectFile(root, name);
-        if (!existsSync4(file)) throw new ProjectError("MISSING_FILE", `Missing artifact: ${name}`);
+        if (!existsSync5(file)) throw new ProjectError("MISSING_FILE", `Missing artifact: ${name}`);
         if (!request.expected?.inputs?.[name]) throw new ProjectError("INVALID_INPUT", "Each artifact needs an expected input digest");
       }
       if (["DRAFT" /* DRAFT */, "DONE" /* DONE */].includes(target) && params.human_decision !== true) throw new ProjectError("INVALID_STATE", "Human innovation selection/final acceptance required");
+      if (["DIAGRAM_DRAFT" /* DIAGRAM_DRAFT */, "DIAGRAM_FINAL" /* DIAGRAM_FINAL */].includes(target)) {
+        const directory = projectFile(root, "figures");
+        for (const entry of existsSync5(directory) ? readdirSync2(directory, { withFileTypes: true }).filter((e) => e.isDirectory()) : []) {
+          const path4 = `figures/${entry.name}/figure-spec.json`;
+          const spec = validateFigureSpec(readJson(root, path4));
+          if (spec.optional) continue;
+          if (!existsSync5(projectFile(root, `figures/${entry.name}/selection.json`)) && existsSync5(projectFile(root, `figures/${entry.name}/provenance.json`))) continue;
+          assertFigureSelection(root, path4, request.expected, target === "DIAGRAM_FINAL" /* DIAGRAM_FINAL */);
+          for (const input of [path4, "MAIN.md"]) if (!request.expected?.inputs?.[input]) throw new ProjectError("INVALID_INPUT", `Expected input digest required: ${input}`);
+        }
+      }
       if (target === "DONE" /* DONE */) {
-        const entries = existsSync4(projectFile(root, "figures")) ? readdirSync2(projectFile(root, "figures"), { withFileTypes: true }).filter((x) => x.isDirectory()) : [];
+        const entries = existsSync5(projectFile(root, "figures")) ? readdirSync2(projectFile(root, "figures"), { withFileTypes: true }).filter((x) => x.isDirectory()) : [];
         const omitted = params.omitted_figures ?? [];
         if (!Array.isArray(omitted) || !omitted.every((item) => item && typeof item.figure_id === "string" && typeof item.reason === "string" && item.reason.trim()) || new Set(omitted.map((item) => item.figure_id)).size !== omitted.length) throw new ProjectError("INVALID_INPUT", "Omissions require unique figure IDs and reasons");
         for (const item of omitted) if (!entries.some((entry) => entry.name === item.figure_id)) throw new ProjectError("INVALID_INPUT", "Cannot omit an unknown figure");
@@ -3097,7 +3297,7 @@ Evidence and technical details pending.
         const node = { ...createInitialNode(path4.nodes.length + 1), ...params.node };
         if (!isValidBrainstormNode(node) || node.round !== path4.nodes.length + 1 || node.id !== `round-${node.round}`) throw new ProjectError("INVALID_INPUT", "Valid consecutive path node required");
         for (const output of node.agentOutputs) {
-          if (!existsSync4(projectFile(root, output.outputFile)) || !request.expected?.inputs?.[output.outputFile]) throw new ProjectError("MISSING_FILE", "Actual role artifacts and expected input digests required");
+          if (!existsSync5(projectFile(root, output.outputFile)) || !request.expected?.inputs?.[output.outputFile]) throw new ProjectError("MISSING_FILE", "Actual role artifacts and expected input digests required");
         }
         if (path4.currentNodeId) path4.edges.push({ id: `edge-${path4.currentNodeId}-to-${node.id}`, fromNodeId: path4.currentNodeId, toNodeId: node.id, transformation: { type: "refine", description: `Round ${node.round - 1} -> Round ${node.round}`, changes: [] } });
         path4.nodes.push(node.id);
@@ -3111,7 +3311,7 @@ Evidence and technical details pending.
       data = staged.data;
     } else if (request.operation === "figure.register") {
       const specPath = string(params.spec_path, "spec_path");
-      const specText = readFileSync5(projectFile(root, specPath), "utf8");
+      const specText = readFileSync6(projectFile(root, specPath), "utf8");
       const spec = validateFigureSpec(JSON.parse(specText));
       const base = `figures/${spec.figure_id}`;
       if (specPath !== `${base}/figure-spec.json`) throw new ProjectError("INVALID_INPUT", "Specification must be in its figure directory");
@@ -3119,16 +3319,17 @@ Evidence and technical details pending.
       if (!resultPath.startsWith(`${base}/`)) throw new ProjectError("INVALID_INPUT", "Result must be in its figure directory");
       const extension = resultPath.split(".").pop();
       if (!spec.formats.includes(extension) || resultPath === specPath || ["provenance.json", "registered-spec.json"].some((name) => resultPath === `${base}/${name}`)) throw new ProjectError("INVALID_INPUT", "Result must use a declared image format");
-      const result = readFileSync5(projectFile(root, resultPath));
+      const result = readFileSync6(projectFile(root, resultPath));
       if (resultPath.endsWith(".svg")) validateSvg(result.toString("utf8"));
       else if (spec.backend === "svg") throw new ProjectError("INVALID_INPUT", "SVG backend requires SVG result");
       for (const name of [specPath, resultPath, "MAIN.md"]) if (!request.expected?.inputs?.[name]) throw new ProjectError("INVALID_INPUT", `Expected input digest required: ${name}`);
       const review = params.review;
+      const selection = assertFigureSelection(root, specPath, request.expected, review?.visual === true);
       if (review && (!["pending", "passed", "failed"].includes(review.status) || !["model", "human"].includes(review.reviewer_type) || typeof review.reviewer !== "string" || !review.reviewer.trim() || !Array.isArray(review.findings) || !review.findings.every((f) => typeof f === "string") || typeof review.technical !== "boolean" || typeof review.visual !== "boolean" || review.status === "passed" && (!review.technical || !review.visual))) throw new ProjectError("INVALID_INPUT", "Invalid review");
       const priorPath = `${base}/provenance.json`;
-      if (existsSync4(projectFile(root, priorPath))) {
+      if (existsSync5(projectFile(root, priorPath))) {
         const snapshotPath = `${base}/registered-spec.json`;
-        if (existsSync4(projectFile(root, snapshotPath))) {
+        if (existsSync5(projectFile(root, snapshotPath))) {
           const old = validateFigureSpec(readJson(root, snapshotPath));
           for (const part of spec.parts) if (old.parts.some((p) => p.id === part.id && p.number !== part.number)) throw new ProjectError("INVALID_INPUT", "Existing part numbers must remain stable");
         }
@@ -3137,14 +3338,16 @@ Evidence and technical details pending.
         figure_id: spec.figure_id,
         spec_digest: digest(specText),
         result_digest: digest(result),
-        main_digest: digest(readFileSync5(projectFile(root, "MAIN.md"))),
+        main_digest: digest(readFileSync6(projectFile(root, "MAIN.md"))),
+        selection_path: `${base}/selection.json`,
+        selection_digest: digest(readFileSync6(projectFile(root, `${base}/selection.json`))),
         result_path: resultPath,
         backend: spec.backend,
         tool: string(params.tool, "tool"),
         generated_at: (/* @__PURE__ */ new Date()).toISOString(),
         review: review ?? { status: "pending", reviewer_type: "model", reviewer: "unreviewed", technical: false, visual: false, findings: [] }
       };
-      if (spec.backend === "imagegen") {
+      if (selection.execution === "remote") {
         provenance.consent_reference = string(params.consent_reference, "consent_reference");
         provenance.disclosure_reference = string(params.disclosure_reference, "disclosure_reference");
         const payloadPath = string(params.payload_path, "payload_path");
@@ -3152,8 +3355,8 @@ Evidence and technical details pending.
         for (const ref of [provenance.consent_reference, provenance.disclosure_reference, payloadPath]) if (!request.expected?.inputs?.[ref]) throw new ProjectError("INVALID_INPUT", "Disclosure evidence needs expected input digests");
         const consent = readJson(root, provenance.consent_reference);
         const event = readJson(root, provenance.disclosure_reference);
-        const payloadDigest = digest(readFileSync5(projectFile(root, payloadPath)));
-        if (!consent || !event || consent.content_digest !== payloadDigest || event.content_digest !== payloadDigest || consent.id !== event.consent_id || consent.operation_id !== event.operation_id || consent.tool !== provenance.tool || event.tool !== provenance.tool || consent.recipient !== event.recipient || consent.purpose !== event.purpose || !consent.approval_reference || consent.reuse !== "one_operation" || event.outcome !== "acknowledged" || !(Date.parse(String(event.time)) >= Date.parse(String(consent.approved_at))) || !(Date.parse(String(event.time)) <= Date.parse(String(consent.expires_at)))) throw new ProjectError("DISCLOSURE_DENIED", "Image generation requires matching approved payload and acknowledged disclosure evidence");
+        const payloadDigest = digest(readFileSync6(projectFile(root, payloadPath)));
+        if (!consent || !event || consent.content_digest !== payloadDigest || event.content_digest !== payloadDigest || consent.id !== event.consent_id || consent.operation_id !== event.operation_id || consent.tool !== provenance.tool || event.tool !== provenance.tool || consent.recipient !== event.recipient || consent.purpose !== event.purpose || !consent.approval_reference || consent.reuse !== "one_operation" || event.outcome !== "acknowledged" || !(Date.parse(String(event.time)) >= Date.parse(String(consent.approved_at))) || !(Date.parse(String(event.time)) <= Date.parse(String(consent.expires_at)))) throw new ProjectError("DISCLOSURE_DENIED", "Remote figure generation requires matching approved payload and acknowledged disclosure evidence");
         const recipient = new URL(string(consent.recipient, "recipient"));
         if (!["https:", "http:"].includes(recipient.protocol) || recipient.username || recipient.password || recipient.search || recipient.hash) throw new ProjectError("INVALID_INPUT", "Invalid disclosure recipient");
         provenance.provider = string(params.provider, "provider");
@@ -3163,7 +3366,7 @@ Evidence and technical details pending.
       if (typeof params.source_path === "string") {
         if (!params.source_path.startsWith(`${base}/`) || !request.expected?.inputs?.[params.source_path]) throw new ProjectError("INVALID_INPUT", "Source must be in figure directory with expected digest");
         provenance.source_path = params.source_path;
-        provenance.source_digest = digest(readFileSync5(projectFile(root, params.source_path)));
+        provenance.source_digest = digest(readFileSync6(projectFile(root, params.source_path)));
       }
       files[`${base}/provenance.json`] = json(provenance);
       files[`${base}/registered-spec.json`] = specText;
@@ -3174,20 +3377,28 @@ Evidence and technical details pending.
   }, { migrate: request.operation === "project.migrate" });
 }
 
-// src/runtime/skill-entry.ts
-try {
-  if (Number(process.versions.node.split(".")[0]) < 22) throw new ProjectError("MISSING_CAPABILITY", "Node.js 22 or newer is required");
-  const args = process.argv.slice(2);
-  let request;
-  if (args.length === 1 && ["--version", "--doctor"].includes(args[0])) request = { interface_version: 1, operation: args[0].slice(2) };
-  else if (args.length === 0) request = JSON.parse(readFileSync6(0, "utf8").replace(/^\uFEFF/, ""));
-  else if (args.length === 2 && args[0] === "--input") request = JSON.parse(readFileSync6(args[1], "utf8").replace(/^\uFEFF/, ""));
-  else throw new ProjectError("INVALID_INPUT", "Use stdin, --input <JSON file>, --version or --doctor");
-  const data = await runOperation(request);
-  process.stdout.write(JSON.stringify({ ok: true, data, artifacts: [], warnings: [] }) + "\n");
-} catch (error) {
-  const code = error instanceof ProjectError ? error.code : error instanceof SyntaxError ? "INVALID_INPUT" : error.code === "ENOENT" ? "MISSING_FILE" : "INTERNAL_ERROR";
-  const exit = ["CONFLICT", "LOCKED", "RECOVERY_REQUIRED"].includes(code) ? 3 : ["MISSING_FILE", "MISSING_CAPABILITY"].includes(code) ? 4 : ["DISCLOSURE_DENIED", "RENDER_FAILED"].includes(code) ? 5 : code === "INTERNAL_ERROR" ? 1 : 2;
-  process.stdout.write(JSON.stringify({ ok: false, data: null, artifacts: [], warnings: [], error: { code, message: error instanceof Error ? error.message : String(error) } }) + "\n");
-  process.exitCode = exit;
+// src/runtime/entry.ts
+async function runRuntime(argv, workspaceDir) {
+  try {
+    if (Number(process.versions.node.split(".")[0]) < 22) throw new ProjectError("MISSING_CAPABILITY", "Node.js 22 or newer is required");
+    let request;
+    if (argv.length === 1 && ["--version", "--doctor"].includes(argv[0])) request = { interface_version: 1, operation: argv[0].slice(2) };
+    else if (argv.length === 0) request = JSON.parse(readFileSync7(0, "utf8").replace(/^\uFEFF/, ""));
+    else if (argv.length === 2 && argv[0] === "--input") request = JSON.parse(readFileSync7(argv[1], "utf8").replace(/^\uFEFF/, ""));
+    else throw new ProjectError("INVALID_INPUT", "Use stdin, --input <JSON file>, --version or --doctor");
+    if (workspaceDir && request.project) {
+      request.project = resolve6(workspaceDir, request.project);
+      ensureUnlinkedPath(workspaceDir, request.project);
+    }
+    const data = await runOperation(request);
+    process.stdout.write(JSON.stringify({ ok: true, data, artifacts: [], warnings: [] }) + "\n");
+  } catch (error) {
+    const code = error instanceof ProjectError ? error.code : error instanceof SyntaxError ? "INVALID_INPUT" : error.code === "ENOENT" ? "MISSING_FILE" : "INTERNAL_ERROR";
+    const exit = ["CONFLICT", "LOCKED", "RECOVERY_REQUIRED"].includes(code) ? 3 : ["MISSING_FILE", "MISSING_CAPABILITY"].includes(code) ? 4 : ["DISCLOSURE_DENIED", "RENDER_FAILED"].includes(code) ? 5 : code === "INTERNAL_ERROR" ? 1 : 2;
+    process.stdout.write(JSON.stringify({ ok: false, data: null, artifacts: [], warnings: [], error: { code, message: error instanceof Error ? error.message : String(error) } }) + "\n");
+    process.exitCode = exit;
+  }
 }
+
+// src/runtime/skill-entry.ts
+await runRuntime(process.argv.slice(2));

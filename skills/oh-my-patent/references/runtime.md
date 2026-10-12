@@ -3,6 +3,8 @@
 Prerequisite: Node.js >=22. No npm install/global package needed in the copied Skill.
 Smoke check: `node "<skill-directory>/scripts/runtime.mjs" --doctor`.
 Call with stdin or `--input <request.json>`. stdout is exactly one JSON envelope.
+Installed plugins expose the same interface via `node "<installed-checker>" --runtime
+--input <request.json>`; project paths resolve inside the installed workspace.
 The npm CLI has the same interface: `oh-my-patent runtime --input <request.json>`.
 
 Request fields: interface_version=1, operation, project (explicit root), params.
@@ -27,6 +29,9 @@ input hashes. Keep the complete request when retrying; changed input needs a new
 | path.restore | node_id, innovation_id; restores an abandoned innovation |
 | figure.validateSpec | spec object |
 | figure.validateSvg | path of SVG inside project |
+| figure.plan | spec_path; optional workspace/figures config override; reads saved actual host observations |
+| figure.offer | spec_path; persists a real 30-second deadline on a timed host |
+| figure.select | spec_path, mode user/timeout/default/reuse; user mode needs backend and decision_reference |
 | figure.register | spec_path, result_path, tool, optional source_path, provider, model, review |
 | figure.inspect | figure_id; stale hashes yield pending review |
 
@@ -54,9 +59,31 @@ Unknown operations, including planned but unimplemented operations, fail explici
 The legacy diagram CLI retains source-generation/local-rendering functions; it cannot
 write migrated projects. Use direct SVG and registration for the portable figure path.
 
+Before drawing, save fresh host/session observations to .patent/figure-capabilities.json
+using assets/figure-capabilities.example.json. Replace every placeholder; available needs
+actual tool/evidence, not configured names. Observations expire after 30 minutes.
+figure.plan reads preferredBackend (task > project > workspace > defaults) and returns
+host_reported candidates. Per-figure saved executable local choices take precedence;
+otherwise the executable local preference, then SVG, then another local renderer.
+Remote tools are never automatic defaults; choice is not content disclosure or budget approval.
+On a timed host, figure.offer saves choice-offer.json, then figure.select mode=timeout
+is accepted only after its actual 30-second deadline with an unchanged plan. Without a
+real timed host interaction, mode=default selects immediately (immediate_default).
+Mode=user records a supplied real decision reference; mode=reuse revalidates an existing
+local choice without manufacturing a new decision. Saved selection.json records source,
+capability/spec/MAIN hashes, host/session, limitations and review readiness. Select updates
+spec.backend atomically; unavailable choices block the affected figure. Per-figure sources
+can differ. Refresh observations on resume; reselect/reuse to update the binding.
+
+Selection mutations need current spec/MAIN/capability/config (if present), prior selection
+and pending offer (if present) digests. New figure.register needs a current selection and
+capability digests. DIAGRAM_DRAFT checks required selected paths; DIAGRAM_FINAL additionally
+requires preview. Missing preview permits drafting, not a passing visual review. Existing
+registered legacy figures remain inspectable; unregistered figures need selection.
+
 Input digests are SHA-256 over exact file bytes, including raster images. Registration
 requires spec/result/MAIN digests and a source digest when source_path is supplied.
-An imagegen handoff additionally requires payload_path (the complete approved payload
+A remote imagegen/PlantUML handoff additionally requires payload_path (the complete approved payload
 preview), provider, consent_reference under `.patent/disclosures/consents/` and an
 acknowledged disclosure_reference under `.patent/disclosures/events/`; hash all three.
 The saved event must match the consent's payload, recipient, purpose, tool, operation

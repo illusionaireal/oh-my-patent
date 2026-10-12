@@ -64,6 +64,7 @@ export interface FigureProvenance {
   source_digest?: string; source_path?: string; result_path: string; backend: string;
   tool: string; provider?: string; model?: string; generated_at: string;
   consent_reference?: string; disclosure_reference?: string;
+  selection_path?: string; selection_digest?: string;
   review: { status: 'pending' | 'passed' | 'failed'; reviewer_type: 'model' | 'human'; reviewer: string; technical: boolean; visual: boolean; findings: string[] };
 }
 export function inspectFigure(root: string, id: string): FigureProvenance & { review_current: boolean } {
@@ -72,6 +73,6 @@ export function inspectFigure(root: string, id: string): FigureProvenance & { re
   const spec = readFileSync(projectFile(root, `${base}/figure-spec.json`), 'utf8');
   validateFigureSpec(JSON.parse(spec));
   const p = JSON.parse(readFileSync(projectFile(root, `${base}/provenance.json`), 'utf8')) as FigureProvenance;
-  const current = digest(spec) === p.spec_digest && digest(readFileSync(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync(projectFile(root, 'MAIN.md'))) === p.main_digest && (!p.source_path || digest(readFileSync(projectFile(root, p.source_path))) === p.source_digest);
+  const current = digest(spec) === p.spec_digest && digest(readFileSync(projectFile(root, p.result_path))) === p.result_digest && digest(readFileSync(projectFile(root, 'MAIN.md'))) === p.main_digest && (!p.selection_path || digest(readFileSync(projectFile(root, p.selection_path))) === p.selection_digest) && (!p.source_path || digest(readFileSync(projectFile(root, p.source_path))) === p.source_digest);
   return { ...p, review: current ? p.review : { ...p.review, status: 'pending' }, review_current: current };
 }

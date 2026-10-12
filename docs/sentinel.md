@@ -61,8 +61,8 @@ Google Scholar is an academic fallback, not an individually required source. An 
 configuration object is counted; disabled/null entries and unrelated servers do not count.
 No connection, authentication or executable validation is implied by this classification.
 Observe actual approved host retrieval tools separately: none or unknown blocks formal
-RESEARCH; academic tools only still require explicit acceptance. Plugin runtime/git/mmdc
-blockers cannot be waived. A search plan is not a completed search.
+RESEARCH; academic tools only still require explicit acceptance. Plugin runtime/git blockers cannot be waived. Missing mmdc is optional at startup;
+selected Mermaid paths require an actual renderer. A search plan is not a completed search.
 
 After the user explicitly accepts academic-only retrieval, rerun the checker, for example:
 
@@ -105,3 +105,37 @@ relocation, structured failures and actual npm archives on Ubuntu/Windows.
 Real Claude Code/Codex/OpenCode model delegation requires separately recorded
 host/session/version and invocation/result evidence. See the
 [repair ledger](../specs/005-sentinel-startup/tasks.md) for the current verdicts.
+
+## Drawing checks and selection / 绘图检查与选择
+
+Both installation modes use the same figure plan/selection runtime. The installed plugin
+checker also accepts --runtime --input request.json; it restricts project paths to its
+workspace. Startup reports figureToolChecks (local_version_only) and leaves actual host
+capabilities unknown. Mermaid CLI absence is a warning, not a global blocker.
+
+The sentinel observes SVG writing, Mermaid/PlantUML, image tools, preview and timed
+interaction. Save fresh active host/session observations in .patent/figure-capabilities.json;
+available needs actual tool/evidence, and observations expire after 30 minutes. Before first
+DIAGRAM_DRAFT, build per-figure specs, apply preferredBackend through figure.plan, then
+select. Existing executable local choices can be reused; otherwise ready local preference,
+SVG, then another available local renderer. Different figures may choose different backends.
+
+Where the host exposes timed interaction, figure.offer saves a 30-second deadline. An
+actual user choice uses figure.select mode=user plus backend/decision_reference. Expiry
+uses mode=timeout and records timeout_default. Without timed interaction, announce the
+default and immediately select mode=default (immediate_default). Neither path invents human
+confirmation, external disclosure consent or spending approval. Remote services never
+become automatic defaults. No available local default needs setup or an explicit available
+choice; the affected figure stays blocked. A resumed executable saved choice uses mode=reuse
+with refreshed observations, preserving its original decision source.
+
+Both modes save selection.json, figure spec, provenance and actual technical/visual reviews.
+No preview allows drafts, not visual pass. Runtime stage checks apply to selected required
+figures at DIAGRAM_DRAFT and preview at DIAGRAM_FINAL; DONE requires current passed review
+and human final acceptance. Legacy registered figures remain inspectable; new registration
+requires selection. Real host tool availability and timed UI behaviour remain separately
+verified in host sessions; synthetic tests do not certify real providers.
+
+中文：启动盘点绘图能力，首次绘图时逐图选择。有真实计时交互等待最多 30 秒，超时
+采用可执行本地默认；无计时能力告知默认后立即继续。系统选择单独留痕，不替代外发/
+付费批准。缺 mmdc 不阻塞全局；无预览允许草稿，但必需附图不能通过最终视觉审阅。

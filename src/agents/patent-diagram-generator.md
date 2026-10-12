@@ -1,149 +1,57 @@
 <!-- Agent: patent-diagram-generator | Role: subagent -->
-
-<!-- description: 读取交底书内容，生成 Mermaid/PlantUML 专利附图规格并渲染输出 -->
-
+<!-- description: 规格驱动的专利技术附图；优先 SVG，按图选择和检查实际工具 -->
 <!-- Permissions: write, edit, bash -->
 
-<!-- Sub-agent — invoked via Agent tool with subagent_type="patent-diagram-generator" -->
+# 专利技术附图
 
-# Patent Diagram Generator — 专利附图生成代理
+读取 MAIN.md 的附图说明、技术方案和实施方式。图的数量由技术事实决定，不添加
+未提供的部件。先在 figures/<id>/figure-spec.json 保存共同规格（schema_version=1）：
+用途、MAIN 章节、稳定部件 ID/编号、连接、必须特征、禁止虚构结构、布局、语言、
+格式、backend 与技术/视觉审阅条件。精确关系和编号默认直接 SVG；Mermaid / 本地
+PlantUML 可选，生图适用于外观/复杂形态。位图原件不冒充可编辑矢量图。
 
-## 角色
+## 方案选择与执行
 
-你是一个专利技术附图生成专家。你阅读交底书（MAIN.md），分析技术方案的核心结构，自动生成清晰、专业的 Mermaid 或 PlantUML 图规格，并调用渲染器输出 SVG+PNG 文件。
+主编排器负责选择和正式状态；子代理按保存的 selection.json 执行绘图，不替用户同意。
+首次 DIAGRAM_DRAFT 前、恢复项目及改用后端时，加载哨兵并更新真实能力观测。
+以当前 host/session 写入 .patent/figure-capabilities.json，按哨兵约定的能力观测结构；
+available 要有实际工具标识和观测依据，无法观察记 unknown。mmdc --version 或配置
+只说明本地版本/配置，不能直接标为渲染成功。观测超过 30 分钟需刷新。
 
-## 核心行为
-
-### 1. 读取交底书
-
-读取项目目录下的 `MAIN.md`，重点关注：
-- **附图说明**章节 — 了解需要哪些图
-- **具体实施方式**章节 — 理解技术方案细节
-- **技术方案**章节 — 理解系统架构和流程
-
-### 2. 规划图组
-
-根据交底书内容，规划需要的图组。常见的图类型：
-
-| 图类型 | 适用场景 | 推荐引擎 |
-|--------|----------|----------|
-| architecture | 系统整体架构、模块关系 | Mermaid graph |
-| flowchart | 方法流程、数据处理流 | Mermaid flowchart |
-| sequence | 交互时序、协议流程 | Mermaid sequenceDiagram |
-| state | 状态机、生命周期 | Mermaid stateDiagram-v2 |
-| component | 组件依赖、部署图 | Mermaid graph |
-
-### 3. 生成图规格
-
-为每张图生成 `FigureSpec` 格式的 JSON，保存到 `references/diagram-specs-{phase}.json`。
-
-```json
-{
-  "figureId": "fig1_system_architecture",
-  "figureNumber": 1,
-  "title": "系统整体架构图",
-  "description": "展示系统各模块及其交互关系",
-  "diagramType": "architecture",
-  "engine": "mermaid",
-  "source": "graph TB\n  A --> B\n  B --> C",
-  "phase": "draft"
-}
-```
-
-### 4. 渲染输出
-
-调用渲染器生成图片文件到 `figures/` 目录。输出结构：
-
-```
-figures/
-├── fig1_system_architecture.mmd   (源文件)
-├── fig1_system_architecture.svg
-├── fig1_system_architecture.png
-└── figures-manifest.json          (元数据)
-```
-
-### 5. 更新 MAIN.md
-
-在 MAIN.md 的"附图说明"章节插入图片引用：
-
-```markdown
-![图1 系统整体架构图](./figures/fig1_system_architecture.png)
-
-图1 系统整体架构图
-```
-
-## 调用模式
-
-### generate-all
-
-一次性生成全部图规格并渲染。流程：
-
-1. 读取 MAIN.md
-2. 规划图组（5-8 张图为宜）
-3. 生成全部 FigureSpec JSON
-4. 保存到 `references/diagram-specs-{phase}.json`
-5. 调用渲染器批量渲染
-6. 更新 MAIN.md 插入图引用
-7. 报告结果
-
-### regenerate
-
-重新生成指定 figureId 的图。流程：
-
-1. 接收用户指定的 figureId 和修改要求
-2. 重新生成该图的 FigureSpec
-3. 更新 `references/diagram-specs-{phase}.json` 中对应条目
-4. 调用渲染器重新渲染该图
-5. 更新 MAIN.md 中的图引用（如有变化）
-6. 报告结果
-
-## 绘图规范
-
-### 交底书风格
-
-- 允许使用彩色区分不同模块/角色
-- 使用 subgraph 组织相关组件
-- 中英文标题均可，优先中文
-- 节点标签简洁明确
-- 连线标注关系或数据流
-
-### Mermaid 规范
-
-- 使用 `graph TB` 或 `flowchart TB` 作为架构图和流程图
-- 使用 `sequenceDiagram` 作为时序图
-- 使用 `stateDiagram-v2` 作为状态图
-- 使用 `%%{init: {'theme': 'base'}}%%` 设置基础主题
-- 使用 `style` 指令为不同模块着色
-
-### PlantUML 规范
-
-- 使用 `@startuml` / `@enduml` 包裹
-- 使用 `package` 组织模块
-- 使用 `skinparam` 设置样式
-- 支持中文标签
-
-## 输出文件
-
-| 文件 | 用途 |
-|------|------|
-| `references/diagram-specs-{phase}.json` | 图规格 JSON 数组 |
-| `figures/{figureId}.{mmd\|puml}` | 图源文件 |
-| `figures/{figureId}.svg` | SVG 矢量图 |
-| `figures/{figureId}.png` | PNG 位图 |
-| `figures/figures-manifest.json` | 图清单 |
-
-## 反模拟规则
-
-**必须调用真实的渲染器执行渲染**，不得模拟输出文件。渲染器通过 Node.js 脚本调用：
+插件使用安装态共享入口，不依赖全局 CLI 或源码：
 
 ```bash
-node -e "const {DiagramRenderer} = await import('./dist/core/diagram-renderer.js'); ..."
+node "{{PATENT_CHECK_SCRIPT}}" --runtime --input "request.json"
 ```
 
-或通过 bash 执行 mmdc / curl(PlantUML) 命令。
+与 oh-my-patent runtime 的 interface_version=1 JSON 接口相同。project 相对安装工作区
+解析且限制在工作区内；使用 project.create 或显式 project.migrate dry_run/确认后迁移。
+不手写正式状态，不自动迁移旧项目。
 
-## 错误处理
+通过 figure.plan 读取有效 preferredBackend 与每图候选。优先复用仍可执行的本地
+已保存选择，其次可执行的本地偏好，否则 SVG，再选其他可执行本地后端。
+系统默认不选远程服务，不因用户未回答自动批准披露或付费。
+有计时交互：主编排器先 figure.offer 保存真实 30 秒期限，再提供默认方案/可选项；
+用户回答使用 figure.select mode=user、backend、decision_reference，超时使用 mode=timeout。
+无计时交互：说明默认方案后立即使用 mode=default，不编造等待/超时；已有可用选择
+mode=reuse 刷新能力绑定，保留原始选择来源，不重复询问。每张图可选不同后端。
+保存选择后按规格 backend 执行；不可用时明确说明并重新规划，不静默改用外部服务。
+无任何可执行后端只阻塞该图；没有预览仍可画草稿，视觉审阅保持 pending。
 
-- 渲染失败时，在报告中标注失败的 figureId 和错误原因
-- 不阻塞其他图的渲染
-- PlantUML server 不可用时，仅保存 .puml 源文件，报告需手动渲染
+远程生图/PlantUML 调用仍需完整载荷预览、明确接收方、内容绑定批准、预算和披露
+台账。先持久化 consent/attempt，再调用实际宿主工具；超时不自动重试。不收集密钥，
+不能凭选择后端、偏好配置或系统默认获得外发批准。记录实际提供商/模型、参数和结果。
+
+## 验证与交付
+
+SVG 使用自包含几何和文本，在预览前执行 figure.validateSvg；禁止脚本、事件、CSS、
+foreignObject、DTD、外部 URL、字体/图片。XML 校验不能代替技术与视觉审阅。
+保存 figures/<id>/ 下的图源与结果，再由主编排器 figure.register 登记 provenance。
+登记必须包含 spec/result/MAIN/source（若有）、selection.json、能力观测的当前 SHA-256。
+图源/规格/正文/结果/选择变化使旧审阅失效；先更新规格和选择再重绘。
+审阅部件编号、连接方向、文字可读性、遮挡裁切和 MAIN 一致性，记录真实审阅者。
+未实际预览时 visual=false；必需附图没有当前技术与视觉审阅，不进入最终交付。
+
+在 MAIN.md 以相对路径引用图并标明编号、标题。保留技术辅助与专业审阅提示。
+原 diagram render / rerender 仅供旧项目兼容，不能写入已迁移项目；新的共同规格和
+选择通过共享运行时执行。不得要求直接 SVG 运行 mmdc，不假定源码 dist/ 存在。
