@@ -9,6 +9,8 @@ import { createInitialPath, createInitialNode, isValidBrainstormNode } from '../
 import { loadPath, loadNode, savePath, saveNode, saveInnovationSnapshot } from '../core/path-persistence.js';
 import { createBranchFromNode } from '../commands/path-branch.js';
 import { restoreInnovation } from '../commands/path-restore.js';
+import { figurePlan, figureSelectionMutation, assertFigureSelection } from './figure-selection.js';
+import { selectionReviewDigest } from '../core/figure-selection.js';
 import { validateFigureSpec, validateSvg, inspectFigure, type FigureProvenance } from '../core/figures.js';
 
 export interface RuntimeRequest {
@@ -99,7 +101,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
   const root = resolve(string(request.project, 'project'));
   const params = request.params ?? {};
   if (request.operation === 'project.inspect') return inspectProject(root);
-  if (['project.validate', 'workflow.inspect', 'figure.inspect', 'path.query'].includes(request.operation)) {
+  if (['project.validate', 'workflow.inspect', 'figure.inspect', 'figure.plan', 'path.query'].includes(request.operation)) {
     const inspected = inspectProject(root);
     const coordination = inspected.coordination;
     if (coordination.locked || coordination.recovery_required) throw new ProjectError('RECOVERY_REQUIRED', 'Inspect owner/recover the interrupted transaction before reading formal artifacts');
@@ -110,6 +112,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
   }
   if (request.operation === 'figure.validateSpec') return validateFigureSpec(params.spec);
   if (request.operation === 'figure.validateSvg') return validateSvg(readFileSync(projectFile(root, string(params.path, 'path')), 'utf8'));
+  if (request.operation === 'figure.plan') return figurePlan(root, params);
   if (request.operation === 'figure.inspect') return inspectFigure(root, string(params.figure_id, 'figure_id'));
   if (request.operation === 'path.query') return { path: await loadPath(root), files: tree(root, '.brainstorm') };
   if (request.operation === 'project.migrate' && params.dry_run === true) {
@@ -117,7 +120,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
     return { proposed: migrate(current.state, root), path_files: Object.keys(migratePathFiles(current.state, root)), state_digest: current.state_digest, writes: false };
   }
   if (request.operation === 'project.recoverLock') { new ProjectStore(root).recoverLock(string(params.owner_token, 'owner_token')); return { recovered: true }; }
-  const operations = ['project.create', 'project.migrate', 'workflow.advance', 'path.record', 'path.branch', 'path.restore', 'figure.register'];
+  const operations = ['project.create', 'project.migrate', 'workflow.advance', 'path.record', 'path.branch', 'path.restore', 'figure.register', 'figure.offer', 'figure.select', 'figure.fallback'];
   if (!operations.includes(request.operation)) throw new ProjectError('UNKNOWN_OPERATION', `Unknown operation: ${request.operation}`);
   const mutation: Mutation = { ...request, operation_id: string(request.operation_id, 'operation_id'), expected: request.expected! };
   return new ProjectStore(root).mutate(mutation, async current => {
@@ -147,7 +150,10 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
     requireCurrentState(current);
     const files: Record<string, string | null> = {};
     let data: unknown;
-    if (request.operation === 'workflow.advance') {
+    if (['figure.offer', 'figure.select', 'figure.fallback'].includes(request.operation)) {
+      const selected = figureSelectionMutation(root, request.operation, params, request.expected!);
+      Object.assign(files, selected.files); data = selected.data;
+    } else if (request.operation === 'workflow.advance') {
       const target = string(params.target, 'target') as WorkflowStage;
       const artifacts = params.artifacts;
       if (!Array.isArray(artifacts) || !artifacts.length || !artifacts.every(a => typeof a === 'string')) throw new ProjectError('INVALID_INPUT', 'Saved stage artifacts required');
@@ -157,6 +163,19 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
         if (!request.expected?.inputs?.[name]) throw new ProjectError('INVALID_INPUT', 'Each artifact needs an expected input digest');
       }
       if ([WorkflowStage.DRAFT, WorkflowStage.DONE].includes(target) && params.human_decision !== true) throw new ProjectError('INVALID_STATE', 'Human innovation selection/final acceptance required');
+      if ([WorkflowStage.DIAGRAM_DRAFT, WorkflowStage.DIAGRAM_FINAL].includes(target)) {
+        const directory = projectFile(root, 'figures');
+        for (const entry of existsSync(directory) ? readdirSync(directory, { withFileTypes: true }).filter(e => e.isDirectory()) : []) {
+          const path = `figures/${entry.name}/figure-spec.json`;
+          const spec = validateFigureSpec(readJson(root, path));
+          if (spec.optional) continue;
+          // Already registered legacy figures remain readable; new work uses selection.
+          if (!existsSync(projectFile(root, `figures/${entry.name}/selection.json`))
+            && existsSync(projectFile(root, `figures/${entry.name}/provenance.json`))) continue;
+          assertFigureSelection(root, path, request.expected, target === WorkflowStage.DIAGRAM_FINAL);
+          for (const input of [path, 'MAIN.md']) if (!request.expected?.inputs?.[input]) throw new ProjectError('INVALID_INPUT', `Expected input digest required: ${input}`);
+        }
+      }
       if (target === WorkflowStage.DONE) {
         const entries = existsSync(projectFile(root, 'figures')) ? readdirSync(projectFile(root, 'figures'), { withFileTypes: true }).filter(x => x.isDirectory()) : [];
         const omitted = params.omitted_figures ?? [];
@@ -222,6 +241,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
       else if (spec.backend === 'svg') throw new ProjectError('INVALID_INPUT', 'SVG backend requires SVG result');
       for (const name of [specPath, resultPath, 'MAIN.md']) if (!request.expected?.inputs?.[name]) throw new ProjectError('INVALID_INPUT', `Expected input digest required: ${name}`);
       const review = params.review as FigureProvenance['review'] | undefined;
+      const selection = assertFigureSelection(root, specPath, request.expected, review?.visual === true);
       if (review && (!['pending', 'passed', 'failed'].includes(review.status) || !['model', 'human'].includes(review.reviewer_type) || typeof review.reviewer !== 'string' || !review.reviewer.trim() || !Array.isArray(review.findings) || !review.findings.every(f => typeof f === 'string') || typeof review.technical !== 'boolean' || typeof review.visual !== 'boolean' || review.status === 'passed' && (!review.technical || !review.visual))) throw new ProjectError('INVALID_INPUT', 'Invalid review');
       const priorPath = `${base}/provenance.json`;
       if (existsSync(projectFile(root, priorPath))) {
@@ -234,10 +254,12 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
       }
       const provenance: FigureProvenance = {
         figure_id: spec.figure_id, spec_digest: digest(specText), result_digest: digest(result), main_digest: digest(readFileSync(projectFile(root, 'MAIN.md'))),
+        selection_path: `${base}/selection.json`, selection_digest: digest(readFileSync(projectFile(root, `${base}/selection.json`))),
+        selection_review_digest: selectionReviewDigest(selection),
         result_path: resultPath, backend: spec.backend, tool: string(params.tool, 'tool'), generated_at: new Date().toISOString(),
         review: review ?? { status: 'pending', reviewer_type: 'model', reviewer: 'unreviewed', technical: false, visual: false, findings: [] },
       };
-      if (spec.backend === 'imagegen') {
+      if (selection.execution === 'remote') {
         provenance.consent_reference = string(params.consent_reference, 'consent_reference');
         provenance.disclosure_reference = string(params.disclosure_reference, 'disclosure_reference');
         const payloadPath = string(params.payload_path, 'payload_path');
@@ -246,7 +268,7 @@ export async function runOperation(request: RuntimeRequest): Promise<unknown> {
         const consent = readJson(root, provenance.consent_reference) as Record<string, unknown>;
         const event = readJson(root, provenance.disclosure_reference) as Record<string, unknown>;
         const payloadDigest = digest(readFileSync(projectFile(root, payloadPath)));
-        if (!consent || !event || consent.content_digest !== payloadDigest || event.content_digest !== payloadDigest || consent.id !== event.consent_id || consent.operation_id !== event.operation_id || consent.tool !== provenance.tool || event.tool !== provenance.tool || consent.recipient !== event.recipient || consent.purpose !== event.purpose || !consent.approval_reference || consent.reuse !== 'one_operation' || event.outcome !== 'acknowledged' || !(Date.parse(String(event.time)) >= Date.parse(String(consent.approved_at))) || !(Date.parse(String(event.time)) <= Date.parse(String(consent.expires_at)))) throw new ProjectError('DISCLOSURE_DENIED', 'Image generation requires matching approved payload and acknowledged disclosure evidence');
+        if (!consent || !event || consent.content_digest !== payloadDigest || event.content_digest !== payloadDigest || consent.id !== event.consent_id || consent.operation_id !== event.operation_id || consent.tool !== provenance.tool || event.tool !== provenance.tool || consent.recipient !== event.recipient || consent.purpose !== event.purpose || !consent.approval_reference || consent.reuse !== 'one_operation' || event.outcome !== 'acknowledged' || !(Date.parse(String(event.time)) >= Date.parse(String(consent.approved_at))) || !(Date.parse(String(event.time)) <= Date.parse(String(consent.expires_at)))) throw new ProjectError('DISCLOSURE_DENIED', 'Remote figure generation requires matching approved payload and acknowledged disclosure evidence');
         const recipient = new URL(string(consent.recipient, 'recipient'));
         if (!['https:', 'http:'].includes(recipient.protocol) || recipient.username || recipient.password || recipient.search || recipient.hash) throw new ProjectError('INVALID_INPUT', 'Invalid disclosure recipient');
         provenance.provider = string(params.provider, 'provider');

@@ -338,3 +338,16 @@ npm run publish:release -- assets --dry-run
 The already published [0.4.0 Release](releases/0.4.0.md) uses the tag `0.4.0`.
 Its original tag is not moved; this automation applies to new release tags that
 contain the updated workflows and scripts.
+
+### Figure capability and timed default selection
+
+Plugin and Skill use the same figure.plan / figure.offer / figure.select interface.
+The installed plugin checker accepts --runtime --input request.json, independent of npm
+cache or global CLI. New versioned projects use project.create; existing legacy projects
+need explicit project.migrate dry-run/confirmation before these mutations. Once migrated,
+all workflow/path/figure writes use the shared runtime, not legacy CLI writers.
+
+The sentinel saves actual host observations and each figure stores its selected backend.
+Timed hosts offer a 30-second default; hosts without timed interaction default immediately.
+System defaults use available local tools and never authorize remote disclosure/spending.
+See [sentinel](sentinel.md) and the packaged runtime/figure references for the protocol.

@@ -23,6 +23,12 @@ export interface DegradedRetrieval {
 }
 
 export type CheckStatus = 'ready' | 'missing' | 'warning';
+export interface StageReadiness {
+  runtime: { ready: boolean; blockingCount: number };
+  research: { configurationReady: boolean; verification: 'configuration_only'; hostTools: 'unknown' };
+  diagramDraft: 'unknown';
+  diagramFinal: 'unknown';
+}
 
 export interface CheckResult {
   category: 'mcp' | 'tool' | 'runtime' | 'project';
@@ -46,6 +52,8 @@ export interface InitReport {
   retrievalCoverage: RetrievalCoverage;
   configuredCount: number;
   degradedRetrieval: DegradedRetrieval;
+  figureToolChecks: { mermaidCli: CheckStatus; verification: 'local_version_only'; hostCapabilities: 'unknown' };
+  stageReadiness: StageReadiness;
 }
 
 export interface McpUserInput {
@@ -155,7 +163,7 @@ const REQUIRED_TOOLS = [
     desc: 'Mermaid CLI - 渲染流程图/架构图',
     command: 'mmdc --version',
     installHint: 'npm install -g @mermaid-js/mermaid-cli',
-    blocking: true,
+    blocking: false,
   },
   {
     name: 'git',
@@ -498,7 +506,8 @@ export function checkExternalTools(): CheckResult[] {
       results.push({
         category: 'tool',
         name: tool.name,
-        status: 'missing',
+        status: tool.blocking ? 'missing' : 'warning',
+        blocking: tool.blocking,
         detail: `${tool.desc} - 未找到`,
         guidance: `安装: ${tool.installHint}`,
       });
@@ -623,8 +632,16 @@ export function runFullCheck(options: InitCheckOptions): InitReport {
       : '环境完全就绪，所有检测项通过'
     : `${blockingCount} 个阻塞项需要解决后才能正常使用${retrievalBlocked ? `；${retrievalDetail}` : ''}`;
 
+  const figureToolChecks: InitReport['figureToolChecks'] = { mermaidCli: results.find(r => r.name === 'mmdc')!.status,
+    verification: 'local_version_only', hostCapabilities: 'unknown' };
+  const runtimeBlocking = results.filter(r => r.status === 'missing' && (r.category === 'tool' || r.category === 'runtime')).length;
+  const stageReadiness: StageReadiness = {
+    runtime: { ready: runtimeBlocking === 0, blockingCount: runtimeBlocking },
+    research: { configurationReady: !retrievalBlocked, verification: 'configuration_only', hostTools: 'unknown' },
+    diagramDraft: 'unknown', diagramFinal: 'unknown',
+  };
   return { timestamp: new Date().toISOString(), adapter, workspaceDir, results, blockingCount, warningCount, ready, summary,
-    retrievalCoverage, configuredCount: configured.length, degradedRetrieval };
+    retrievalCoverage, configuredCount: configured.length, degradedRetrieval, figureToolChecks, stageReadiness };
 }
 
 export interface JsonReport {
@@ -634,6 +651,8 @@ export interface JsonReport {
   retrievalCoverage: RetrievalCoverage;
   configuredCount: number;
   degradedRetrieval: DegradedRetrieval;
+  figureToolChecks: { mermaidCli: CheckStatus; verification: 'local_version_only'; hostCapabilities: 'unknown' };
+  stageReadiness: StageReadiness;
   ready: boolean;
   blockingCount: number;
   warningCount: number;
@@ -653,6 +672,8 @@ export function runJsonCheck(options: InitCheckOptions): JsonReport {
     retrievalCoverage: report.retrievalCoverage,
     configuredCount: report.configuredCount,
     degradedRetrieval: report.degradedRetrieval,
+    figureToolChecks: report.figureToolChecks,
+    stageReadiness: report.stageReadiness,
     ready: report.ready,
     blockingCount: report.blockingCount,
     warningCount: report.warningCount,
@@ -709,6 +730,9 @@ export function formatReport(report: InitReport): string {
   lines.push(`- **警告项**: ${report.warningCount}`);
   lines.push(`- **摘要**: ${report.summary}`);
   lines.push(`- **检索覆盖度（仅配置）**: ${report.retrievalCoverage} / ${report.configuredCount} 个源`);
+  lines.push(`- **基础运行时**: ${report.stageReadiness.runtime.ready ? '就绪' : '有阻塞项'}`);
+  lines.push(`- **RESEARCH 配置门禁**: ${report.stageReadiness.research.configurationReady ? '通过，实际检索工具仍未验证' : '阻塞'}`);
+  lines.push('- **绘图/视觉审阅**: 由当前宿主按图检查，启动报告不推断通过');
   if (report.degradedRetrieval.accepted) {
     lines.push(`- **降级确认依据**: ${report.degradedRetrieval.reason}`);
     lines.push(`- **检索局限**: ${report.degradedRetrieval.limitation}`);

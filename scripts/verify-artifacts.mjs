@@ -116,6 +116,29 @@ try {
     if (checked.status !== 0) throw new Error(`Installed ${host} checker failed: ${checked.stdout} ${checked.stderr}`);
     const report = JSON.parse(checked.stdout);
     if (report.workspaceDir !== packedWorkspace || report.mcpVerification !== 'configuration_only' || report.ready !== false || !report.timestamp) throw new Error(`Incorrect installed ${host} report`);
+    const runtime = spawnSync(process.execPath, [script, '--runtime', '--doctor'], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '' } });
+    if (runtime.status !== 0 || !JSON.parse(runtime.stdout).ok) throw new Error(`Installed ${host} shared runtime failed`);
+    const project = `projects/${host}-figure-fixture`;
+    const invoke = request => {
+      const result = spawnSync(process.execPath, [script, '--runtime'], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '' }, input: JSON.stringify({ interface_version: 1, project, ...request }) });
+      if (result.status !== 0 || !JSON.parse(result.stdout).ok) throw new Error(`Packed ${host} figure runtime failed: ${result.stdout}`);
+      return JSON.parse(result.stdout).data;
+    };
+    invoke({ operation: 'project.create', operation_id: 'create', expected: { revision: null }, params: { topic: 'Synthetic archive fixture', topic_slug: 'fixture' } });
+    const projectRoot = join(packedWorkspace, project);
+    const specPath = 'figures/fig1/figure-spec.json';
+    mkdirSync(join(projectRoot, 'figures/fig1'), { recursive: true });
+    writeFileSync(join(projectRoot, specPath), readFileSync(join(root, 'removed package cache/skills/oh-my-patent/assets/figure-spec.example.json')));
+    const capabilities = JSON.parse(readFileSync(join(root, 'removed package cache/skills/oh-my-patent/assets/figure-capabilities.example.json'), 'utf8'));
+    capabilities.host = host; capabilities.session_id = 'synthetic-archive-fixture'; capabilities.observed_at = new Date().toISOString();
+    capabilities.backends.svg = { status: 'available', tool: 'synthetic-file-tool', evidence: 'Synthetic archive test; no real model invocation', execution: 'local' };
+    writeFileSync(join(projectRoot, '.patent/figure-capabilities.json'), JSON.stringify(capabilities));
+    if (invoke({ operation: 'figure.plan', params: { spec_path: specPath } }).default_backend !== 'svg') throw new Error(`Packed ${host} figure plan failed`);
+    const state = readFileSync(join(projectRoot, '.patent/state.json'), 'utf8');
+    const inputs = ['MAIN.md', '.patent/config.json', '.patent/figure-capabilities.json', specPath];
+    const choice = invoke({ operation: 'figure.select', operation_id: 'select', params: { spec_path: specPath, mode: 'default' },
+      expected: { revision: JSON.parse(state).revision, state_digest: sha(state), inputs: Object.fromEntries(inputs.map(path => [path, sha(readFileSync(join(projectRoot, path)))])) } });
+    if (choice.result.backend !== 'svg' || choice.result.source !== 'immediate_default') throw new Error(`Packed ${host} default selection failed`);
   }
   console.log(JSON.stringify({ok:true,version:manifest.version,zip_entries:count,tarball:tarName,skill_tarball:standalone.tarball,skill_npm_files:standaloneCount,zip:zipName,node:process.versions.node,installed_check_hosts:checkScripts.map(([host]) => host)}));
 } finally { rmSync(root,{recursive:true,force:true}); }

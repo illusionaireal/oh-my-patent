@@ -25,6 +25,9 @@ it.each([undefined, 'user accepted academic limitations'])('blocks zero sources 
     blockingCount: 1, warningCount: 5, mcpVerification: 'configuration_only',
     degradedRetrieval: { accepted: false } });
   expect(result.summary).toContain('检索能力缺失');
+  expect(result.stageReadiness).toMatchObject({ runtime: { ready: true, blockingCount: 0 },
+    research: { configurationReady: false, verification: 'configuration_only', hostTools: 'unknown' },
+    diagramDraft: 'unknown', diagramFinal: 'unknown' });
   expect(result.results.find(r => r.name === 'retrieval-coverage')).toMatchObject({ status: 'missing', blocking: true });
   expect(result.results.filter(r => r.status === 'warning')).toHaveLength(result.warningCount);
 });
@@ -78,9 +81,17 @@ it('passes mixed coverage and does not record an academic downgrade as accepted'
     degradedRetrieval: { requested: true, accepted: false, limitation: null } });
 });
 
-it.each(['mmdc --version', 'git --version', 'node --version'])('consent cannot waive missing %s', command => {
+it.each(['git --version', 'node --version'])('consent cannot waive missing %s', command => {
   configure({ google_scholar: {} });
   vi.mocked(execSync).mockImplementation(input => { if (input === command) throw new Error('missing'); return 'v22.0.0'; });
   expect(report('user decision')).toMatchObject({ ready: false, blockingCount: 1,
+    stageReadiness: { runtime: { ready: false, blockingCount: 1 }, research: { configurationReady: true } },
     degradedRetrieval: { accepted: true }, retrievalCoverage: 'fallback_only' });
+});
+
+it('keeps missing Mermaid CLI optional at startup when retrieval and runtime are ready', () => {
+  configure({ uspto_patent: {} });
+  vi.mocked(execSync).mockImplementation(command => { if (command === 'mmdc --version') throw new Error('missing'); return 'v22.0.0'; });
+  expect(report()).toMatchObject({ ready: true, blockingCount: 0,
+    figureToolChecks: { mermaidCli: 'warning', verification: 'local_version_only', hostCapabilities: 'unknown' } });
 });

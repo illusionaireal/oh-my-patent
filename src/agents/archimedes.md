@@ -191,7 +191,23 @@
    - 同时核实本宿主实际获准检索工具：零可用源或 unknown 阻塞，不能仅凭配置放行；
      仅学术源仍需降级确认。恢复时重新检查，旧报告/旧确认不能自动放行。
      无获准检索时仅保存检索计划或分析用户材料，明确证据不足，不推进正式 RESEARCH。
-     运行时/git/mmdc 阻塞始终需解决。
+     运行时/git 阻塞始终需解决；mmdc 缺失只记录绘图缺口。
+   - 按阶段消费哨兵报告：基础运行时始终检查，检索缺口仅阻塞 RESEARCH/补充检索；
+     已有证据的撰写或绘图按自身能力继续，不能用 ready=false 停止所有恢复任务。
+     绘图/审阅 unknown 不当作通过。能力刷新不清空未改动图的已通过审阅。
+   - 绘图能力在启动/恢复时盘点，不阻塞前面的检索与撰写。首次进入 DIAGRAM_DRAFT
+     前，根据 MAIN 创建逐图规格，并按 patent-diagram-generator 的共同流程执行
+     figure.plan / figure.offer / figure.select；preferredBackend 参与选择，精确附图默认 SVG。
+   - 有真实计时交互时提供默认项并等待最多 30 秒，超时自动采用可执行本地默认项；
+     无计时能力则告知默认项并立即继续，分别记录 timeout_default / immediate_default，
+     不伪造用户确认。已有本地方案仍可执行时 mode=reuse，不重复询问；每图可不同。
+   - 新项目使用安装态脚本 --runtime 的 project.create 创建版本化状态。已有旧项目在
+     首次使用共享绘图运行时前先 project.migrate dry_run，说明结果并取得迁移确认。
+     创建/迁移后，所有正式工作流/路径操作都使用同一 JSON 运行时（workflow.advance、
+     path.record/query/branch/restore）；旧角色的 path/diagram CLI 示例不再作为写入接口。
+     不混用旧写入器，不手改 schema/state。创新选择和最终验收仍需 human_decision=true。
+   - 保存 .patent/figure-capabilities.json 和每图 selection.json；恢复时刷新实际工具观测。
+     缺少预览允许草稿，但最终必需附图仍需当前技术/视觉审阅。系统默认不能批准外发/付费。
 1) 用 `task` 调用 `patent-landscape-analyst`，先给检索式/CPC/候选证据
    **输出**:
    ```

@@ -9,6 +9,8 @@ import { CodexAdapter } from '../../src/adapters/codex/index.js';
 import { OpenCodeAdapter } from '../../src/adapters/opencode/index.js';
 import { checkRuntimePath } from '../../src/adapters/check-runtime.js';
 import { getMcpStatuses, writeMcpConfig, type InitCheckHost } from '../../src/core/init-checker.js';
+import { capabilityFixture } from '../figure-selection-fixture.js';
+import { digest } from '../../src/core/project-store.js';
 
 const roots: string[] = [];
 const hosts = ['claude-code', 'codex', 'opencode'] as const;
@@ -157,3 +159,60 @@ it.each([new OpenCodeAdapter(), new CodexAdapter()])('preserves another host and
   expect(readFileSync(script, 'utf8')).toBe(edited);
   expect(readFileSync(other, 'utf8')).toBe('another host');
 });
+
+it.each(hosts)('shares the bundled figure-selection runtime in the installed %s checker', async host => {
+  const workspace = root();
+  const def = await loadPortableDef({ pluginDir: resolve('.'), workspaceDir: workspace });
+  const generated = await adapters[hosts.indexOf(host)].generate(def, {});
+  const script = join(workspace, checkRuntimePath(host));
+  mkdirSync(dirname(script), { recursive: true }); writeFileSync(script, generated.files.get(checkRuntimePath(host))!);
+  const run = (request: object, expectedStatus = 0) => {
+    const result = spawnSync(process.execPath, [script, '--runtime'], { cwd: root(), encoding: 'utf8',
+      env: { ...process.env, PATH: '' }, input: JSON.stringify(request) });
+    expect(result.status, result.stdout + result.stderr).toBe(expectedStatus);
+    return JSON.parse(result.stdout);
+  };
+  const project = 'projects/01-fixture';
+  expect(run({ interface_version: 1, operation: 'project.create', project, operation_id: 'create',
+    expected: { revision: null }, params: { topic: 'Synthetic figure', topic_slug: 'fixture' } }).ok).toBe(true);
+  const projectRoot = join(workspace, project);
+  mkdirSync(join(projectRoot, 'figures/fig1'), { recursive: true });
+  writeFileSync(join(projectRoot, 'figures/fig1/figure-spec.json'), readFileSync('src/skill-entry/assets/figure-spec.example.json'));
+  writeFileSync(join(projectRoot, '.patent/figure-capabilities.json'), JSON.stringify(capabilityFixture()));
+  const params = { spec_path: 'figures/fig1/figure-spec.json' };
+  expect(run({ interface_version: 1, operation: 'figure.plan', project, params }).data).toMatchObject({ default_backend: 'svg', verification: 'host_reported' });
+  const inputs = ['MAIN.md', '.patent/config.json', '.patent/figure-capabilities.json', params.spec_path];
+  const stateText = readFileSync(join(projectRoot, '.patent/state.json'), 'utf8');
+  const expected = { revision: JSON.parse(stateText).revision, state_digest: digest(stateText),
+    inputs: Object.fromEntries(inputs.map(p => [p, digest(readFileSync(join(projectRoot, p)))])) };
+  expect(run({ interface_version: 1, operation: 'figure.select', project, operation_id: 'select', expected,
+    params: { ...params, mode: 'default' } }).data.result).toMatchObject({ backend: 'svg', source: 'immediate_default', decision_reference: null });
+  expect(JSON.parse(readFileSync(join(projectRoot, 'figures/fig1/selection.json'), 'utf8')).backend).toBe('svg');
+  expect(run({ interface_version: 1, operation: 'project.create', project: '../outside', operation_id: 'outside',
+    expected: { revision: null }, params: { topic: 'escape', topic_slug: 'escape' } }, 1).ok).toBe(false);
+}, 15000);
+
+it.each(hosts)('inherits workspace preferences and honors project/task overrides in installed %s runtime', async host => {
+  const workspace = root();
+  const def = await loadPortableDef({ pluginDir: resolve('.'), workspaceDir: workspace });
+  const generated = await adapters[hosts.indexOf(host)].generate(def, {});
+  const script = join(workspace, checkRuntimePath(host));
+  mkdirSync(dirname(script), { recursive: true }); writeFileSync(script, generated.files.get(checkRuntimePath(host))!);
+  writeFileSync(join(workspace, '.oh-my-patent/config.json'), JSON.stringify({ figures: { preferredBackend: 'mermaid' }, jurisdiction: 'US' }));
+  const project = 'projects/02-preference';
+  const run = (operation: string, params: object, extra = {}) => {
+    const result = spawnSync(process.execPath, [script, '--runtime'], { cwd: root(), input: JSON.stringify({ interface_version: 1, operation, project, params, ...extra }), encoding: 'utf8' });
+    expect(result.status, result.stdout + result.stderr).toBe(0); return JSON.parse(result.stdout).data;
+  };
+  run('project.create', { topic: 'Synthetic inheritance', topic_slug: 'preference' }, { operation_id: 'create', expected: { revision: null } });
+  const projectRoot = join(workspace, project);
+  expect(JSON.parse(readFileSync(join(projectRoot, '.patent/config.json'), 'utf8'))).toMatchObject({ jurisdiction: 'US', figures: { preferredBackend: 'mermaid' } });
+  mkdirSync(join(projectRoot, 'figures/fig1'), { recursive: true });
+  writeFileSync(join(projectRoot, 'figures/fig1/figure-spec.json'), readFileSync('src/skill-entry/assets/figure-spec.example.json'));
+  writeFileSync(join(projectRoot, '.patent/figure-capabilities.json'), JSON.stringify(capabilityFixture()));
+  const params = { spec_path: 'figures/fig1/figure-spec.json' };
+  expect(run('figure.plan', params).default_backend).toBe('mermaid');
+  writeFileSync(join(projectRoot, '.patent/config.json'), JSON.stringify({ figures: { preferredBackend: 'svg' } }));
+  expect(run('figure.plan', params).default_backend).toBe('svg');
+  expect(run('figure.plan', { ...params, figures: { preferredBackend: 'mermaid' } }).default_backend).toBe('mermaid');
+}, 15000);

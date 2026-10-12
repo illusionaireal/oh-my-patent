@@ -24,3 +24,16 @@ attempt before the call, record observed result/timeout without automatic retry.
 Preserve bitmap original, provider/model when available, parameters, time and ledger
 references. Missing tool/consent/budget means use SVG or deliver the specification.
 Do not describe any real provider as verified on the strength of mock handoff tests.
+
+Before generation run figure.plan, then figure.offer/select as documented in runtime.md.
+Save actual observations from assets/figure-capabilities.example.json. Prefer an executable
+saved local choice or preference, else SVG. Timed interaction defaults after a persisted
+30-second deadline; no timed interaction defaults immediately. Save selection.json and
+its true source. Never infer consent from default/timeout. New registration binds selection
+and capabilities; substantive content/backend/execution changes invalidate prior review.
+Refreshing observations or reusing an unchanged choice preserves the existing review.
+Output formats are normalized to the selected backend; image tools keep raster originals.
+Local renderers have a 60-second host deadline with one recorded SVG fallback through
+figure.fallback, then stop on further failure; see runtime.md for the evidence contract.
+No preview permits drafting
+but prevents visual pass/final required-figure completion.
